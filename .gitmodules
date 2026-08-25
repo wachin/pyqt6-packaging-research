@@ -13,3 +13,6 @@
 [submodule "napari"]
 	path = napari
 	url = https://github.com/napari/napari.git
+[submodule "napari-packaging"]
+	path = napari-packaging
+	url = https://github.com/napari/packaging
