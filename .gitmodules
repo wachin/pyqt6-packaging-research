@@ -1,0 +1,15 @@
+[submodule "dikte"]
+	path = dikte
+	url = https://github.com/yusufipk/dikte.git
+[submodule "CustomKnight-Creator"]
+	path = CustomKnight-Creator
+	url = https://github.com/cmot17/CustomKnight-Creator.git
+[submodule "pyzo"]
+	path = pyzo
+	url = https://github.com/pyzo/pyzo.git
+[submodule "CARA"]
+	path = CARA
+	url = https://github.com/pguntermann/CARA.git
+[submodule "napari"]
+	path = napari
+	url = https://github.com/napari/napari.git
