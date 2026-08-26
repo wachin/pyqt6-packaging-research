@@ -1,13 +1,35 @@
-
 Aquí te adjunto los tres archivos, y estas indicaciones de ellos y sus resultados:
+
+- MASTER_PYQT6_PACKAGING_GUIDE.md (1631 lines) — full 35-section comparative analysis
+/home/wachin/Dev3/pyqt6-packaging-research/03-Promt-MAESTRO-resultado/MASTER_PYQT6_PACKAGING_GUIDE.md
+
+- PYQT6_MASTER_PACKAGING_TUTORIAL.md (1092 lines) — practical step-by-step, all templates labeled [TEMPLATE — MUST BE TESTED]
+/home/wachin/Dev3/pyqt6-packaging-research/03-Promt-MAESTRO-resultado/PYQT6_MASTER_PACKAGING_TUTORIAL.md
+
+- PACKAGING_EVIDENCE_MATRIX.md (182 lines) — traceable evidence table + contradiction log + not-verifiable list
+Final Summary
+/home/wachin/Dev3/pyqt6-packaging-research/03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md
+
+para que me hagas unos promts para dos objetivos:
+
+1. Yo tengo un repositorio donde tengo un programa que estoy desarrollandolo en Python/PyQt6 pero que le falla la creación de los ejecutables para Windows .exe, para macOS, para Linux paquete deb y AppImage, pues he tratado varias veces y me falla en GitHub Actios el poderlos crear pues al dar clic en "Actions" en "Build executables" me da fallas porque los "workflow runs" no pasan, y el promt que quiero que me hagas debe decirle al Agente de IA que lea los tres archivos los cuales los he puesto en la carpeta: 
+
+
+AGENTS_GitHub-Actios_PyQt6/MASTER_PYQT6_PACKAGING_GUIDE.md
+AGENTS_GitHub-Actios_PyQt6/PYQT6_MASTER_PACKAGING_TUTORIAL.md
+AGENTS_GitHub-Actios_PyQt6/PACKAGING_EVIDENCE_MATRIX.md
+
+para que en base a estos tres archivos encuentre la solución y lo repare
+
+
+2. Al iniciar un proyecto desde cero de un programa que quiero hacer en pyqt6 donde tengo colocado el ROADMAP.md con las indicaciones, allí al lado de él pondré esos tres archivos y necesito que me crees un promt paa decirle que el programa debe guiarse en ellos para que al final cuando ya esté listo no haya problmeas con GitHub Actions al momento de crear ejecutables para Windows .exe, para macOS, para Linux paquete deb y AppImage.
+
+---
+
 
 ```
 Three new documents created in /home/wachin/Dev3/pyqt6-packaging-research/ (original studies untouched):
 
-- MASTER_PYQT6_PACKAGING_GUIDE.md (1631 lines) — full 35-section comparative analysis
-- PYQT6_MASTER_PACKAGING_TUTORIAL.md (1092 lines) — practical step-by-step, all templates labeled [TEMPLATE — MUST BE TESTED]
-- PACKAGING_EVIDENCE_MATRIX.md (182 lines) — traceable evidence table + contradiction log + not-verifiable list
-Final Summary
 
 1. Strongest technique: PyInstaller onedir as a transparent, container-ready payload built natively per OS (CARA, dikte, pyzo independently; [REPEATED + STRONG]).
 2. Strongest Windows strategy: onedir → PE metadata → sign inner EXEs → signed Inno Setup per-user installer → verify → SHA256. Only napari actually signs Windows (Azure, final tags); the rest is recommended.
@@ -25,14 +47,3 @@ Final Summary
 ```
 
 
-Ahora necesito que me hagas con estos tres resultados un promt para poder usar estos tres archivos:
-
-
-MASTER_PYQT6_PACKAGING_GUIDE.md
-PACKAGING_EVIDENCE_MATRIX.md
-PYQT6_MASTER_PACKAGING_TUTORIAL.md
-
-para dos objetivos:
-
-1. Poner los tres archivos en un repositorio donde tenga un programa que estoy creandolo con pyqt6 pero que me falla la creación de los ejecutables para Windows .exe, para macOS, para Linux paquete deb y AppImage, y decirle a al Agente de IA que los lea y con esa información lo repare
-2. Al iniciar un proyecto desde cero de un programa que quiero hacer en pyqt6 donde tengo colocado el ROADMAP.md con las indicaciones, allí al lado de él pondré esos tres archivos y necesito que me crees un promt paa decirle que el programa debe guiarse en ellos para que al final cuando ya esté listo no haya problmeas con GitHub Actions al momento de crear ejecutables para Windows .exe, para macOS, para Linux paquete deb y AppImage.
