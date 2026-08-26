@@ -1,30 +1,28 @@
-Aquí te adjunto los tres archivos, y estas indicaciones de ellos y sus resultados:
 
-- MASTER_PYQT6_PACKAGING_GUIDE.md (1631 lines) — full 35-section comparative analysis
-/home/wachin/Dev3/pyqt6-packaging-research/03-Promt-MAESTRO-resultado/MASTER_PYQT6_PACKAGING_GUIDE.md
-
-- PYQT6_MASTER_PACKAGING_TUTORIAL.md (1092 lines) — practical step-by-step, all templates labeled [TEMPLATE — MUST BE TESTED]
-/home/wachin/Dev3/pyqt6-packaging-research/03-Promt-MAESTRO-resultado/PYQT6_MASTER_PACKAGING_TUTORIAL.md
-
-- PACKAGING_EVIDENCE_MATRIX.md (182 lines) — traceable evidence table + contradiction log + not-verifiable list
-Final Summary
-/home/wachin/Dev3/pyqt6-packaging-research/03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md
-
-para que me hagas unos promts para dos objetivos:
-
-1. Yo tengo un repositorio donde tengo un programa que estoy desarrollandolo en Python/PyQt6 pero que le falla la creación de los ejecutables para Windows .exe, para macOS, para Linux paquete deb y AppImage, que lo he añadido como sub-modulo en:
-
-/home/wachin/Dev3/pyqt6-packaging-research/PyQt6-Apps/TBO/
-
-y tengo el problema de que he tratado varias veces y me falla en GitHub Actios:
+me falla en GitHub Actios:
 
 https://github.com/wachin/TBO/actions
 
-el poderlos crear pues al dar clic en "Actions" en "Build executables" me da fallas porque los "workflow runs" no pasan, me da estos errores:
+al dar clic en "Actions" en "Build executables" me da falla porque los "workflow runs" no pasan, me da estos errores:
 
 ## en "Build .deb"
 
 ```
+1s
+Run dpkg-buildpackage -b -uc -us
+dpkg-buildpackage: info: source package tbo
+dpkg-buildpackage: info: source version 2.0.0.dev0-1
+dpkg-buildpackage: info: source distribution unstable
+dpkg-buildpackage: info: source changed by Washington Indacochea Delgado <linuxfrontier@proton.me>
+ dpkg-source --before-build .
+dpkg-buildpackage: info: host architecture amd64
+ fakeroot debian/rules clean
+dh clean --with python3 --buildsystem=pybuild
+   dh_auto_clean -O--buildsystem=pybuild
+   dh_autoreconf_clean -O--buildsystem=pybuild
+   debian/rules override_dh_clean
+make[1]: Entering directory '/home/runner/work/TBO/TBO'
+dh_clean
 rm -rf ../build ../dist
 make[1]: Leaving directory '/home/runner/work/TBO/TBO'
  debian/rules build
@@ -83,28 +81,28 @@ Error: Process completed with exit code 1.
 ## En "build-flatpak" en "Initialize containers":
 
 ```
->Checking docker version
+Checking docker version
   /usr/bin/docker version --format '{{.Server.APIVersion}}'
   '1.48'
   Docker daemon API version: '1.48'
   /usr/bin/docker version --format '{{.Client.APIVersion}}'
   '1.48'
   Docker client API version: '1.48'
->Clean up resources from previous jobs
-  /usr/bin/docker ps --all --quiet --no-trunc --filter "label=386eba"
-  /usr/bin/docker network prune --force --filter "label=386eba"
-> Create local container network
-  /usr/bin/docker network create --label 386eba github_network_bec3cf50fc924de2b2cddfc9d388e8c0
-  8cd662ede7fba20b597bcdb75b488986a5ac12cf833e54ca076288e8243037ab
-> Starting job container
-  /usr/bin/docker --config /home/runner/work/_temp/.docker_595e70de-ebd0-42bc-99cf-f86da6da65a0 login ghcr.io -u wachin --password-stdin
-  /usr/bin/docker --config /home/runner/work/_temp/.docker_595e70de-ebd0-42bc-99cf-f86da6da65a0 pull ghcr.io/flathub/flathub-infra:latest
+Clean up resources from previous jobs
+  /usr/bin/docker ps --all --quiet --no-trunc --filter "label=b0cd17"
+  /usr/bin/docker network prune --force --filter "label=b0cd17"
+Create local container network
+  /usr/bin/docker network create --label b0cd17 github_network_f25e1ef9d902498f85d7698255ce5a2a
+  996a854ecf29655d1b6b056c381f2886a83146bf3d9ad35c532db96533a0e699
+Starting job container
+  /usr/bin/docker --config /home/runner/work/_temp/.docker_f80344aa-e774-405f-be1f-e58236198f15 login ghcr.io -u wachin --password-stdin
+  /usr/bin/docker --config /home/runner/work/_temp/.docker_f80344aa-e774-405f-be1f-e58236198f15 pull ghcr.io/flathub/flathub-infra:latest
   Error response from daemon: manifest unknown
-  Warning: Docker pull failed with exit code 1, back off 9.1 seconds before retry.
-  /usr/bin/docker --config /home/runner/work/_temp/.docker_595e70de-ebd0-42bc-99cf-f86da6da65a0 pull ghcr.io/flathub/flathub-infra:latest
+  Warning: Docker pull failed with exit code 1, back off 5.028 seconds before retry.
+  /usr/bin/docker --config /home/runner/work/_temp/.docker_f80344aa-e774-405f-be1f-e58236198f15 pull ghcr.io/flathub/flathub-infra:latest
   Error response from daemon: manifest unknown
-  Warning: Docker pull failed with exit code 1, back off 6.526 seconds before retry.
-  /usr/bin/docker --config /home/runner/work/_temp/.docker_595e70de-ebd0-42bc-99cf-f86da6da65a0 pull ghcr.io/flathub/flathub-infra:latest
+  Warning: Docker pull failed with exit code 1, back off 5.488 seconds before retry.
+  /usr/bin/docker --config /home/runner/work/_temp/.docker_f80344aa-e774-405f-be1f-e58236198f15 pull ghcr.io/flathub/flathub-infra:latest
   Error response from daemon: manifest unknown
   Error: Docker pull failed with exit code 1
 ```
