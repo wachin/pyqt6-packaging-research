@@ -1,3 +1,7 @@
+
+Aquí te adjunto los tres archivos, y estas indicaciones de ellos y sus resultados:
+
+```
 Three new documents created in /home/wachin/Dev3/pyqt6-packaging-research/ (original studies untouched):
 
 - MASTER_PYQT6_PACKAGING_GUIDE.md (1631 lines) — full 35-section comparative analysis
@@ -18,3 +22,17 @@ Final Summary
 11. Five things NOT to copy: unsigned onefile Windows; conda/constructor for a plain app; Apple-cert-for-Windows signing; unpinned/floating release deps; calling tar.gz/zip "AppImage" or ad-hoc signing "production macOS".
 12. Biggest unresolved: actual AV/SmartScreen behavior of signed PyInstaller vs Nuitka artifacts; exact Qt plugin/translation inventories; correct DEB model; notarized-DMG flow.
 13. Experiments before finalizing: the §31 four-arm PyInstaller/Nuitka × onedir/onefile comparison over several releases; cross-distro AppImage/GLIBC matrix; artifact smoke-test suite; signed-vs-unsigned VirusTotal; a Nuitka-macOS-PyQt6 proof build.
+```
+
+
+Ahora necesito que me hagas con estos tres resultados un promt para poder usar estos tres archivos:
+
+
+MASTER_PYQT6_PACKAGING_GUIDE.md
+PACKAGING_EVIDENCE_MATRIX.md
+PYQT6_MASTER_PACKAGING_TUTORIAL.md
+
+para dos objetivos:
+
+1. Poner los tres archivos en un repositorio donde tenga un programa que estoy creandolo con pyqt6 pero que me falla la creación de los ejecutables para Windows .exe, para macOS, para Linux paquete deb y AppImage, y decirle a al Agente de IA que los lea y con esa información lo repare
+2. Al iniciar un proyecto desde cero de un programa que quiero hacer en pyqt6 donde tengo colocado el ROADMAP.md con las indicaciones, allí al lado de él pondré esos tres archivos y necesito que me crees un promt paa decirle que el programa debe guiarse en ellos para que al final cuando ya esté listo no haya problmeas con GitHub Actions al momento de crear ejecutables para Windows .exe, para macOS, para Linux paquete deb y AppImage.
