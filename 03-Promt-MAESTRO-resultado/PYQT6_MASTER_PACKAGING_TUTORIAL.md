@@ -1052,6 +1052,8 @@ sha256sum -c SHA256SUMS.txt
 
 ### RELEASE
 - [ ] Version consistent
+- [ ] License file present in repo and bundled (Windows/macOS scripts copy it
+      into the artifact)
 - [ ] Changelog updated
 - [ ] Artifacts smoke-tested in CI
 - [ ] Checksums published (attached)

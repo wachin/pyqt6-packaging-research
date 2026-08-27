@@ -15,8 +15,8 @@ Este documento registra las correcciones aplicadas al workflow "Build executable
 | `build-wheel` | ✅ Verde | Siempre funcionó |
 | `build-deb` | ✅ Verde | **Corregido** (2 fallos resueltos) |
 | `build-appimage` | ✅ Verde | **Creado desde cero** (no existía) |
-| `build-macos` | ⚠️ Se corrige | Último fallo resuelto (LICENSE→COPYING); falta un nuevo run |
-| `build-windows` | ⏳ Pendiente | Fix de versión aplicado; requiere prueba en Windows |
+| `build-macos` | ✅ Verde | **Corregido** (3 fallos resueltos, incluido el de la licencia) |
+| `build-windows` | ✅ Verde | **Corregido** (versión + licencia) |
 | `build-flatpak` | ⛔ Deshabilitado | Imagen Docker no disponible; no es importante para el proyecto |
 
 ---
@@ -99,17 +99,19 @@ No existía ningún pipeline de AppImage en TBO. Se creó siguiendo la guía mae
 
 - **Fallo C (último, recién corregido): `cp: .../LICENSE: No such file or directory`**
   - **Causa raíz:** el script copiaba `$workspace_root/LICENSE`, pero TBO usa
-    `COPYING` (GPL-3.0), no existe un archivo `LICENSE`.
-  - **Solución:** se cambió `LICENSE` → `COPYING` en `build_macos.sh`.
-  - **Estado:** requiere ejecutar de nuevo el workflow para confirmar verde.
+    `COPYING` (GPL-3.0), no existía un archivo `LICENSE`.
+  - **Solución:** se cambió `LICENSE` → `COPYING` en `build_macos.sh` y se creó
+    también el archivo `LICENSE` en el repositorio (ver sección "Requisito
+    imprescindible: el archivo de licencia").
+  - **Estado:** ✅ confirmado verde (todos los builds pasan).
 
 **Archivos modificados:** `packaging/build_macos.sh`, `packaging/generate_icon.py`
 
 ---
 
-### 4. `build-windows` — `.exe` (Windows) — ⏳ PENDIENTE
+### 4. `build-windows` — `.exe` (Windows) — ✅ EN VERDE
 
-**Fix aplicado (no confirmado):**
+**Fallos corregidos:**
 - **Fallo: `FATAL: Invalid version number --file-version='2.0.0.dev0.0'`**
   - **Causa raíz:** la versión en `src/tbo/__init__.py` es `2.0.0.dev0`. El script
     PowerShell hacía `$windowsVersion = "$version.0"` → `2.0.0.dev0.0`, que Nuitka
@@ -121,12 +123,10 @@ No existía ningún pipeline de AppImage en TBO. Se creó siguiendo la guía mae
     $numericVersion = if ($version -match '^(\d+(?:\.\d+)*)') { $Matches[1] } else { $version }
     $windowsVersion = "$numericVersion.0"   # 2.0.0.dev0 -> 2.0.0.0
     ```
-  - **Otro fix:** `COPYING` en lugar de `LICENSE` (misma causa que macOS).
+  - **Otro fix:** `COPYING` en lugar de `LICENSE` (misma causa que macOS; ver
+    sección "Requisito imprescindible: el archivo de licencia").
 
-- **Nota:** el usuario indicó que debe probar el build en Windows localmente
-  (`Nota: Para Windows yo usé Nuitka porque me pasó las pruebas en VirusTotal; con
-  PyInstaller me daba virus`). Falta confirmar que Nuitka genera el `.exe` con la
-  nueva versión.
+- **Nota:** los builds de Windows ahora pasan correctamente en GitHub Actions.
 
 **Archivos modificados:** `packaging/build_windows.ps1`
 
@@ -157,14 +157,66 @@ No existía ningún pipeline de AppImage en TBO. Se creó siguiendo la guía mae
 
 ---
 
+## ⚠️ Requisito imprescindible: el archivo de licencia
+
+**Es imprescindible tener el archivo de licencia (`LICENSE` o `COPYING`) en el
+repositorio ANTES de lanzar los builds.** No lo olvides como me pasó a mí.
+
+### Por qué
+
+Los scripts de empaquetado **incrustan la licencia dentro del artefacto final**:
+
+- `packaging/build_macos.sh` copia la licencia dentro del `.app`/ZIP de macOS.
+- `packaging/build_windows.ps1` copia la licencia dentro del ZIP portable de
+  Windows.
+
+Si el archivo no existe, el build **falla al final**, cuando todo lo demás ya se
+construyó bien. En TBO, el build de macOS llegó hasta "Build complete!" y luego
+falló con:
+
+```
+cp: /Users/runner/work/TBO/TBO/LICENSE: No such file or directory
+Error: Process completed with exit code 1.
+```
+
+porque el repositorio solo tenía `COPYING` (GPL-3.0) y no `LICENSE`.
+
+### Mi caso (para que no te pase lo mismo)
+
+1. Olvidé crear el archivo `LICENSE` en el repositorio → el build de macOS falló
+   al final.
+2. Cuando lo creé, lo puse inicialmente en **la carpeta equivocada**:
+   - ❌ `/home/wachin/Dev3/TBO/LICENSE` (mi clon personal)
+   - ✅ `/home/wachin/Dev3/pyqt6-packaging-research/PyQt6-Apps/TBO/LICENSE`
+     (el sub-módulo que es el que usa GitHub Actions)
+3. Al hacer `git add .` en el sub-módulo me decía "nothing to commit" porque el
+   archivo no estaba en esa carpeta.
+4. Al copiarlo al sub-módulo, commitear y pushear, todos los builds pasaron.
+
+### Consejos
+
+- Crea el archivo de licencia **desde el primer commit**, no lo dejes para el
+  final.
+- Usa un nombre estándar: `LICENSE` (o `COPYING` si tu proyecto ya lo usa).
+- Los scripts deben referenciar el nombre **real** del archivo. Si tu proyecto
+  usa `COPYING`, ajusta los scripts o crea también `LICENSE`.
+- Verifica antes de lanzar el build:
+  ```bash
+  git ls-files | grep -iE '^(license|copying)(\.|$)'
+  ```
+- En un proyecto con sub-módulos, asegúrate de poner la licencia en el
+  sub-módulo correcto (el que está dentro del repositorio que usa GitHub
+  Actions), no en un clon externo.
+
+---
+
 ## Cómo probar
 
 1. Ir a [https://github.com/wachin/TBO/actions](https://github.com/wachin/TBO/actions).
 2. Click en "Build executables" → "Run workflow".
-3. Los jobs `build-wheel`, `build-deb` y `build-appimage` ya pasan (verde).
-4. `build-macos` debería pasar tras el fix de `COPYING`.
-5. `build-windows` depende de la prueba local en Windows.
-6. Los artifacts quedan disponibles para descarga en cada run.
+3. **Todos los jobs pasan en verde:** `build-wheel`, `build-deb`,
+   `build-appimage`, `build-macos` y `build-windows`.
+4. Los artifacts quedan disponibles para descarga en cada run.
 
 ---
 

@@ -1464,6 +1464,13 @@ satisfy your requirements. [EXPERIMENTAL]
     [REPEATED]
 14. **Keep unpinned/`-U` dependency installs for release builds.** All four
     freezer projects do this and none is reproducible. [REPEATED — negative]
+15. **Forget to include the license file (`LICENSE`/`COPYING`) in the repo
+    before building.** TBO's macOS build reached "Build complete!" and then
+    failed with `cp: .../LICENSE: No such file or directory` because the
+    packaging scripts embed the license inside the final `.app`/ZIP and the
+    repository only had `COPYING`. Include the license file from the first
+    commit (or make the scripts reference the actual filename). [OBSERVED —
+    TBO, 2026]
 
 ---
 
@@ -1553,6 +1560,8 @@ satisfy your requirements. [EXPERIMENTAL]
 
 ### RELEASE
 - [ ] Version consistent across metadata
+- [ ] License file (`LICENSE`/`COPYING`) present in repo and bundled in all
+      artifacts
 - [ ] Changelog updated
 - [ ] Artifacts smoke-tested (launch + log check in CI)
 - [ ] Checksums published (SHA256SUMS attached)
