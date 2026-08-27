@@ -559,6 +559,9 @@ Based strictly on evidence in the studies.
 - Onefile mode shows startup/extraction fragility and is associated with the
   negative case study. [OBSERVED BUT PROJECT-SPECIFIC]
 - No project demonstrates reproducible PyInstaller output. [NOT VERIFIED]
+- **PyInstaller 6.x removed the `--verbose` flag.** Scripts using it
+  (`pyinstaller --verbose`) fail with `unrecognized arguments: --verbose`.
+  Use `--log-level=DEBUG` instead, or remove it. [OBSERVED — TBO, 2026]
 
 ---
 
@@ -580,6 +583,10 @@ the agents, explicitly labelled as not from the repositories:
   several tutorials as an anecdote, explicitly marked "correlation, not
   causation" and "NOT guaranteed". **No case study supplies data.**
   [NOT VERIFIED]
+- `--file-version` / `--product-version` require a **4-part numeric version**
+  (`major.minor.build.revision`). A PEP 440 version such as `2.0.0.dev0`
+  makes Nuitka fail with `FATAL: Invalid version number`. Sanitize it before
+  passing (TBO observed this, 2026). [OBSERVED — TBO]
 
 **Verdict:** Nuitka remains a legitimate alternative worth benchmarking (§31),
 but there is zero case-study evidence that it is superior for any of the five
@@ -842,6 +849,30 @@ The analysis recommends treating them as separate products:
 - **Do not** assume the AppImage payload can simply be re-labeled as a `.deb`;
   they have different integration, dependency and update semantics.
   [RECOMMENDED FROM TECHNICAL REASONING; NOT VERIFIED BY ANY CASE STUDY]
+
+### CI build gotchas observed on TBO (2026)
+
+Two real `.deb`-in-CI failures that a new project should avoid:
+
+1. **`dpkg-buildpackage` writes its artifacts (`.deb`, `.buildinfo`,
+   `.changes`) to the PARENT directory of the source tree**, not to the
+   workspace where `actions/upload-artifact` looks. A green job can silently
+   upload nothing. Move them into the workspace before uploading:
+   ```bash
+   dpkg-buildpackage -b -uc -us
+   mv ../tbo_*.deb ../tbo_*.buildinfo ../tbo_*.changes ./
+   ```
+   [OBSERVED — TBO, 2026]
+
+2. **`dh_auto_test` fails for a Qt GUI package** because pybuild runs
+   `python3.12 -m unittest discover` and the tests import `PyQt6`, which is a
+   runtime dependency (`python3-pyqt6`), not a build dependency. Skip tests
+   during the package build (they should run separately in CI):
+   ```makefile
+   override_dh_auto_test:
+       @echo "Skipping dh_auto_test (Qt GUI tests need a display and PyQt6 at build time)"
+   ```
+   [OBSERVED — TBO, 2026]
 
 ---
 
@@ -1112,6 +1143,15 @@ tag vX.Y.Z (and optional nightly)
 Gating rules to copy: signing only on tag events when secrets are available
 (napari); build packaging on PRs touching `packaging/**` (dikte); publish only
 from tags with `--verify-tag` (pyzo). [REPEATED + MODERATE EVIDENCE]
+
+### Action versions / Node.js deprecation
+
+GitHub deprecated Node.js 20 on its runners (2025-09). Actions still pinned to
+Node 20 (`actions/checkout@v4`, `actions/setup-python@v5`,
+`actions/upload-artifact@v4`, …) still run but emit deprecation warnings and
+are "forced to run on Node.js 24". Upgrade to the current major versions
+(`checkout@v5`, `setup-python@v6`, `upload-artifact@v5`) — or better, pin to
+commit SHAs as napari does. [OBSERVED — TBO, 2026]
 
 ---
 
@@ -1471,6 +1511,18 @@ satisfy your requirements. [EXPERIMENTAL]
     repository only had `COPYING`. Include the license file from the first
     commit (or make the scripts reference the actual filename). [OBSERVED —
     TBO, 2026]
+16. **Expect `dpkg-buildpackage` artifacts inside the workspace.** They land in
+    the PARENT directory; a green `build-deb` job can upload nothing. Move
+    them (`mv ../tbo_*.deb ... ./`) before `upload-artifact`. [OBSERVED — TBO]
+17. **Let `dh_auto_test` run for a Qt GUI `.deb`.** pybuild runs `unittest` and
+    the tests import `PyQt6`, which is not a build dependency; override
+    `dh_auto_test` and run the tests separately in CI. [OBSERVED — TBO]
+18. **Pass a PEP 440 version to Nuitka `--file-version`.** `2.0.0.dev0.0`
+    fails with `FATAL: Invalid version number`; sanitize to a 4-part numeric
+    version (`2.0.0.0`). [OBSERVED — TBO]
+19. **Keep GitHub Actions on Node 20 actions** (`checkout@v4`,
+    `setup-python@v5`, `upload-artifact@v4`). They still run but warn; upgrade
+    to the current majors (`v5`/`v6`/`v5`). [OBSERVED — TBO, 2026]
 
 ---
 
