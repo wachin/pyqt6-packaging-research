@@ -231,4 +231,71 @@ porque el repositorio solo tenía `COPYING` (GPL-3.0) y no `LICENSE`.
 
 ---
 
+## Correcciones posteriores (2026-08-26)
+
+Tras confirmar que todos los jobs pasaban, se corrigieron dos avisos/fallos
+adicionales que aparecían en el run:
+
+### 6. El `.deb` se construía pero NO se subía como artifact
+
+**Síntoma:** el job `build-deb` estaba en verde, pero GitHub Actions mostraba:
+
+```
+No files were found with the provided path: tbo_*.deb tbo_*.buildinfo tbo_*.changes.
+No artifacts will be uploaded.
+```
+
+y en la lista de ejecutables descargables solo aparecían `tbo-linux-appimage`,
+`tbo-macos` y `tbo-windows` — faltaba el `.deb`.
+
+**Causa raíz:** `dpkg-buildpackage` escribe los archivos generados (`.deb`,
+`.buildinfo`, `.changes`) en el **directorio padre** del árbol fuente
+(`/home/runner/work/TBO/`), NO en el workspace
+(`/home/runner/work/TBO/TBO/`) donde `upload-artifact` busca por defecto.
+
+**Solución (`.github/workflows/build.yml`, job `build-deb`):** mover los
+artefactos al workspace antes de subirlos:
+
+```yaml
+- name: Build .deb
+  run: |
+    dpkg-buildpackage -b -uc -us
+    # dpkg-buildpackage writes to the PARENT directory; move them here.
+    mv ../tbo_*.deb ../tbo_*.buildinfo ../tbo_*.changes ./
+```
+
+### 7. Avisos de Node.js 20 obsoleto en las actions
+
+**Síntoma:** los 5 jobs mostraban avisos (warnings) como:
+
+```
+Node.js 20 is deprecated. The following actions target Node.js 20 but are
+being forced to run on Node.js 24: actions/checkout@v4,
+actions/setup-python@v5, actions/upload-artifact@v4.
+```
+
+**Causa raíz:** las versiones `v4`/`v5` de esas acciones usan Node.js 20, que
+GitHub ya no soporta de forma nativa en sus runners (desde 2025-09).
+
+**Solución (`.github/workflows/build.yml` y `ci.yml`):** subir las acciones a
+las versiones que usan Node.js 24:
+
+| Acción | Antes | Después |
+|---|---|---|
+| `actions/checkout` | `@v4` | `@v5` |
+| `actions/setup-python` | `@v5` | `@v6` |
+| `actions/upload-artifact` | `@v4` | `@v5` |
+
+---
+
+## Cómo probar (tras estas correcciones)
+
+1. Ir a [https://github.com/wachin/TBO/actions](https://github.com/wachin/TBO/actions).
+2. Click en "Build executables" → "Run workflow".
+3. **Todos los jobs pasan en verde** sin avisos de Node.js obsoleto.
+4. Ahora sí se descargan **4 artefactos**: el AppImage, el ZIP de macOS, el ZIP
+   de Windows **y el paquete `.deb`** (más el wheel/sdist si se descarga).
+
+---
+
 Dios les bendiga
