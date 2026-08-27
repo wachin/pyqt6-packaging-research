@@ -180,3 +180,24 @@ These are flagged as NOT VERIFIED and must not be treated as facts:
 11. Actual GLIBC minimum required by bundled Python/PyQt6 wheels beyond the
     Ubuntu 22.04 baseline.
 12. Whether UPX is applied to any released Windows artifact.
+
+---
+
+## F. TBO follow-up evidence (2026-08)
+
+Real fixes applied while packaging **TBO** (github.com/wachin/TBO), a PyQt6
+app built with Nuitka (Windows) and PyInstaller (macOS/Linux) on GitHub
+Actions. Recorded in
+`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md`.
+
+| Technique | Project | Evidence | Observed behavior | Conclusion | Confidence |
+|---|---|---|---|---|---|
+| `python3 -m build` module missing in `.deb` CI | TBO | SOLUCIONES §1 | `setup-python` toolcache Python lacks `build`; apt `python3-build` only helps system Python | pip-install `build setuptools wheel` into the active interpreter before `dpkg-buildpackage` | HIGH |
+| Skip tests in Qt GUI `.deb` build | TBO | SOLUCIONES §1 | `dh_auto_test` runs `unittest`, tests import `PyQt6` (runtime dep) → fails | `override_dh_auto_test:` to skip; run tests separately in CI | HIGH |
+| Nuitka `--file-version` format | TBO | SOLUCIONES §4 | `2.0.0.dev0.0` → `FATAL: Invalid version number` | sanitize to 4-part numeric `2.0.0.0` | HIGH |
+| Icons for macOS/PyInstaller | TBO | SOLUCIONES §3 | script expected `build/tmp/TBO.iconset`, generator wrote next to source | pass an explicit output dir to the icon generator | HIGH |
+| PyInstaller `--verbose` removed in 6.x | TBO | SOLUCIONES §3 | `unrecognized arguments: --verbose` | remove or use `--log-level=DEBUG` | HIGH |
+| License file required by packaging scripts | TBO | SOLUCIONES §2 | `cp: LICENSE: No such file` at end of macOS build | commit `LICENSE` (or point scripts to `COPYING`) from the first commit | HIGH |
+| `dpkg-buildpackage` writes to parent dir | TBO | SOLUCIONES §6 | `.deb` built but `upload-artifact` found nothing | `mv ../tbo_*.deb ... ./` before upload | HIGH |
+| Node.js 20 action deprecation | TBO | SOLUCIONES §7 | `checkout@v4`/`setup-python@v5`/`upload-artifact@v4` warnings | upgrade to `@v5`/`@v6`/`@v5` | HIGH |
+| `.gitignore` cannot hide submodule dirt | pyqt6-packaging-research | `Añadir_un_git_sub-modulo.md` | untracked files inside submodules still reported | use `ignore = dirty` in `.gitmodules` + `git submodule sync` | HIGH |

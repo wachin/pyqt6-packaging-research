@@ -135,3 +135,19 @@ Debes proporcionar:
 - Usar placeholders para todo lo que requiera configuración del usuario (certificados, URLs de timestamp, etc.)
 - Mantener compatibilidad con Python 3.11, 3.12, 3.12
 - Seguir el estilo de código existente del proyecto
+
+---
+
+## Apéndice: resultado real de este prompt (2026-08)
+
+Este prompt se ejecutó sobre TBO y **todos los builds pasaron** en GitHub
+Actions: `build-wheel`, `build-deb`, `build-appimage`, `build-macos` y
+`build-windows`.
+
+El registro completo de soluciones, causas raíz y lecciones está en:
+
+**`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md`**
+
+Incluye además correcciones posteriores que surgieron al validar el primer
+run (subida del `.deb` y avisos de Node.js 20 obsoleto). Si vuelves a usar
+este prompt, consulta ese documento como referencia de lo ya resuelto.

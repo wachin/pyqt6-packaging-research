@@ -191,6 +191,9 @@ pyinstaller --noconfirm --clean --onedir --windowed \
 - **Avoid `--onefile`** unless a single naked executable is a real user
   benefit; an installer/AppImage/DMG already gives users one file, and onedir
   avoids per-launch extraction. `[REPEATED]`
+- **PyInstaller 6.x removed the `--verbose` flag.** `pyinstaller --verbose`
+  fails with `unrecognized arguments: --verbose`. Use `--log-level=DEBUG` or
+  remove it. `[OBSERVED — TBO, 2026]`
 
 ### A committed onedir spec `[OBSERVED — CARA/dikte shape]`
 
@@ -281,6 +284,13 @@ python -m nuitka --mode=standalone --enable-plugin=pyqt6 \
   --include-data-dir=src/myapp/resources=myapp/resources \
   src/myapp/__main__.py
 ```
+
+- **`--file-version` / `--product-version` require a 4-part numeric version**
+  (`major.minor.build.revision`, e.g. `2.0.0.0`). A PEP 440 version such as
+  `2.0.0.dev0` (or `2.0.0.dev0.0`) makes Nuitka fail with
+  `FATAL: Invalid version number`. Sanitize it before passing:
+  `2.0.0.dev0` → `2.0.0.0`. [OBSERVED — TBO, 2026]
+
 
 - Select only the Qt plugins you need (`--include-qt-plugins=platforms;imageformats`
   style; check your Nuitka version's docs).
@@ -636,6 +646,30 @@ lintian myapp_1.2.3_amd64.deb
 - Do not treat the AppImage payload as a drop-in `.deb` — different
   integration/dependency semantics.
 
+### CI gotchas (observed on TBO, 2026) `[OBSERVED — TBO]`
+
+1. **`dpkg-buildpackage` writes the artifacts (`.deb`, `.buildinfo`,
+   `.changes`) to the PARENT directory** of the source tree, not to the
+   workspace. A green job can silently upload nothing. Move them into the
+   workspace before `actions/upload-artifact`:
+   ```bash
+   dpkg-buildpackage -b -uc -us
+   mv ../myapp_*.deb ../myapp_*.buildinfo ../myapp_*.changes ./
+   ```
+2. **`dh_auto_test` fails for a Qt GUI package** because pybuild runs
+   `python3.12 -m unittest discover` and the tests import `PyQt6`, which is a
+   runtime dependency, not a build dependency. Skip tests during the package
+   build (run them separately in CI):
+   ```makefile
+   override_dh_auto_test:
+       @echo "Skipping dh_auto_test (Qt GUI tests need a display and PyQt6 at build time)"
+   ```
+3. **`python3.12: No module named build`** — if you use
+   `actions/setup-python`, the wheel build runs with the toolcache Python
+   (which lacks `build`), not the system Python where the apt
+   `python3-build` was installed. Add `python3 -m pip install build setuptools
+   wheel` before `dpkg-buildpackage`.
+
 ---
 
 ## 12. macOS: .app, signing, notarization, DMG
@@ -930,6 +964,11 @@ jobs:
   pyzo). `[OBSERVED — pyzo]`
 - Pin actions to commit SHAs; add dependabot; consider zizmor; use
   least-privilege `permissions:`. `[OBSERVED — napari]`
+- **Keep GitHub Actions on current major versions.** `checkout@v4`,
+  `setup-python@v5`, `upload-artifact@v4` target Node.js 20, which is
+  deprecated on GitHub runners (2025-09). Upgrade to `checkout@v5`,
+  `setup-python@v6`, `upload-artifact@v5` to eliminate the warnings.
+  `[OBSERVED — TBO, 2026]`
 - Never expose signing secrets to untrusted PRs; use protected environments for
   release signing. `[RECOMMENDED]`
 
