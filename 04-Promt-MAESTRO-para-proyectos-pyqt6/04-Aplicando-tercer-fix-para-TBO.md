@@ -13,6 +13,13 @@ Esta ya pasó, está en verde
 
 ---
 
+## en "build-appimage"
+
+```
+Esta ya pasó, está en verde
+```
+---
+
 ## en "build-windows" en "Build standalone executable with Nuitka":
 
 ```
@@ -24,6 +31,8 @@ Nota: Para Windows yo usé Nuitka porque me pasó las pruebas en VirusTotal (con
 ---
 
 ## En "build-macos" en "Build macOS App with PyInstaller":
+
+Da error:
 
 ```
 Run bash packaging/build_macos.sh
@@ -117,10 +126,8 @@ cp: /Users/runner/work/TBO/TBO/LICENSE: No such file or directory
 Error: Process completed with exit code 1.
 ```
 
-Creo que debo revisar en macOS
 
 ---
 
 
-Por favor el del paquete deb ese debes hacerlo funcionar pues estoy en Linux
-
+Por favor crea una carpeta especial donde puedas poner las soluciones que se icieron para TBO Con los que ya pasó en verde
