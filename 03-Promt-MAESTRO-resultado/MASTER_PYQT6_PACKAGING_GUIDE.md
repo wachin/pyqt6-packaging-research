@@ -864,15 +864,34 @@ Two real `.deb`-in-CI failures that a new project should avoid:
    ```
    [OBSERVED — TBO, 2026]
 
-2. **`dh_auto_test` fails for a Qt GUI package** because pybuild runs
-   `python3.12 -m unittest discover` and the tests import `PyQt6`, which is a
-   runtime dependency (`python3-pyqt6`), not a build dependency. Skip tests
-   during the package build (they should run separately in CI):
-   ```makefile
-   override_dh_auto_test:
-       @echo "Skipping dh_auto_test (Qt GUI tests need a display and PyQt6 at build time)"
-   ```
-   [OBSERVED — TBO, 2026]
+ 2. **`dh_auto_test` fails for a Qt GUI package** because pybuild runs
+    `python3.12 -m unittest discover` and the tests import `PyQt6`, which is a
+    runtime dependency (`python3-pyqt6`), not a build dependency. Skip tests
+    during the package build (they should run separately in CI):
+    ```makefile
+    override_dh_auto_test:
+        @echo "Skipping dh_auto_test (Qt GUI tests need a display and PyQt6 at build time)"
+    ```
+    [OBSERVED — TBO, 2026]
+
+### Audit the built `.deb` before installing
+
+A green build is not enough: audit the `.deb` before `gdebi`/`apt install`
+(TBO maintains a full checklist in `DEBIAN-PACKAGE-AUDIT.md`). Order:
+1. `lintian` (static analysis; also run at the end of `dpkg-buildpackage`);
+   `--info` explains each tag.
+2. `dpkg-deb --info` — verify `Architecture`, `Depends`, `Recommends`.
+3. `dpkg-deb --contents` — verify entry point, modules, assets, `.desktop`,
+   metainfo, icons, and bundled translations (`.qm`).
+4. `apt install --dry-run ./<pkg>.deb` — resolve dependencies without
+   changing anything.
+5. Install + smoke test, then `debsums <pkg>` to verify on-disk files match
+   the embedded checksums (empty output = intact).
+
+Common harmless Lintian warnings for a GUI app:
+`initial-upload-closes-no-bugs`, `no-manual-page`,
+`icon-size-and-directory-name-mismatch` (all exit 0). Stop and fix any failing
+check before continuing. [OBSERVED — TBO, 2026]
 
 ---
 

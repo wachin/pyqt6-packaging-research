@@ -288,6 +288,47 @@ las versiones que usan Node.js 24:
 
 ---
 
+## 8. Auditoría del paquete `.deb` antes de instalarlo
+
+Además de que el job `build-deb` pase en verde, es buena práctica **auditar el
+`.deb` generado antes de instalarlo** con `gdebi` o `apt install`. Eso detecta
+problemas temprano en lugar de ver los avisos de Lintian solo en el instalador
+gráfico.
+
+TBO incluye el checklist completo, listo para pasar a un agente de IA o a la
+terminal:
+
+**`DEBIAN-PACKAGE-AUDIT.md`** (en el repositorio TBO, y copiado aquí en
+`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/DEBIAN-PACKAGE-AUDIT.md`).
+
+Resumen del checklist (en orden):
+
+1. **Lintian** (análisis estático): `lintian tbo_2.0.0.dev0-1_all.deb`
+   - Avisos típicos inofensivos: `initial-upload-closes-no-bugs`,
+     `no-manual-page`, `icon-size-and-directory-name-mismatch`. Todos producen
+     `exit 0`.
+2. **Inspeccionar metadatos**: `dpkg-deb --info tbo_2.0.0.dev0-1_all.deb`
+   - Verificar `Architecture: all`, `Depends: python3-pyqt6,
+     python3-pyqt6.qtsvg`, `Recommends: python3-pyqt6.qtpdf`.
+3. **Inspeccionar contenido**: `dpkg-deb --contents tbo_2.0.0.dev0-1_all.deb`
+   - Comprobar `/usr/bin/tbo`, los módulos Python en
+     `/usr/lib/python3/dist-packages/tbo/`, los assets en
+     `/usr/share/tbo/doodle/`, el `.desktop`, el metainfo, el icono SVG y PNG,
+     y las traducciones `tbo/translations/tbo_en.qm` y `tbo_es.qm`.
+4. **Verificar dependencias sin instalar**:
+   `apt install --dry-run ./tbo_2.0.0.dev0-1_all.deb`
+   - Si dice `0 newly installed`, ya está todo satisfecho.
+5. **Checksums tras la instalación** (debsums):
+   `sudo apt install debsums && debsums tbo`
+   - Salida vacía = archivos intactos; cualquier diferencia indica corrupción.
+6. **Checklist completa antes de publicar**: build → lintian → info → contents
+   → dry-run → install + smoke test (`tbo --help`) → debsums.
+7. **Herramientas**: `sudo apt install lintian debsums`
+
+Si una comprobación falla, detente y corrige antes de pasar al siguiente paso.
+
+---
+
 ## Cómo probar (tras estas correcciones)
 
 1. Ir a [https://github.com/wachin/TBO/actions](https://github.com/wachin/TBO/actions).

@@ -664,11 +664,40 @@ lintian myapp_1.2.3_amd64.deb
    override_dh_auto_test:
        @echo "Skipping dh_auto_test (Qt GUI tests need a display and PyQt6 at build time)"
    ```
-3. **`python3.12: No module named build`** — if you use
-   `actions/setup-python`, the wheel build runs with the toolcache Python
-   (which lacks `build`), not the system Python where the apt
-   `python3-build` was installed. Add `python3 -m pip install build setuptools
-   wheel` before `dpkg-buildpackage`.
+ 3. **`python3.12: No module named build`** — if you use
+    `actions/setup-python`, the wheel build runs with the toolcache Python
+    (which lacks `build`), not the system Python where the apt
+    `python3-build` was installed. Add `python3 -m pip install build setuptools
+    wheel` before `dpkg-buildpackage`.
+
+### Audit the `.deb` before installing `[RECOMMENDED — TBO DEBIAN-PACKAGE-AUDIT.md]`
+
+A green `dpkg-buildpackage` is not enough; audit the built `.deb` before
+installing it with `gdebi`/`apt install`:
+
+```bash
+# 1. Static analysis (also run at the end of dpkg-buildpackage)
+lintian myapp_1.2.3-1_all.deb
+
+# 2. Inspect metadata (Architecture, Depends, Recommends)
+dpkg-deb --info myapp_1.2.3-1_all.deb
+
+# 3. Inspect contents (entry point, modules, assets, .desktop, metainfo,
+#    icons, translations .qm)
+dpkg-deb --contents myapp_1.2.3-1_all.deb
+
+# 4. Verify dependencies without changing anything
+apt install --dry-run ./myapp_1.2.3-1_all.deb
+
+# 5. Install + smoke test, then verify checksums on disk
+sudo apt install ./myapp_1.2.3-1_all.deb
+myapp --help
+sudo apt install debsums && debsums myapp    # empty output = files intact
+```
+
+Common harmless Lintian warnings for a GUI app: `initial-upload-closes-no-bugs`,
+`no-manual-page`, `icon-size-and-directory-name-mismatch` (all exit 0). Stop and
+fix any check that fails before moving to the next step.
 
 ---
 

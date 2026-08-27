@@ -201,3 +201,4 @@ Actions. Recorded in
 | `dpkg-buildpackage` writes to parent dir | TBO | SOLUCIONES §6 | `.deb` built but `upload-artifact` found nothing | `mv ../tbo_*.deb ... ./` before upload | HIGH |
 | Node.js 20 action deprecation | TBO | SOLUCIONES §7 | `checkout@v4`/`setup-python@v5`/`upload-artifact@v4` warnings | upgrade to `@v5`/`@v6`/`@v5` | HIGH |
 | `.gitignore` cannot hide submodule dirt | pyqt6-packaging-research | `Añadir_un_git_sub-modulo.md` | untracked files inside submodules still reported | use `ignore = dirty` in `.gitmodules` + `git submodule sync` | HIGH |
+| `.deb` audit before install | TBO | `DEBIAN-PACKAGE-AUDIT.md` | lintian + dpkg-deb --info/--contents + apt --dry-run + debsums checklist | audit a built `.deb` before `gdebi`/`apt install`; stop on any failing check | HIGH |
