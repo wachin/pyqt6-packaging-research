@@ -1,0 +1,30 @@
+# --- Research sub-modules ------------------------------------------------------
+# These directories are Git sub-modules. They contain untracked files
+# (PACKAGING_STUDY.md / PYQT6_PACKAGING_TUTORIAL.md / opencode.json created by
+# the research agents). Ignoring them keeps the parent repository's `git status`
+# clean so that changes inside the sub-modules are not reported as
+# "contenido no rastreado" (untracked content).
+#
+# NOTE: the sub-modules remain tracked as gitlinks. Their own content is managed
+# inside each sub-module repository; use `git -C <submodule> status` to inspect it.
+CARA/
+CustomKnight-Creator/
+dikte/
+napari/
+napari-packaging/
+pyzo/
+
+# --- Python / TBO -------------------------------------------------------------
+# General Python build artefacts (in case packaging happens in-tree)
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.coverage
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/

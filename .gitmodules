@@ -1,21 +1,27 @@
 [submodule "dikte"]
 	path = dikte
 	url = https://github.com/yusufipk/dikte.git
+	ignore = dirty
 [submodule "CustomKnight-Creator"]
 	path = CustomKnight-Creator
 	url = https://github.com/cmot17/CustomKnight-Creator.git
+	ignore = dirty
 [submodule "pyzo"]
 	path = pyzo
 	url = https://github.com/pyzo/pyzo.git
+	ignore = dirty
 [submodule "CARA"]
 	path = CARA
 	url = https://github.com/pguntermann/CARA.git
+	ignore = dirty
 [submodule "napari"]
 	path = napari
 	url = https://github.com/napari/napari.git
+	ignore = dirty
 [submodule "napari-packaging"]
 	path = napari-packaging
 	url = https://github.com/napari/packaging
+	ignore = dirty
 [submodule "PyQt6-Apps/TBO"]
 	path = PyQt6-Apps/TBO
 	url = https://github.com/wachin/TBO
