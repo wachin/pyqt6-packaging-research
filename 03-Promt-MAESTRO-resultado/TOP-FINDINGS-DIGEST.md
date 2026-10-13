@@ -1,6 +1,18 @@
-```
-Three new documents created in /home/wachin/Dev3/pyqt6-packaging-research/ (original studies untouched):
+# Top findings digest
 
+A one-page digest of the headline conclusions from the three master documents,
+produced at the end of the second-level analysis.
+
+> **This is a summary, not the authority.** Every point below is treated at
+> greater length, and with confidence labels, elsewhere. Where they disagree,
+> those documents win:
+>
+> - `MASTER_PYQT6_PACKAGING_GUIDE.md` — the full 35-section analysis; its §1 is
+>   the authoritative executive summary.
+> - `PACKAGING_EVIDENCE_MATRIX.md` — per-claim evidence and `HIGH` / `MEDIUM` /
+>   `LOW` / `NOT VERIFIED` labels, plus the explicit list of what could not be
+>   verified.
+> - `PYQT6_MASTER_PACKAGING_TUTORIAL.md` — the practical, end-to-end version.
 
 1. Strongest technique: PyInstaller onedir as a transparent, container-ready payload built natively per OS (CARA, dikte, pyzo independently; [REPEATED + STRONG]).
 2. Strongest Windows strategy: onedir → PE metadata → sign inner EXEs → signed Inno Setup per-user installer → verify → SHA256. Only napari actually signs Windows (Azure, final tags); the rest is recommended.
@@ -15,4 +27,3 @@ Three new documents created in /home/wachin/Dev3/pyqt6-packaging-research/ (orig
 11. Five things NOT to copy: unsigned onefile Windows; conda/constructor for a plain app; Apple-cert-for-Windows signing; unpinned/floating release deps; calling tar.gz/zip "AppImage" or ad-hoc signing "production macOS".
 12. Biggest unresolved: actual AV/SmartScreen behavior of signed PyInstaller vs Nuitka artifacts; exact Qt plugin/translation inventories; correct DEB model; notarized-DMG flow.
 13. Experiments before finalizing: the §31 four-arm PyInstaller/Nuitka × onedir/onefile comparison over several releases; cross-distro AppImage/GLIBC matrix; artifact smoke-test suite; signed-vs-unsigned VirusTotal; a Nuitka-macOS-PyQt6 proof build.
-```
