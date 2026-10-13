@@ -154,7 +154,7 @@ jobs:
           path: |
             build/output/TBO-*-Windows-x64-pyinstaller-*.zip
             build/output/TBO-*-pyinstaller-windows.json
-            build/dist/tbo-pyinstaller-onedir/tbo.exe
+            build/dist/tbo-pyinstaller-onedir/tbo-pyinstaller-onedir.exe
             build/dist/tbo-pyinstaller-onefile.exe
 
   build-macos:

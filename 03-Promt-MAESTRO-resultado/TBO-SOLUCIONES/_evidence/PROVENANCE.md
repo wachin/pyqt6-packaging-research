@@ -7,12 +7,12 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Source tree | `PyQt6-Apps/TBO` |
 | Tracked as | independent clone (ignored by this repository) |
 | Upstream | https://github.com/wachin/TBO |
-| Pinned commit | `0cdac5fd19a44c0346faaf8e58b8502fe206fbea` |
-| Described as | `0cdac5f` |
+| Pinned commit | `bf6e5062fbff9ac4a6674b02398ab86c71439c4b` |
+| Described as | `bf6e506` |
 | Licence | GPL (`LICENSE`) |
 | Extracted (UTC) | 2026-10-13 |
 | Files | 23 |
-| Total size | 174,606 bytes |
+| Total size | 175,375 bytes |
 
 > Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.
 
@@ -22,7 +22,7 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 |---|---|---|
 | `packaging/build_appimage.sh` | 5,477 | AppImage build script. |
 | `packaging/build_windows_nuitka.ps1` | 2,908 | Windows build (Nuitka) driver - the shipping Windows build. |
-| `packaging/build_windows_pyinstaller.ps1` | 9,163 | Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application. |
+| `packaging/build_windows_pyinstaller.ps1` | 9,913 | Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application. |
 | `packaging/build_macos.sh` | 2,583 | macOS build (PyInstaller) driver. |
 | `packaging/build.sh` | 2,030 | Top-level local packaging driver (includes the Flatpak step). |
 | `packaging/generate_icon.py` | 2,632 | Icon generator; the explicit output-dir bug is recorded in SOLUCIONES-TBO.md. |
@@ -39,7 +39,7 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | `debian/changelog` | 410 | Debian changelog driving the package version. |
 | `debian/copyright` | 1,730 | Debian copyright/attribution file. |
 | `debian/source/format` | 12 | Source package format (3.0 quilt). |
-| `.github/workflows/build.yml` | 6,041 | Release pipeline producing the wheel/sdist, .deb, Flatpak, Windows and macOS artifacts. |
+| `.github/workflows/build.yml` | 6,060 | Release pipeline producing the wheel/sdist, .deb, Flatpak, Windows and macOS artifacts. |
 | `.github/workflows/ci.yml` | 1,572 | CI tests. |
 | `docs/GitHub-Actions-Solutions/PACKAGING-RESOURCE-COLLECTION-BUG.md` | 3,724 | The resource-collection defect: bundles that built green and shipped without their icons and translations. |
 | `pyproject.toml` | 1,770 | Build metadata (version source for the .deb and Nuitka --file-version). |

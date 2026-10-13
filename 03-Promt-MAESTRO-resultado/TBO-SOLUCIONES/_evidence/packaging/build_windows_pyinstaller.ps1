@@ -25,8 +25,9 @@
     Two artifacts are produced, because bundle layout is a second variable worth
     separating from the freezer itself:
 
-      onedir   - a directory plus tbo.exe, no self-extraction at launch;
-      onefile  - a single self-extracting tbo.exe, the shape the case studies
+      onedir   - a directory containing the executable, no self-extraction at
+                 launch;
+      onefile  - a single self-extracting executable, the shape the case studies
                  flag as the classic false-positive profile.
 
 .PARAMETER Mode
@@ -81,7 +82,7 @@ if (-not (Test-Path $icoPath)) { throw "icon.ico was not generated at $icoPath" 
 # Kept identical to the Nuitka flags in build_windows_nuitka.ps1. If you change
 # one, change the other, or the comparison stops being apples to apples.
 $versionInfoPath = Join-Path $tmpDir "version_info.txt"
-@"
+$versionInfo = @"
 VSVersionInfo(
   ffi=FixedFileInfo(
     filevers=($($windowsVersion -replace '\.', ', ')),
@@ -104,7 +105,11 @@ VSVersionInfo(
     VarFileInfo([VarStruct("Translation", [0x0409, 1200])])
   ]
 )
-"@ | Set-Content -LiteralPath $versionInfoPath -Encoding UTF8
+"@
+# WriteAllText emits UTF-8 WITHOUT a byte-order mark. `Set-Content -Encoding UTF8`
+# on Windows PowerShell 5.1 prepends a BOM, and PyInstaller then fails to parse
+# the version resource instead of reporting a clear error.
+[IO.File]::WriteAllText($versionInfoPath, $versionInfo)
 
 # ---------------------------------------------------------------- helpers ----
 # On Windows the --add-data separator is ";" (os.pathsep), not ":".
@@ -118,7 +123,7 @@ function Build-TboPyInstaller {
 
     Write-Host "=== PyInstaller $Kind -> $name ===" -ForegroundColor Cyan
 
-    $args = @(
+    $pyiArgs = @(
         '-m', 'PyInstaller'
         '--noconfirm', '--clean', '--log-level=INFO'
         '--name', $name
@@ -150,7 +155,10 @@ function Build-TboPyInstaller {
         (Join-Path $workspaceRoot "src\tbo\__main__.py")
     )
 
-    python @args
+    # The build log goes to the host, not to the success stream: anything a
+    # native command writes to stdout would otherwise be captured into this
+    # function's return value and end up inside the JSON manifest.
+    & python @pyiArgs | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller ($Kind) failed with exit code $LASTEXITCODE" }
 
     # --------------------------------------------------------------- package --
@@ -165,7 +173,10 @@ function Build-TboPyInstaller {
         $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-pyinstaller-onedir-portable.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
         Compress-Archive -Path "$appDir\*" -DestinationPath $zipPath
-        $exePath = Join-Path $appDir "tbo.exe"
+        # PyInstaller names the executable after --name, so the onedir payload
+        # is <name>\<name>.exe, not <name>\tbo.exe.
+        $exePath = Join-Path $appDir "$name.exe"
+        if (-not (Test-Path $exePath)) { throw "expected onedir executable not found: $exePath" }
     }
     else {
         $exePath = Join-Path $distDir "$name.exe"
@@ -207,7 +218,8 @@ switch ($Mode) {
     }
 }
 
-$results | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $outputDir "TBO-$version-pyinstaller-windows.json") -Encoding UTF8
+$manifestPath = Join-Path $outputDir "TBO-$version-pyinstaller-windows.json"
+[IO.File]::WriteAllText($manifestPath, ($results | ConvertTo-Json -Depth 4))
 
 Write-Host "PyInstaller Windows build complete." -ForegroundColor Green
 $results | Format-Table kind, bytes, sha256 -AutoSize
