@@ -1,0 +1,15 @@
+# Toolchain for packaging/build_windows_pyinstaller.ps1.
+#
+# Deliberately separate from requirements-windows.txt, which carries the Nuitka
+# toolchain used by the *shipping* Windows build. Keeping them apart means each
+# job installs only what it needs, and which freezer is under test is explicit
+# rather than implied by a shared file.
+#
+# This mirrors requirements-linux.txt, which is already the PyInstaller
+# toolchain for the Linux/AppImage build. If you bump one, consider the other.
+#
+# Pillow is required by packaging/generate_icon.py, which produces the .ico
+# passed to PyInstaller via --icon.
+PyQt6>=6.6
+pyinstaller>=6.0
+Pillow>=10.0
