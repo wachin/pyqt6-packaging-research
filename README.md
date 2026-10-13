@@ -150,6 +150,7 @@ pyqt6-packaging-research/
 ├── .dsh/skills/                    # agent Skills built from the verified findings
 ├── EVIDENCE_INDEX.md               # index of every evidence pack
 ├── SKILLS.md                       # what the Skills cover and what they refuse to
+├── AGENTS.md                       # hard rules for AI agents: submodules are not libraries
 ├── .gitmodules
 └── README.md
 ```
@@ -269,6 +270,19 @@ Check their current state with:
 git submodule status
 ```
 
+When you clone with submodules you will get seven complete third-party source
+trees on disk. **They are not libraries and they are not dependencies of this
+repository.** They are exhibits, cloned to be read:
+
+- do not import them, and do not add them to any dependency manifest;
+- do not modify them, and do not run their build or release workflows;
+- do not treat their age or state as a defect in this repository.
+
+If you use an AI agent here, `AGENTS.md` states this as a hard rule. To inspect
+what a studied project actually did, read its evidence pack under
+`<project>-resultados/_evidence/` rather than the submodule tree — the pack is
+pinned to the exact commit the studies describe.
+
 ## Update the submodules
 
 To fetch newer upstream commits:
@@ -293,6 +307,17 @@ git push
 ```
 
 Updating a submodule can change the code being studied, so research results should ideally record the exact commit or version analyzed.
+
+> **Warning.** Studies cite files by path and line number at a pinned commit. After
+> `git submodule update --remote`, those citations point at different code until the
+> affected evidence packs are regenerated:
+>
+> ```bash
+> python3 tools/extract_evidence.py
+> ```
+>
+> Regenerate the packs in the same change as the submodule bump, and review the
+> diff. Never update a submodule without regenerating its evidence.
 
 ## Research methodology
 
