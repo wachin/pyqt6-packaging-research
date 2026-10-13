@@ -200,5 +200,31 @@ Actions. Recorded in
 | License file required by packaging scripts | TBO | SOLUCIONES §2 | `cp: LICENSE: No such file` at end of macOS build | commit `LICENSE` (or point scripts to `COPYING`) from the first commit | HIGH |
 | `dpkg-buildpackage` writes to parent dir | TBO | SOLUCIONES §6 | `.deb` built but `upload-artifact` found nothing | `mv ../tbo_*.deb ... ./` before upload | HIGH |
 | Node.js 20 action deprecation | TBO | SOLUCIONES §7 | `checkout@v4`/`setup-python@v5`/`upload-artifact@v4` warnings | upgrade to `@v5`/`@v6`/`@v5` | HIGH |
-| `.gitignore` cannot hide submodule dirt | pyqt6-packaging-research | `Añadir_un_git_sub-modulo.md` | untracked files inside submodules still reported | use `ignore = dirty` in `.gitmodules` + `git submodule sync` | HIGH |
+| `.gitignore` cannot hide submodule dirt | pyqt6-packaging-research | `AGENTS.md` §5; `.gitignore` header comment (re-verified — see note below) | untracked files inside submodules still reported | use `ignore = dirty` in `.gitmodules` + `git submodule sync` | HIGH |
 | `.deb` audit before install | TBO | `DEBIAN-PACKAGE-AUDIT.md` | lintian + dpkg-deb --info/--contents + apt --dry-run + debsums checklist | audit a built `.deb` before `gdebi`/`apt install`; stop on any failing check | HIGH |
+
+### Note: re-citation of the `.gitignore` / submodule-dirt row
+
+This row was originally cited to `Añadir_un_git_sub-modulo.md`, which has since
+been deleted from this repository (commit `1a356de`, "delete file"). Rather than
+restore a deliberately removed file, the behaviour was re-verified directly and
+is now documented in two places that exist:
+
+- `AGENTS.md` §5, "Submodule and ignore hygiene";
+- the comment block at the head of `.gitignore`.
+
+What was confirmed:
+
+- A submodule is recorded as a gitlink (mode `160000`), and `.gitignore` has no
+  effect on a tracked path. The `dikte/` and `napari/` patterns that used to sit
+  in `.gitignore` did nothing at all.
+- What actually keeps `git status` clean is `ignore = dirty` in `.gitmodules`.
+  With `git status --ignore-submodules=none`, the only untracked submodule
+  content reported was the research agents' leftover `opencode.json` files.
+- Related, and worse in practice: unanchored patterns are actively harmful in
+  this repository. A bare `napari/` also matched
+  `napari-resultados/_evidence/napari/` and silently excluded **12 real evidence
+  files** from git.
+
+Confidence remains **HIGH**: the behaviour was reproduced directly rather than
+read from a note.
