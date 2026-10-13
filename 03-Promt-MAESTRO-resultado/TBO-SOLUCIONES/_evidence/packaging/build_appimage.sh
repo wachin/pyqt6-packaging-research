@@ -95,17 +95,19 @@ EOF
 chmod +x "$appdir/AppRun"
 
 # Desktop entry + icon + metainfo
-# The icon filename MUST match Icon= in the .desktop entry. appimagetool refuses
-# to build otherwise: "org.tbo.TBO{.png,.svg,.xpm} defined in desktop file but
-# not found". The desktop entry uses the reverse-DNS application ID, so the icon
-# file has to use it too.
-icon_name="org.tbo.TBO"
-python "$workspace_root/packaging/generate_icon.py" \
-    "$workspace_root/src/tbo/resources/icon.png" png "$appdir/${icon_name}.png"
-install -m644 "$appdir/${icon_name}.png" \
-    "$appdir/usr/share/icons/hicolor/256x256/apps/${icon_name}.png"
-install -m644 "$workspace_root/packaging/tbo.desktop" "$appdir/tbo.desktop"
-install -m644 "$workspace_root/packaging/tbo.desktop" "$appdir/usr/share/applications/tbo.desktop"
+# The icon base name MUST match the desktop entry's Icon= value (org.tbo.TBO).
+# appimagetool refuses to build otherwise:
+#   org.tbo.TBO{.png,.svg,.xpm} defined in desktop file but not found
+# The desktop entry and the icon both use the reverse-DNS application ID, which
+# is also the AppStream ID used by the metainfo file below.
+python3 -c "
+from PIL import Image
+im = Image.open('$workspace_root/src/tbo/resources/icon.png').resize((256, 256), Image.Resampling.LANCZOS)
+im.save('$appdir/org.tbo.TBO.png')
+"
+install -m644 "$appdir/org.tbo.TBO.png" "$appdir/usr/share/icons/hicolor/256x256/apps/org.tbo.TBO.png"
+install -m644 "$workspace_root/packaging/tbo.desktop" "$appdir/org.tbo.TBO.desktop"
+install -m644 "$workspace_root/packaging/tbo.desktop" "$appdir/usr/share/applications/org.tbo.TBO.desktop"
 install -m644 "$workspace_root/packaging/org.tbo.TBO.appdata.xml" \
     "$appdir/usr/share/metainfo/org.tbo.TBO.metainfo.xml"
 

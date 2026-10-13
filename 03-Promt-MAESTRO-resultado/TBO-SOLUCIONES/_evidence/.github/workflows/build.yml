@@ -31,9 +31,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential debhelper dh-python \
-            pybuild-plugin-pyproject python3-setuptools python3-build python3-installer
+            pybuild-plugin-pyproject python3-setuptools python3-build python3-installer \
+            python3-pil
       - name: Install Python build tooling into the active interpreter
-        run: python3 -m pip install build setuptools wheel
+        run: python3 -m pip install build setuptools wheel Pillow
       - name: Build .deb
         run: |
           dpkg-buildpackage -b -uc -us
