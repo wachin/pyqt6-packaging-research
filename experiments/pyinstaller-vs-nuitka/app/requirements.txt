@@ -1,0 +1,7 @@
+# Pinned on purpose: the experiment compares build tools, so the Qt version must
+# not drift between arms or between runs.
+#
+# PyQt6 ships its own Qt, so one pin covers both. Nuitka and PyInstaller are
+# installed separately by the build scripts, also pinned - see
+# build/build_nuitka.ps1 and the workflow.
+PyQt6==6.8.1

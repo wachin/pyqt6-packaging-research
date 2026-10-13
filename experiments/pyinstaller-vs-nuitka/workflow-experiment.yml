@@ -1,0 +1,290 @@
+# PyInstaller vs Nuitka - controlled build-tool experiment
+#
+# WHERE THIS FILE GOES
+#   GitHub only reads workflows from `.github/workflows/` at the repository
+#   root. Copy this file there to use it:
+#
+#       cp experiments/pyinstaller-vs-nuitka/workflow-experiment.yml \
+#          .github/workflows/experiment.yml
+#
+#   The experiment is self-contained: it builds the minimal probe application in
+#   `experiments/pyinstaller-vs-nuitka/app`, so the results are comparable and
+#   are not confounded by a large real application. Repeat it afterwards with
+#   the real application as a second phase.
+#
+# WHAT IT DELIBERATELY DOES NOT DO
+#   * It does not enable UPX in any arm. UPX is a separate variable.
+#   * It does not sign by default. Signing is an opt-in input because a
+#     signature changes heuristics; run the whole experiment twice (unsigned
+#     then signed) rather than mixing arms.
+#   * It does not decide anything. It produces artifacts, hashes, sizes, timings
+#     and build logs. The interpretation is a human step (see README.md).
+
+name: Packaging experiment - PyInstaller vs Nuitka
+
+on:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: Python version used by every arm
+        type: string
+        default: '3.12'
+      pyqt6-version:
+        description: PyQt6 pin used by every arm
+        type: string
+        default: '6.8.1'
+      pyinstaller-version:
+        description: PyInstaller pin
+        type: string
+        default: '6.13.0'
+      nuitka-version:
+        description: Nuitka pin
+        type: string
+        default: '2.7.12'
+      sign:
+        description: 'Sign the artifacts (requires the SIGNING_* secrets; leave off for the unsigned baseline)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  WORKDIR: experiments/pyinstaller-vs-nuitka
+
+jobs:
+  build:
+    name: ${{ matrix.arm }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arm: arm-a-pyinstaller-onedir
+            tool: pyinstaller
+            spec: build/pyinstaller_onedir.spec
+          - arm: arm-b-pyinstaller-onefile
+            tool: pyinstaller
+            spec: build/pyinstaller_onefile.spec
+          - arm: arm-c-nuitka-standalone
+            tool: nuitka
+            nuitka-arm: standalone
+          - arm: arm-d-nuitka-onefile
+            tool: nuitka
+            nuitka-arm: onefile
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install the shared, pinned toolchain
+        working-directory: ${{ env.WORKDIR }}
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r app/requirements.txt
+          # Pin the Qt version explicitly as well, so the recorded pin is the
+          # one actually used even if requirements.txt drifts.
+          python -m pip install "PyQt6==${{ inputs.pyqt6-version }}"
+          if ('${{ matrix.tool }}' -eq 'pyinstaller') {
+            python -m pip install "pyinstaller==${{ inputs.pyinstaller-version }}"
+          } else {
+            python -m pip install "nuitka==${{ inputs.nuitka-version }}"
+          }
+          python -m pip freeze | Out-File -Encoding utf8 "dist-toolchain-${{ matrix.arm }}.txt"
+          Get-Content "dist-toolchain-${{ matrix.arm }}.txt"
+
+      - name: Build (PyInstaller)
+        if: matrix.tool == 'pyinstaller'
+        working-directory: ${{ env.WORKDIR }}
+        shell: pwsh
+        run: |
+          $out = if ('${{ matrix.arm }}' -like '*onedir*') { 'dist/arm-a-onedir' } else { 'dist/arm-b-onefile' }
+          $work = "$out.work"
+          $sw = [System.Diagnostics.Stopwatch]::StartNew()
+          python -m PyInstaller --noconfirm --clean --log-level=INFO `
+            --distpath $out --workpath $work `
+            ${{ matrix.spec }}
+          if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed: $LASTEXITCODE" }
+          $sw.Stop()
+          "build_seconds=$([math]::Round($sw.Elapsed.TotalSeconds,1))" | Out-File -Encoding utf8 "build-time-${{ matrix.arm }}.txt"
+
+      - name: Build (Nuitka)
+        if: matrix.tool == 'nuitka'
+        working-directory: ${{ env.WORKDIR }}
+        shell: pwsh
+        run: |
+          $sw = [System.Diagnostics.Stopwatch]::StartNew()
+          ./build/build_nuitka.ps1 -Arm ${{ matrix.nuitka-arm }}
+          $sw.Stop()
+          "build_seconds=$([math]::Round($sw.Elapsed.TotalSeconds,1))" | Out-File -Encoding utf8 "build-time-${{ matrix.arm }}.txt"
+
+      - name: Sign (opt-in)
+        if: inputs.sign
+        working-directory: ${{ env.WORKDIR }}
+        shell: pwsh
+        run: |
+          # Requires, as repository secrets:
+          #   SIGNING_PFX_BASE64  base64 of the .pfx
+          #   SIGNING_PFX_PASSWORD
+          # Secret *names* are documented here; values are never echoed.
+          $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String('${{ secrets.SIGNING_PFX_BASE64 }}'))
+          $targets = Get-ChildItem -Path dist -Recurse -Include *.exe, *.dll |
+            Where-Object { $_.FullName -notmatch '\.work\\' }
+          foreach ($t in $targets) {
+            & signtool.exe sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 `
+              /f $pfx /p '${{ secrets.SIGNING_PFX_PASSWORD }}' $t.FullName
+            if ($LASTEXITCODE -ne 0) { throw "signtool failed for $($t.FullName)" }
+            & signtool.exe verify /pa /v $t.FullName
+          }
+          Remove-Item $pfx -Force
+
+      - name: Measure start-up
+        continue-on-error: true
+        working-directory: ${{ env.WORKDIR }}
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path dist -Recurse -Filter PackagingProbe.exe |
+            Where-Object { $_.FullName -notmatch '\.work\\' } |
+            Select-Object -First 1
+          if (-not $exe) { throw 'no built executable found' }
+          ./measure/measure_startup.ps1 -Exe $exe.FullName -Runs 6 `
+            -OutFile "startup-${{ matrix.arm }}.json"
+
+      - name: Record hash, size and signature status
+        working-directory: ${{ env.WORKDIR }}
+        shell: pwsh
+        run: |
+          $rows = @()
+          foreach ($f in Get-ChildItem -Path dist -Recurse -File |
+                   Where-Object { $_.FullName -notmatch '\.work\\' }) {
+            $sig = Get-AuthenticodeSignature -LiteralPath $f.FullName
+            $rows += [pscustomobject]@{
+              arm            = '${{ matrix.arm }}'
+              file           = $f.FullName.Substring((Get-Location).Path.Length + 1) -replace '\\', '/'
+              size_bytes     = $f.Length
+              sha256         = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLower()
+              signature      = $sig.Status.ToString()
+              signer         = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { $null }
+            }
+          }
+          $rows | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 "manifest-${{ matrix.arm }}.json"
+          $rows | Format-Table -AutoSize
+          $total = ($rows | Measure-Object size_bytes -Sum).Sum
+          "total_bytes=$total" | Out-File -Encoding utf8 -Append "build-time-${{ matrix.arm }}.txt"
+
+      - name: Upload arm artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.arm }}
+          # Everything needed to reproduce and to audit the result. The
+          # toolchain freeze file is as important as the binary: without it the
+          # run cannot be compared to the next one.
+          path: |
+            ${{ env.WORKDIR }}/dist/**
+            ${{ env.WORKDIR }}/manifest-${{ matrix.arm }}.json
+            ${{ env.WORKDIR }}/startup-${{ matrix.arm }}.json
+            ${{ env.WORKDIR }}/build-time-${{ matrix.arm }}.txt
+            ${{ env.WORKDIR }}/dist-toolchain-${{ matrix.arm }}.txt
+          if-no-files-found: error
+          retention-days: 90
+
+  # One combined table, so the four arms can actually be compared side by side.
+  manifest:
+    name: Combined manifest
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download every arm
+        uses: actions/download-artifact@v5
+        with:
+          path: arms
+          merge-multiple: true
+
+      - name: Summarise
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## PyInstaller vs Nuitka - run summary"
+            echo
+            echo "Inputs: python \`${{ inputs.python-version }}\`, PyQt6 \`${{ inputs.pyqt6-version }}\`,"
+            echo "PyInstaller \`${{ inputs.pyinstaller-version }}\`, Nuitka \`${{ inputs.nuitka-version }}\`,"
+            echo "signed: \`${{ inputs.sign }}\`."
+            echo
+            echo "| Arm | File | Size (bytes) | SHA-256 | Signature |"
+            echo "|---|---|---:|---|---|"
+            shopt -s nullglob
+            for f in arms/manifest-*.json; do
+              python3 - "$f" <<'PY'
+          import json, sys
+          for row in json.load(open(sys.argv[1], encoding="utf-8")):
+              print(f"| {row['arm']} | `{row['file']}` | {row['size_bytes']:,} | `{row['sha256'][:16]}…` | {row['signature']} |")
+          PY
+            done
+            echo
+            echo "### Start-up"
+            echo
+            for f in arms/startup-*.json; do
+              python3 - "$f" <<'PY'
+          import json, sys
+          d = json.load(open(sys.argv[1], encoding="utf-8"))
+          print(f"- **{d['executable'].split('/')[-1]}**: coldest {d['coldest_sample_seconds']}s, warm median {d['warm_median_seconds']}s")
+          PY
+            done
+            echo
+            echo "> A single run is noise. Repeat across several builds before concluding anything."
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
+
+  # Optional, off by default. The public VirusTotal API allows 4 lookups per
+  # minute and 500 per day; the file must already have been submitted for a
+  # hash lookup to return anything. This job therefore *uploads* the artifact,
+  # which sends your binary to a third party - a deliberate, explicit choice.
+  # Enable it by setting the repository variable VT_ENABLED=true and adding the
+  # secret VT_API_KEY. Never commit the key.
+  virustotal:
+    name: VirusTotal (opt-in)
+    needs: build
+    if: ${{ vars.VT_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: arms
+          merge-multiple: true
+
+      - name: Submit and collect reports
+        env:
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p vt
+          find arms -type f \( -name '*.exe' -o -name '*.zip' \) -print0 |
+            while IFS= read -r -d '' f; do
+              echo "submitting $f"
+              curl -sS --fail-with-body \
+                -H "x-apikey: ${VT_API_KEY}" \
+                -F "file=@${f}" \
+                https://www.virustotal.com/api/v3/files \
+                -o "vt/$(basename "$f").submit.json" || echo "  submit failed for $f"
+              # 4 requests/minute on the free tier; stay well inside it.
+              sleep 20
+            done
+          ls -la vt
+
+      - name: Upload VirusTotal responses
+        uses: actions/upload-artifact@v5
+        with:
+          name: virustotal-reports
+          path: vt/**
+          if-no-files-found: warn
+          retention-days: 90

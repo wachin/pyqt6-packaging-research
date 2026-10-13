@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.tbo.TBO</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>TBO</name>
+  <summary>Comic editor compatible with legacy TBO documents</summary>
+  <description>
+    <p>
+      TBO is a comic and cartoon editor originally written for GNOME in C. This
+      is the modern reimplementation in Python and PyQt6.
+    </p>
+    <p>
+      It reads and writes the legacy .tbo format, offers an interactive canvas
+      with pages and panels, supports text, image and SVG objects, provides a
+      library of doodles and speech bubbles, and exports to PNG, PDF and SVG.
+    </p>
+  </description>
+  <launchable type="desktop-id">org.tbo.TBO.desktop</launchable>
+  <url type="homepage">https://github.com/wachin/TBO</url>
+  <screenshots>
+    <screenshot type="default">
+      <image type="source">https://github.com/wachin/TBO/raw/master/legacy/images/tbo-logo-400.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="2.0.0.dev0" date="2026-08-24">
+      <description>
+        <p>Development release of the Python/PyQt6 reimplementation.</p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-cartoon">none</content_attribute>
+    <content_attribute id="social-chat">none</content_attribute>
+  </content_rating>
+</component>

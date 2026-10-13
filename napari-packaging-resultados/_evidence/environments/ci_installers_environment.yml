@@ -1,0 +1,19 @@
+# Use this file to create an environment to build the installers. You will
+# need to `pip install -e path/to/napari/source --no-deps` too.
+name: build-bundle
+channels:
+  - conda-forge
+dependencies:
+  - python 3.13.*
+  - pip
+  - constructor >=3.11.0
+  - conda-build >=3.28
+  - ruamel.yaml
+  - conda-standalone >=24.7.1
+  - conda >=24.7.1
+  - conda-libmamba-solver
+  # only needed to import napari and get the path to the logo.png file
+  - lazy_loader >=0.2
+  - numpy >=1.22.2
+  # - pip:
+  #   - -e ../napari --no-deps

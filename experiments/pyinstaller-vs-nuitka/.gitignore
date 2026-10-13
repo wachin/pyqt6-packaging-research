@@ -1,0 +1,4 @@
+# Local build output for the experiment. The repository root .gitignore anchors
+# its /build/ and /dist/ patterns, so this nested pair needs its own rule.
+build/
+dist/

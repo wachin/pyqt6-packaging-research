@@ -1,0 +1,110 @@
+# Build Linux amd64 and arm64 PyInstaller onedir bundles (manual trigger only).
+# Artifacts: one tar.gz per architecture.
+#
+# Use Ubuntu 22.04 images (not 24.04) so the bundle links against an older glibc (~2.35).
+# That way builds run on Debian 12 (~2.36), Ubuntu 22.04+, and newer distros. Building on
+# 24.04 pulled in GLIBC_2.38 and broke Debian 12 and similar older baselines.
+#
+# ARM64: ubuntu-22.04-arm. Public-repo runner availability applies; private repos may need
+# alternatives until ARM runners are enabled.
+#
+# Archive format: tar.gz is more typical on Linux and preserves permissions/symlinks.
+# This avoids issues where ZIP extraction tools turn symlinks (e.g. Qt .so SONAME links)
+# into tiny regular files, which can crash at runtime with "file too short".
+
+name: Build Linux AppBundles
+
+on:
+  workflow_dispatch:
+    inputs:
+      use_config_version:
+        description: "Use version from config.json (if false, use timestamp)"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies (Qt runtime for tests/build + UPX)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 \
+            libgl1 \
+            libxcb-cursor0 \
+            libxcb-xinerama0 \
+            libxkbcommon0 \
+            upx-ucl \
+            tar
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -c .github/ci/linux-pip-constraints.txt
+          pip install pyinstaller==6.17.0
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event.inputs.use_config_version }}" = "true" ]; then
+            VERSION=$(python -c "import json; print(json.load(open('app/config/config.json'))['version'])")
+          else
+            VERSION=$(date +%Y%m%d_%H%M%S)
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update config.json version for timestamp builds
+        if: github.event.inputs.use_config_version == 'false'
+        shell: bash
+        env:
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python - << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+
+          cfg_path = Path("app/config/config.json")
+          data = json.loads(cfg_path.read_text(encoding="utf-8"))
+          data["version"] = os.environ["BUILD_VERSION"]
+          cfg_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          EOF
+
+      - name: Build with PyInstaller
+        run: pyinstaller CARA_linux.spec
+
+      - name: Create Linux tar.gz
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          arch="${{ matrix.arch }}"
+          archiveName="CARA.${version}.linux.${arch}.AppBundle.tar.gz"
+          (cd dist && tar -czf "../${archiveName}" CARA)
+          echo "ARCHIVE_NAME=${archiveName}" >> "$GITHUB_ENV"
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: CARA.${{ steps.version.outputs.version }}.linux.${{ matrix.arch }}.AppBundle
+          path: ${{ env.ARCHIVE_NAME }}

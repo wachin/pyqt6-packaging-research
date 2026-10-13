@@ -1,0 +1,40 @@
+# PyInstaller Windows PE version resource.
+#
+# All four build arms must carry identical identity metadata, otherwise a
+# VirusTotal or SmartScreen difference could be caused by the metadata rather
+# than by the build tool. Nuitka takes the same values on the command line
+# (see build/build_nuitka.ps1); keep the two in sync.
+#
+# Note: filevers/prodvers must be plain integer tuples.
+VSVersionInfo(
+    ffi=FixedFileInfo(
+        filevers=(1, 0, 0, 0),
+        prodvers=(1, 0, 0, 0),
+        mask=0x3F,
+        flags=0x0,
+        OS=0x40004,
+        fileType=0x1,
+        subtype=0x0,
+        date=(0, 0),
+    ),
+    kids=[
+        StringFileInfo(
+            [
+                StringTable(
+                    "040904B0",
+                    [
+                        StringStruct("CompanyName", "Packaging Research"),
+                        StringStruct("FileDescription", "PackagingProbe build-tool probe"),
+                        StringStruct("FileVersion", "1.0.0.0"),
+                        StringStruct("InternalName", "PackagingProbe"),
+                        StringStruct("LegalCopyright", "Provided as-is for packaging research"),
+                        StringStruct("OriginalFilename", "PackagingProbe.exe"),
+                        StringStruct("ProductName", "PackagingProbe"),
+                        StringStruct("ProductVersion", "1.0.0.0"),
+                    ],
+                )
+            ]
+        ),
+        VarFileInfo([VarStruct("Translation", [0x0409, 1200])]),
+    ],
+)

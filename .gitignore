@@ -1,28 +1,33 @@
 # --- Research sub-modules ------------------------------------------------------
-# These directories are Git sub-modules. They contain untracked files
-# (PACKAGING_STUDY.md / PYQT6_PACKAGING_TUTORIAL.md / opencode.json created by
-# the research agents). Ignoring them keeps the parent repository's `git status`
-# clean so that changes inside the sub-modules are not reported as
-# "contenido no rastreado" (untracked content).
+# The sub-module directories are tracked as gitlinks (mode 160000), and
+# .gitignore has NO effect on them: a tracked path is never ignored. Patterns
+# such as "napari/" here used to be dead weight.
 #
-# NOTE: the sub-modules remain tracked as gitlinks. Their own content is managed
-# inside each sub-module repository; use `git -C <submodule> status` to inspect it.
-CARA/
-CustomKnight-Creator/
-dikte/
-napari/
-napari-packaging/
-pyzo/
+# What actually keeps `git status` clean is `ignore = dirty` in .gitmodules:
+#
+#     [submodule "napari"]
+#         ignore = dirty
+#
+# Without it, untracked files inside a sub-module are reported as
+# "modified: napari (untracked content)". Inspect a sub-module with:
+#
+#     git -C <submodule> status
+#
+# Do NOT add unanchored patterns for directories that also occur inside the
+# evidence packs: a bare "napari/" would also match
+# "<project>-resultados/_evidence/napari/", silently hiding real evidence files.
 
 # --- Python / TBO -------------------------------------------------------------
-# General Python build artefacts (in case packaging happens in-tree)
-__pycache__/
+# General Python build artefacts (in case packaging happens in-tree).
+# Root-anchored so they cannot swallow a nested directory of the same name
+# inside an evidence pack.
+/__pycache__/
 *.py[cod]
 *.egg-info/
-build/
-dist/
-.venv/
-venv/
+/build/
+/dist/
+/.venv/
+/venv/
 .coverage
 .pytest_cache/
 .ruff_cache/

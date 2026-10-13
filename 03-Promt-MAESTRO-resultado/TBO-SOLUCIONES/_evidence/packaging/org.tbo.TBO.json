@@ -1,0 +1,48 @@
+{
+  "app-id": "org.tbo.TBO",
+  "runtime": "org.kde.Platform",
+  "runtime-version": "6.8",
+  "sdk": "org.kde.Sdk",
+  "command": ["python3", "-m", "tbo"],
+  "finish-args": [
+    "--share=ipc",
+    "--socket=x11",
+    "--socket=wayland",
+    "--filesystem=home",
+    "--device=dri"
+  ],
+  "modules": [
+    {
+      "name": "python3-pip",
+      "buildsystem": "simple",
+      "build-commands": [
+        "python3 -m ensurepip --upgrade"
+      ],
+      "only-arches": ["x86_64", "aarch64"]
+    },
+    {
+      "name": "tbo",
+      "buildsystem": "simple",
+      "build-commands": [
+        "python3 -m pip install --prefix=/app .",
+        "install -Dm644 packaging/tbo.desktop /app/share/applications/org.tbo.TBO.desktop",
+        "install -Dm644 packaging/org.tbo.TBO.appdata.xml /app/share/metainfo/org.tbo.TBO.appdata.xml",
+        "install -Dm644 packaging/org.tbo.TBO.svg /app/share/icons/hicolor/scalable/apps/org.tbo.TBO.svg",
+        "mkdir -p /app/share/tbo",
+        "cp -r assets/doodle /app/share/tbo/doodle",
+        "install -Dm644 /app/share/icons/hicolor/scalable/apps/org.tbo.TBO.svg /app/share/icons/hicolor/48x48/apps/org.tbo.TBO.svg"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": ".."
+        },
+        {
+          "type": "dir",
+          "path": "../data/doodle",
+          "dest": "assets/doodle"
+        }
+      ]
+    }
+  ]
+}

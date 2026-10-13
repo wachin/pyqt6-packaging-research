@@ -1,0 +1,14 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=TBO
+GenericName=Comic Editor
+Comment=Create and edit comics
+Exec=tbo %F
+Icon=org.tbo.TBO
+Terminal=false
+Categories=Graphics;VectorGraphics;Qt;2DGraphics;
+Keywords=comic;comics;editor;drawing;graphic;novel;
+StartupNotify=true
+MimeType=application/x-tbo;
+X-GNOME-UsesNotifications=false
