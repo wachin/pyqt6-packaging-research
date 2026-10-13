@@ -19,14 +19,15 @@ this repository, you have misread the task — stop and ask.
 
 ---
 
-## 1. THE LOCK: the submodules are reference material, not dependencies
+## 1. THE LOCK: the studied projects are reference material, not dependencies
 
 This is the most important rule in this file, and the easiest to get wrong.
 
-This repository pins six upstream projects plus one application as **Git
-submodules**. They were cloned **to be read**, so that their packaging, signing,
-installer and release-automation infrastructure could be studied side by side.
-Nothing more.
+This repository pins six upstream projects as **Git submodules**, and keeps the
+owner's own application (`PyQt6-Apps/TBO`) alongside them as an ordinary
+independent clone that this repository deliberately **ignores**. All seven were
+obtained **to be read**, so that their packaging, signing, installer and
+release-automation infrastructure could be studied side by side. Nothing more.
 
 A forker running
 
@@ -36,8 +37,8 @@ git clone --recurse-submodules https://github.com/wachin/pyqt6-packaging-researc
 git submodule update --init --recursive
 ```
 
-will end up with seven full source trees on disk. **They are not part of this
-project. They are exhibits.**
+will end up with six full source trees on disk (TBO is not fetched, because it is
+not a submodule). **None of them is part of this project. They are exhibits.**
 
 ### You MUST NOT
 
@@ -86,35 +87,60 @@ never the submodule tree:
 Each pack mirrors the original repository layout, so a citation resolves
 directly. Start from `EVIDENCE_INDEX.md`.
 
-### What the submodules are
+### What the studied projects are
 
-| Path | Upstream | Why it is here |
-|---|---|---|
-| `dikte/` | yusufipk/dikte | Small PyQt6 app; the only implemented AppImage in the set. |
-| `CustomKnight-Creator/` | cmot17/CustomKnight-Creator | The negative example: onefile, unsigned, no release automation. |
-| `pyzo/` | pyzo/pyzo | Mature desktop app; onedir, Inno Setup, full macOS signing in CI. |
-| `CARA/` | pguntermann/CARA | Real-world PyQt6 app; local macOS signing and notarization. |
-| `napari/` | napari/napari | Large scientific app; rejected freezing in favour of conda. |
-| `napari-packaging/` | napari/packaging | The most auditable installer pipeline in the set. |
-| `PyQt6-Apps/TBO/` | wachin/TBO | The owner's own app; the only source of validated `.deb` evidence. |
+Six of them are Git submodules. The seventh, TBO, is an independent clone kept
+under `PyQt6-Apps/TBO/` and ignored by this repository.
+
+| Path | Upstream | How it is tracked | Why it is here |
+|---|---|---|---|
+| `dikte/` | yusufipk/dikte | submodule | Small PyQt6 app; the only implemented AppImage in the set. |
+| `CustomKnight-Creator/` | cmot17/CustomKnight-Creator | submodule | The negative example: onefile, unsigned, no release automation. |
+| `pyzo/` | pyzo/pyzo | submodule | Mature desktop app; onedir, Inno Setup, full macOS signing in CI. |
+| `CARA/` | pguntermann/CARA | submodule | Real-world PyQt6 app; local macOS signing and notarization. |
+| `napari/` | napari/napari | submodule | Large scientific app; rejected freezing in favour of conda. |
+| `napari-packaging/` | napari/packaging | submodule | The most auditable installer pipeline in the set. |
+| `PyQt6-Apps/TBO/` | wachin/TBO | **independent clone, ignored here** | The owner's own app; the only source of validated `.deb`, AppImage and Windows evidence. |
 
 None of these is a dependency of this repository. All of them are exhibits.
+
+### The one exception: TBO
+
+`PyQt6-Apps/TBO` is the repository owner's own application, not a third-party
+case study. It is deliberately **not** a submodule: it is a separate clone with
+its own `.git`, ignored by this repository through `/PyQt6-Apps/TBO/` in
+`.gitignore`.
+
+It is therefore the one tree here that **is** meant to be edited and built. When
+working on it:
+
+- commit in its own repository (`git -C PyQt6-Apps/TBO ...`), never through this
+  one — this repository tracks nothing about it;
+- trigger its GitHub Actions by pushing to `https://github.com/wachin/TBO`;
+- everything else in section 1 still applies unchanged: no imports, no dependency
+  manifests, and the six submodules remain read-only.
+
+Because TBO is not a submodule, `git submodule update --init --recursive` will
+never touch it, and a fresh clone of this repository does not contain it.
 
 ---
 
 ## 2. Caveat: when this file is not loaded
 
 The project root is detected by walking upward from the working directory to the
-first directory containing `.git`. Because **each submodule has its own `.git`**,
-an agent whose working directory is inside a submodule may not load this file at
-all.
+first directory containing `.git`. Because **every studied tree has its own
+`.git`** — the six submodules and TBO alike — an agent whose working directory is
+inside one of them may not load this file at all.
 
 Therefore:
 
-- **Work from the repository root.** Do not `cd` into a submodule to do work.
+- **Work from the repository root** when doing research work. Do not `cd` into a
+  studied tree for that.
+- If you are editing TBO deliberately (see "The one exception: TBO"), you will be
+  inside it by necessity; carry the rules from section 1 with you.
 - If you find yourself operating inside `dikte/`, `pyzo/`, `CARA/`, `napari/`,
-  `napari-packaging/`, `CustomKnight-Creator/` or `PyQt6-Apps/TBO/`, stop: you
-  are in the wrong place, and the rules in section 1 may not be in your context.
+  `napari-packaging/` or `CustomKnight-Creator/`, stop: you are in the wrong
+  place, and the rules in section 1 may not be in your context.
 
 ---
 
@@ -250,7 +276,8 @@ git -C <submodule> status --short                                        # expec
 
 A change in this repository is complete when:
 
-- [ ] No submodule working tree was modified.
+- [ ] No submodule working tree was modified. (TBO is not a submodule: its
+      changes belong in its own repository, never in this one.)
 - [ ] No evidence file was edited by hand; packs were regenerated if needed.
 - [ ] `sha256sum -c SHA256SUMS` passes in every `_evidence/` directory touched.
 - [ ] Any new claim is labelled with its confidence, and unverified material is

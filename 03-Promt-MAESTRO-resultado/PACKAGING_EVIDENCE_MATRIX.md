@@ -202,6 +202,12 @@ Actions. Recorded in
 | Node.js 20 action deprecation | TBO | SOLUCIONES §7 | `checkout@v4`/`setup-python@v5`/`upload-artifact@v4` warnings | upgrade to `@v5`/`@v6`/`@v5` | HIGH |
 | `.gitignore` cannot hide submodule dirt | pyqt6-packaging-research | `AGENTS.md` §5; `.gitignore` header comment (re-verified — see note below) | untracked files inside submodules still reported | use `ignore = dirty` in `.gitmodules` + `git submodule sync` | HIGH |
 | `.deb` audit before install | TBO | `DEBIAN-PACKAGE-AUDIT.md` | lintian + dpkg-deb --info/--contents + apt --dry-run + debsums checklist | audit a built `.deb` before `gdebi`/`apt install`; stop on any failing check | HIGH |
+| Bundles build green but ship without the app's own resources | TBO | SOLUCIONES §9 | `--add-data` destinations pointed at loose top-level directories; the code resolves relative to `__file__` (`_internal/tbo/...`) | collect package data to the path the code actually reads, then verify by running the artifact | HIGH |
+| One application, three resource-collection mechanisms | TBO | SOLUCIONES §9.4 | Nuitka `--include-package-data` collected correctly; both PyInstaller builds shipped without icons and translations | correct-on-Windows is not evidence that a bundle is correct; verify per platform | HIGH |
+| Rolling `continuous` tag used as a checksum pin | TBO | SOLUCIONES §9.5 | the asset was republished 2026-10-04, so the pinned SHA-256 stopped matching and the build failed | pin a **versioned** release; the checksum failing is the desired outcome, the pin choice was wrong | HIGH |
+| Icon filename must match `Icon=` in the `.desktop` entry | TBO | SOLUCIONES §9.5 | appimagetool 1.9.1 refuses to build with `Icon=org.tbo.TBO` while the AppDir contains `tbo.png` | name the icon after the application ID; older rolling builds tolerated it | HIGH |
+| Green CI is not a working artifact | TBO | SOLUCIONES §9 | five jobs green while the published AppImage had been missing 14 UI icons since August | smoke test the built artifact in CI; nothing else catches a silently incomplete bundle | HIGH |
+| Freezer comparison on the real application | TBO | SOLUCIONES §10 | Windows had only ever been built with Nuitka; the PyInstaller false-positive claim was never measured on TBO | a PyInstaller Windows build now exists with identical metadata and no UPX, to be scanned alongside it | HIGH (for the setup), NOT VERIFIED (for any detection result) |
 
 ### Note: re-citation of the `.gitignore` / submodule-dirt row
 

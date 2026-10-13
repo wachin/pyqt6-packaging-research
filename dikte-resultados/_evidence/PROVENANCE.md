@@ -4,7 +4,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Submodule | `dikte` |
+| Source tree | `dikte` |
+| Tracked as | submodule |
 | Upstream | https://github.com/yusufipk/dikte.git |
 | Pinned commit | `3663c7fd57569d1914424f4f9656a9941ae2d636` |
 | Described as | `v1.0.2` |

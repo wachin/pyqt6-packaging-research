@@ -4,7 +4,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Submodule | `napari` |
+| Source tree | `napari` |
+| Tracked as | submodule |
 | Upstream | https://github.com/napari/napari.git |
 | Pinned commit | `908b3ed80ccbe73a3393f0207aafc6d7a45e116a` |
 | Described as | `v0.9.0` |

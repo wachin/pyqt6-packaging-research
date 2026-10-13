@@ -113,7 +113,7 @@ jobs:
 
       - name: Build standalone executable with Nuitka
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File packaging/build_windows.ps1
+          powershell -NoProfile -ExecutionPolicy Bypass -File packaging/build_windows_nuitka.ps1
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v5
@@ -122,6 +122,39 @@ jobs:
           path: |
             build/output/TBO-*-Windows-x64-portable.zip
             build/dist/TBO/TBO.exe
+
+  # Builds the same application with the other freezer, in both bundle layouts,
+  # so the two can be compared on the same binaries. Upload each .exe to
+  # VirusTotal and record the result; nothing here assumes which one fares
+  # better. The Nuitka build above remains the shipping Windows artifact.
+  build-windows-pyinstaller:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r packaging/requirements-windows.txt
+
+      - name: Build Windows executables with PyInstaller (onedir + onefile)
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File packaging/build_windows_pyinstaller.ps1 -Mode both
+
+      - name: Upload PyInstaller artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: tbo-windows-pyinstaller
+          path: |
+            build/output/TBO-*-Windows-x64-pyinstaller-*.zip
+            build/output/TBO-*-pyinstaller-windows.json
+            build/dist/tbo-pyinstaller-onedir/tbo.exe
+            build/dist/tbo-pyinstaller-onefile.exe
 
   build-macos:
     runs-on: macos-15-intel

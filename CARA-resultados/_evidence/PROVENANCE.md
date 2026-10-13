@@ -4,7 +4,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Submodule | `CARA` |
+| Source tree | `CARA` |
+| Tracked as | submodule |
 | Upstream | https://github.com/pguntermann/CARA.git |
 | Pinned commit | `6c9164c6616cea5a3cf5ab125e82362ebf87822f` |
 | Described as | `2.8.7` |

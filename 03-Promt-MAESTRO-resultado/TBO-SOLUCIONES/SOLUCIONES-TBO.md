@@ -339,4 +339,170 @@ Si una comprobación falla, detente y corrige antes de pasar al siguiente paso.
 
 ---
 
+## 9. Los artefactos se construían en verde y salían incompletos (2026-10)
+
+Esta sección es distinta de las anteriores. Todo lo de arriba lo detectó CI al
+fallar. Esto no: **los cinco jobs estaban en verde** y el AppImage llevaba desde
+agosto publicado sin los recursos de la aplicación, sin que nada avisara.
+
+Se encontró ejecutando el artefacto y leyendo su salida, no leyendo el workflow.
+
+### 9.1 Síntoma
+
+El AppImage arrancaba y funcionaba, pero imprimía un error por cada icono de la
+interfaz:
+
+```text
+qt.svg: Cannot open file '.../_internal/tbo/resources/icons/document-new.svg',
+        because: No such file or directory
+```
+
+14 iconos. Ningún test falló, ningún paso falló, el job estaba en verde.
+
+### 9.2 Causa raíz: el destino de `--add-data` no coincide con lo que lee el código
+
+La aplicación resuelve sus datos con `Path(__file__).parent`:
+
+```python
+# src/tbo/resources.py
+resources_dir = Path(__file__).resolve().parent / "resources"
+
+# src/tbo/application.py
+TRANSLATION_DIRS = (
+    _package_dir / "translations",              # <bundle>/tbo/translations
+    _package_dir.parent.parent / "translations",
+    ...
+)
+```
+
+Dentro de un bundle congelado, el paquete `tbo` vive en `_internal/tbo`, así que
+la aplicación busca en `_internal/tbo/resources` y `_internal/tbo/translations`.
+
+Los scripts de PyInstaller copiaban los directorios sueltos de la raíz:
+
+```bash
+--add-data "translations:translations"     # -> _internal/translations  (mal)
+```
+
+Nunca se colocaba nada en `_internal/tbo/`, así que **los iconos y las
+traducciones de la aplicación eran inalcanzables**.
+
+### 9.3 Arreglo
+
+```bash
+--add-data "$workspace_root/src/tbo/resources:tbo/resources"
+--add-data "$workspace_root/src/tbo/translations:tbo/translations"
+```
+
+Aplicado en `packaging/build_appimage.sh` y `packaging/build_macos.sh`.
+
+### 9.4 Tres plataformas, tres mecanismos, dos mal
+
+| Plataforma | Herramienta | Mecanismo | Resultado |
+|---|---|---|---|
+| Windows | Nuitka | `--include-package-data=tbo` | correcto (recoge `tbo/resources`, `tbo/translations`, `tbo/data`) |
+| macOS | PyInstaller | `--add-data` de directorios sueltos | **faltaban iconos y traducciones** |
+| Linux AppImage | PyInstaller | `--add-data` de directorios sueltos | **faltaban iconos y traducciones** |
+
+Windows funcionaba por casualidad de haber elegido otra bandera: el
+comportamiento de `--include-package-data` de Nuitka coincide con el layout que
+el código espera. Los dos builds de PyInstaller no, y nada detectó la diferencia.
+
+Moraleja: **"funciona en Windows" no es prueba de que un bundle esté bien.**
+
+### 9.5 Dos roturas más, encontradas al reconstruir
+
+Al arreglar lo anterior y reconstruir el AppImage aparecieron dos fallos que
+habrían roto el próximo run de CI, y que no tienen nada que ver con los recursos:
+
+**a) El pin de `appimagetool` era un tag móvil.**
+
+El script fijaba el SHA256 de `releases/download/continuous/...`. El asset
+`continuous` se republicó el 2026-10-04, así que el checksum dejó de coincidir y
+el build falla con `La suma no coincide`. El chequeo funcionó como debía —fallar
+en vez de publicar en silencio— pero el pin estaba mal elegido.
+
+Arreglo: fijar una release **versionada** (`1.9.1`), cuyo tag no se mueve.
+
+```bash
+APPIMAGETOOL_VERSION="1.9.1"
+APPIMAGETOOL_SHA256="ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0"
+```
+
+**b) El nombre del icono no coincidía con `Icon=` del `.desktop`.**
+
+`packaging/tbo.desktop` declara `Icon=org.tbo.TBO`, pero el script instalaba el
+PNG como `tbo.png`. appimagetool lo rechaza:
+
+```text
+org.tbo.TBO{.png,.svg,.xpm} defined in desktop file but not found
+```
+
+El `continuous` antiguo lo toleraba; la versión estable lo rechaza. Al fijar la
+versión se destapó la inconsistencia latente.
+
+Arreglo: nombrar el icono según el ID de aplicación, `org.tbo.TBO.png`.
+
+### 9.6 Verificación
+
+AppImage reconstruido y ejecutado de extremo a extremo:
+
+| | Antes | Después |
+|---|---|---|
+| Errores `qt.svg: Cannot open file` | 14 | **0** |
+| Iconos de UI empaquetados | 0 | 13 |
+| Traducciones empaquetadas | 0 | 2 |
+| Arranca y se mantiene vivo | sí | sí |
+
+### 9.7 La lección que importa
+
+> **CI en verde significa que el comando de build devolvió 0, no que el artefacto
+> funcione.**
+
+Nada en el pipeline lanzaba jamás lo construido. La guía maestra ya recomendaba
+un *smoke test* del artefacto (solo napari y pyzo lo hacen); TBO construía pero
+no ejecutaba.
+
+La regla general, escrita también en
+`PyQt6-Apps/TBO/docs/GitHub-Actions-Solutions/PACKAGING-RESOURCE-COLLECTION-BUG.md`:
+
+> Cuando un comando de build copia datos de la aplicación, el **destino** debe
+> coincidir con la ruta que el código lee en tiempo de ejecución, no con la ruta
+> desde la que es cómodo copiar. Verifícalo inspeccionando el bundle o
+> ejecutándolo, nunca confiando en que el build terminó bien.
+
+### 9.8 Cambio de estado de TBO en este repositorio
+
+TBO dejó de ser un sub-módulo y pasó a ser un clon independiente, ignorado por
+`.gitignore`. Se puede editar y publicar en su propio repositorio sin que este
+registre un commit distinto cada vez. Ver `AGENTS.md` §1, "The one exception:
+TBO".
+
+---
+
+## 10. Build de Windows con PyInstaller, para poder comparar
+
+Hasta ahora Windows se construía solo con Nuitka. El motivo original —que
+PyInstaller daba falsos positivos en VirusTotal— es un dato de una aplicación
+anterior y **nunca se ha medido sobre TBO**.
+
+Para poder medirlo:
+
+- `packaging/build_windows_nuitka.ps1` — el build que se publica (antes
+  `build_windows.ps1`, renombrado para que su naturaleza quede explícita).
+- `packaging/build_windows_pyinstaller.ps1` — nuevo, produce **onedir** y
+  **onefile**, con los mismos metadatos PE, los mismos datos y UPX desactivado
+  en ambos.
+- Nuevo job `build-windows-pyinstaller` en `.github/workflows/build.yml`.
+
+Los dos scripts mantienen constantes el código, la versión y los recursos, para
+que la única diferencia sea la herramienta y el layout. Cada `.exe` se sube a
+VirusTotal por separado y se registra el resultado.
+
+Esto **no decide nada por sí solo**: es un punto de partida para medir. Un único
+resultado de VirusTotal es una señal puntual de un motor concreto, no un veredicto
+— ver `PACKAGING_EVIDENCE_MATRIX.md` sección B.
+
+---
+
 Dios les bendiga

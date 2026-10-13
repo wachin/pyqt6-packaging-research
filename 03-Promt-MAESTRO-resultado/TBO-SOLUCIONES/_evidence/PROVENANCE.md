@@ -4,24 +4,26 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Submodule | `PyQt6-Apps/TBO` |
+| Source tree | `PyQt6-Apps/TBO` |
+| Tracked as | independent clone (ignored by this repository) |
 | Upstream | https://github.com/wachin/TBO |
-| Pinned commit | `d92fabbedc63878d2e0e5a4aa565b13c4545338e` |
-| Described as | `d92fabb` |
+| Pinned commit | `f1bafa8bb8eae4c1ed8dc47278d6a908fa448be2` |
+| Described as | `f1bafa8` |
 | Licence | GPL (`LICENSE`) |
 | Extracted (UTC) | 2026-10-13 |
-| Files | 21 |
-| Total size | 158,226 bytes |
+| Files | 23 |
+| Total size | 174,479 bytes |
 
-> Not a case study: this is the owner's own application and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.
+> Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.
 
 ## Files and why each one is here
 
 | Original path | Bytes | Why it is included |
 |---|---|---|
-| `packaging/build_appimage.sh` | 3,857 | AppImage build script. |
-| `packaging/build_windows.ps1` | 2,908 | Windows build (Nuitka) driver. |
-| `packaging/build_macos.sh` | 2,027 | macOS build (PyInstaller) driver. |
+| `packaging/build_appimage.sh` | 5,383 | AppImage build script. |
+| `packaging/build_windows_nuitka.ps1` | 2,908 | Windows build (Nuitka) driver - the shipping Windows build. |
+| `packaging/build_windows_pyinstaller.ps1` | 9,163 | Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application. |
+| `packaging/build_macos.sh` | 2,583 | macOS build (PyInstaller) driver. |
 | `packaging/build.sh` | 2,030 | Top-level local packaging driver (includes the Flatpak step). |
 | `packaging/generate_icon.py` | 2,632 | Icon generator; the explicit output-dir bug is recorded in SOLUCIONES-TBO.md. |
 | `packaging/update_translations.sh` | 1,849 | Translation (.qm) generation. |
@@ -37,8 +39,9 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | `debian/changelog` | 410 | Debian changelog driving the package version. |
 | `debian/copyright` | 1,730 | Debian copyright/attribution file. |
 | `debian/source/format` | 12 | Source package format (3.0 quilt). |
-| `.github/workflows/build.yml` | 4,724 | Release pipeline producing the wheel/sdist, .deb, Flatpak, Windows and macOS artifacts. |
+| `.github/workflows/build.yml` | 6,008 | Release pipeline producing the wheel/sdist, .deb, Flatpak, Windows and macOS artifacts. |
 | `.github/workflows/ci.yml` | 1,572 | CI tests. |
+| `docs/GitHub-Actions-Solutions/PACKAGING-RESOURCE-COLLECTION-BUG.md` | 3,724 | The resource-collection defect: bundles that built green and shipped without their icons and translations. |
 | `pyproject.toml` | 1,770 | Build metadata (version source for the .deb and Nuitka --file-version). |
 
 ## Integrity

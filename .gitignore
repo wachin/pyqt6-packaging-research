@@ -34,6 +34,19 @@
 .mypy_cache/
 .hypothesis/
 
-# personal
+# --- Personal working copies ---------------------------------------------------
+# TBO is the owner's own application. It used to be a sub-module of this
+# repository; it is now an ordinary independent Git clone checked out here, so
+# that it can be edited and pushed to its own remote without this repository
+# recording a different commit every time.
+#
+# Ignored on purpose: its files must not be tracked here, and its Git history
+# lives in PyQt6-Apps/TBO/.git, not in this repository.
+#
+#     git -C PyQt6-Apps/TBO status
+#
+# Anchored to the root so it cannot accidentally match a nested directory of the
+# same name inside an evidence pack.
+/PyQt6-Apps/TBO/
 
 PyQt6-Apps/TBO-GitHub-Actions-Executables/

@@ -108,9 +108,9 @@ The following upstream projects are included as Git submodules:
 | `CARA` | Study another real-world PyQt6 desktop application and its multiplatform builds. |
 | `napari` | Study a large, mature scientific Python/Qt application and its release architecture. |
 | `napari-packaging` | Study napari's dedicated packaging and installer infrastructure. |
-| `PyQt6-Apps/TBO` | Own PyQt6 application. Not a case study: it is the *validation ground* for this repository, and the only source of real, working `.deb` evidence. |
+| `PyQt6-Apps/TBO` | Own PyQt6 application. Not a case study: it is the *validation ground* for this repository, and the only source of real, working `.deb` and AppImage evidence. **Not a submodule** — an independent clone that this repository ignores. |
 
-The projects remain independent upstream repositories. This repository records specific commits of those projects through Git submodules.
+The six studied projects remain independent upstream repositories, recorded here through Git submodules. `PyQt6-Apps/TBO` is treated differently: it is the owner's own application, kept as an ordinary clone so it can be edited and pushed to its own remote without this repository pinning a commit.
 
 ## Repository structure
 
@@ -128,7 +128,7 @@ pyqt6-packaging-research/
 │   ├── TOP-FINDINGS-DIGEST.md              # one-page digest of the headline findings
 │   └── TBO-SOLUCIONES/             # validated fixes found while packaging TBO
 ├── PyQt6-Apps/
-│   ├── TBO/                        # submodule: the owner's own application
+│   ├── TBO/                        # independent clone, NOT a submodule (git-ignored)
 │   └── TBO-GitHub-Actions-Executables/   # build outputs (git-ignored)
 ├── CARA/                           # submodule
 ├── CustomKnight-Creator/           # submodule
@@ -273,13 +273,17 @@ Check their current state with:
 git submodule status
 ```
 
-When you clone with submodules you will get seven complete third-party source
+When you clone with submodules you will get six complete third-party source
 trees on disk. **They are not libraries and they are not dependencies of this
 repository.** They are exhibits, cloned to be read:
 
 - do not import them, and do not add them to any dependency manifest;
 - do not modify them, and do not run their build or release workflows;
 - do not treat their age or state as a defect in this repository.
+
+`PyQt6-Apps/TBO` is not among them: it is not a submodule, so a fork does not
+fetch it. It is a separate clone of the owner's own application, ignored by this
+repository through `.gitignore`.
 
 If you use an AI agent here, `AGENTS.md` states this as a hard rule. To inspect
 what a studied project actually did, read its evidence pack under

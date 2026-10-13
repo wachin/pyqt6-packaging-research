@@ -22,6 +22,14 @@ python "$workspace_root/packaging/generate_icon.py" \
     "$workspace_root/src/tbo/resources/icon.png" iconset "$iconset_dir"
 iconutil -c icns "$iconset_dir" -o "$icon_path"
 
+# --add-data destinations must match how the application resolves its own data
+# at runtime, otherwise the bundle builds "successfully" and ships without it.
+# src/tbo/resources.py and src/tbo/application.py resolve relative to
+# Path(__file__).parent, which inside the .app is Contents/Resources/tbo:
+#
+#   tbo/resources     -> Contents/Resources/tbo/resources
+#   tbo/translations  -> Contents/Resources/tbo/translations
+#   data/doodle       -> Contents/Resources/data/doodle
 pyinstaller -w -D -y \
   --name TBO \
   --icon "$icon_path" \
@@ -34,7 +42,8 @@ pyinstaller -w -D -y \
   --hidden-import=PyQt6.QtSvgWidgets \
   --hidden-import=PyQt6.QtPrintSupport \
   --add-data "$workspace_root/data/doodle:data/doodle" \
-  --add-data "$workspace_root/translations:translations" \
+  --add-data "$workspace_root/src/tbo/resources:tbo/resources" \
+  --add-data "$workspace_root/src/tbo/translations:tbo/translations" \
   --distpath "$dist_dir" \
   --specpath "$tmp_dir" \
   --workpath "$tmp_dir" \

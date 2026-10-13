@@ -4,7 +4,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Submodule | `CustomKnight-Creator` |
+| Source tree | `CustomKnight-Creator` |
+| Tracked as | submodule |
 | Upstream | https://github.com/cmot17/CustomKnight-Creator.git |
 | Pinned commit | `158ec2f259cb220b6d81fe409fb64c367c2fc893` |
 | Described as | `v1.0.2` |

@@ -4,10 +4,11 @@
 Why this exists
 ---------------
 The case studies describe and cite the real packaging files (for example
-``packaging/build-appimage.sh`` lines 41-49) but do not embed them. Those files
-live inside Git submodules pinned to a commit, so a citation breaks as soon as a
-submodule is updated. This script copies the files that actually participate in
-producing (or installing) a distributable into::
+``packaging/build-appimage.sh`` lines 41-49) but do not embed them. Most of those
+files live inside Git submodules pinned to a commit, so a citation breaks as soon
+as a submodule is updated. (TBO is the exception: it is an ordinary independent
+clone ignored by this repository.) This script copies the files that actually
+participate in producing (or installing) a distributable into::
 
     <results-dir>/_evidence/<original/relative/path>
 
@@ -17,10 +18,9 @@ extracted tree.
 
 Provenance is the point
 -----------------------
-Each extraction records the upstream URL, the exact submodule commit, the
-licence, and a SHA-256 per file, in ``_evidence/PROVENANCE.md`` plus
-``_evidence/SHA256SUMS``. A file copied without its commit is worthless as
-evidence.
+Each extraction records the upstream URL, the exact commit, the licence, and a
+SHA-256 per file, in ``_evidence/PROVENANCE.md`` plus ``_evidence/SHA256SUMS``. A
+file copied without its commit is worthless as evidence.
 
 Nothing here is relicensed. The extracted files remain under their upstream
 licence -- note that CARA, CustomKnight-Creator, dikte and TBO are GPL, while
@@ -201,10 +201,11 @@ PROJECTS: list[dict] = [
         "submodule": "PyQt6-Apps/TBO",
         "results": "03-Promt-MAESTRO-resultado/TBO-SOLUCIONES",
         "label": "TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux)",
-        "note": "Not a case study: this is the owner's own application and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.",
+        "note": "Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.",
         "files": [
             ("packaging/build_appimage.sh", "AppImage build script."),
-            ("packaging/build_windows.ps1", "Windows build (Nuitka) driver."),
+            ("packaging/build_windows_nuitka.ps1", "Windows build (Nuitka) driver - the shipping Windows build."),
+            ("packaging/build_windows_pyinstaller.ps1", "Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application."),
             ("packaging/build_macos.sh", "macOS build (PyInstaller) driver."),
             ("packaging/build.sh", "Top-level local packaging driver (includes the Flatpak step)."),
             ("packaging/generate_icon.py", "Icon generator; the explicit output-dir bug is recorded in SOLUCIONES-TBO.md."),
@@ -223,6 +224,7 @@ PROJECTS: list[dict] = [
             ("debian/source/format", "Source package format (3.0 quilt)."),
             (".github/workflows/build.yml", "Release pipeline producing the wheel/sdist, .deb, Flatpak, Windows and macOS artifacts."),
             (".github/workflows/ci.yml", "CI tests."),
+            ("docs/GitHub-Actions-Solutions/PACKAGING-RESOURCE-COLLECTION-BUG.md", "The resource-collection defect: bundles that built green and shipped without their icons and translations."),
             ("pyproject.toml", "Build metadata (version source for the .deb and Nuitka --file-version)."),
         ],
     },
@@ -263,9 +265,24 @@ def run_git(args: list[str], cwd: Path) -> str:
     return proc.stdout.strip() if proc.returncode == 0 else ""
 
 
-def submodule_url(submodule: str) -> str:
-    url = run_git(["config", "-f", ".gitmodules", "--get", f"submodule.{submodule}.url"], ROOT)
-    return url or "(not recorded in .gitmodules)"
+def is_submodule(path: str) -> bool:
+    """Whether `path` is still registered as a submodule in .gitmodules."""
+    return bool(run_git(["config", "-f", ".gitmodules", "--get", f"submodule.{path}.url"], ROOT))
+
+
+def source_url(path: str) -> str:
+    """Upstream URL of a studied source tree.
+
+    Most trees are sub-modules, so their URL comes from .gitmodules. TBO is the
+    exception: it used to be a sub-module and is now an ordinary independent
+    clone checked out under this repository and ignored by it, so its URL has to
+    come from its own Git configuration.
+    """
+    url = run_git(["config", "-f", ".gitmodules", "--get", f"submodule.{path}.url"], ROOT)
+    if url:
+        return url
+    url = run_git(["config", "--get", "remote.origin.url"], ROOT / path)
+    return url or "(no remote recorded)"
 
 
 def detect_licence(submodule: str) -> tuple[str, str]:
@@ -317,12 +334,13 @@ def main() -> int:
 
         commit = run_git(["rev-parse", "HEAD"], sub_path) or "(unknown)"
         described = run_git(["describe", "--tags", "--always"], sub_path)
-        url = submodule_url(submodule)
+        url = source_url(submodule)
+        tracked = "submodule" if is_submodule(submodule) else "independent clone (ignored by this repository)"
         licence, licence_file = detect_licence(submodule)
         dest_root = ROOT / results / "_evidence"
 
         print(f"\n=== {key} ===")
-        print(f"  submodule : {submodule}")
+        print(f"  source    : {submodule} [{tracked}]")
         print(f"  commit    : {commit[:12]}{' (' + described + ')' if described else ''}")
         print(f"  licence   : {licence}{' [' + licence_file + ']' if licence_file else ''}")
         print(f"  target    : {dest_root.relative_to(ROOT)}")
@@ -366,7 +384,8 @@ def main() -> int:
                     "any of this in another project.\n\n"
                 )
                 handle.write("| Field | Value |\n|---|---|\n")
-                handle.write(f"| Submodule | `{submodule}` |\n")
+                handle.write(f"| Source tree | `{submodule}` |\n")
+                handle.write(f"| Tracked as | {tracked} |\n")
                 handle.write(f"| Upstream | {url} |\n")
                 handle.write(f"| Pinned commit | `{commit}` |\n")
                 if described:
@@ -393,7 +412,7 @@ def main() -> int:
         index_rows.append(
             (
                 project["label"],
-                submodule,
+                f"`{submodule}`" + ("" if is_submodule(submodule) else " *(independent clone)*"),
                 commit,
                 licence,
                 str((Path(results) / "_evidence").as_posix()),
@@ -421,10 +440,10 @@ def main() -> int:
             "```bash\npython3 tools/extract_evidence.py\n```\n\n"
         )
         handle.write("## Projects\n\n")
-        handle.write("| Project | Submodule | Commit | Licence | Evidence | Files | Purpose |\n|---|---|---|---|---|---|---|\n")
+        handle.write("| Project | Source tree | Commit | Licence | Evidence | Files | Purpose |\n|---|---|---|---|---|---|---|\n")
         for label, submodule, commit, licence, dest, count, note in index_rows:
             short = commit[:12] if commit != "(unknown)" else commit
-            handle.write(f"| {label} | `{submodule}` | `{short}` | {licence} | `{dest}/` | {count} | {note} |\n")
+            handle.write(f"| {label} | {submodule} | `{short}` | {licence} | `{dest}/` | {count} | {note} |\n")
 
         handle.write("\n## How to read an evidence pack\n\n")
         handle.write(

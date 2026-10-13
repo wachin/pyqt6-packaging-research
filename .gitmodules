@@ -22,6 +22,3 @@
 	path = napari-packaging
 	url = https://github.com/napari/packaging
 	ignore = dirty
-[submodule "PyQt6-Apps/TBO"]
-	path = PyQt6-Apps/TBO
-	url = https://github.com/wachin/TBO

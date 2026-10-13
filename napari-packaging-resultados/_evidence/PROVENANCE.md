@@ -4,7 +4,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Submodule | `napari-packaging` |
+| Source tree | `napari-packaging` |
+| Tracked as | submodule |
 | Upstream | https://github.com/napari/packaging |
 | Pinned commit | `5befa97fdd90fa20f1709cf72f379bccf9a403f6` |
 | Described as | `5befa97` |
