@@ -122,8 +122,11 @@ pyqt6-packaging-research/
 │   ├── MASTER_PYQT6_PACKAGING_GUIDE.md
 │   ├── PYQT6_MASTER_PACKAGING_TUTORIAL.md
 │   ├── PACKAGING_EVIDENCE_MATRIX.md
+│   ├── PROMPT-01-FIX-TBO-PACKAGING.md      # prompt to repair TBO's build jobs
+│   ├── PROMPT-02-NUEVO-PROYECTO-PYQT6.md   # prompt to start a new project correctly
+│   ├── PROMPTS-README.md                   # how to use the two prompts
+│   ├── TOP-FINDINGS-DIGEST.md              # one-page digest of the headline findings
 │   └── TBO-SOLUCIONES/             # validated fixes found while packaging TBO
-├── 04-Promt-MAESTRO-para-proyectos-pyqt6/
 ├── PyQt6-Apps/
 │   ├── TBO/                        # submodule: the owner's own application
 │   └── TBO-GitHub-Actions-Executables/   # build outputs (git-ignored)
