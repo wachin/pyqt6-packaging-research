@@ -161,24 +161,11 @@ This is what actually changes the VirusTotal page. Vendors do remove generic
 detections when shown a legitimate application, and once they do, the scan goes
 clean and the public accusation loses its evidence.
 
-The four engines involved in the TBO measurement and where to report:
-
-| Engine | Detection | Report via |
-|---|---|---|
-| Zillya | `Trojan.Script.2226` | Zillya's site / `virus@zillya.com` |
-| SecureAge | `Malicious` | SecureAge support |
-| Bkav Pro | `W32.Malware.7730AFD` | Bkav's false-positive form |
-| Skyhigh (SWG) | `BehavesLike.Win32.Backdoor.rc` | Skyhigh support |
-
-Include, every time: the **SHA-256**, the **detection name**, a link to the
-**public source repository**, a link to a **signed release** if one exists, and
-one sentence saying it is an unsigned PyInstaller build of an open-source PyQt6
-application. Keep a record of when each was submitted and when it was cleared —
-the trend is the argument.
-
-VirusTotal itself also lets the uploader add a comment to the report page. That
-does not change the engine verdicts, but it puts the explanation where the
-accusers are looking.
+VirusTotal itself cannot help: it aggregates other companies' verdicts and
+produces none of its own, which is why a file report has no "report a false
+positive" button. **Who to contact, and a ready-to-send message, is in
+`FALSE-POSITIVE-REPORTING.md`** — including the official VirusTotal contacts page
+that exists but is not linked from the reports.
 
 ### 4. The things that cost nothing
 
