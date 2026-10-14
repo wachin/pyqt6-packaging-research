@@ -620,18 +620,30 @@ Verificado en disco: `dist/TBO/` contiene 1 entrada (`TBO.exe`) y
 
 ### 11.4 Qué haría falta para que esto sea concluyente
 
-1. **Capturar el detalle**: número de detecciones, motores, y categoría
-   (malware / PUA / heurístico) de cada artefacto.
+1. ~~Capturar el detalle~~ — **hecho**: 0/71 frente a 3/73, con la lista de motores
+   (ver §11.1).
 2. **Repetir en varias releases.** Un único par de builds no distingue una
    propiedad de la herramienta de una casualidad de ese build.
 3. **Repetir con firma Authenticode**, que cambia las heurísticas y no está
-   probado aquí.
-4. **Probar la hipótesis del bootloader**: un tercer build con `--noupx` ya está,
-   pero faltaría una rama con un bootloader reconstruido o un `onedir` de
-   PyInstaller sin bootloader self-extracting, para separar "bootloader" de
-   "PyInstaller" como causa.
+   probado aquí. Es el mecanismo que la investigación sí respalda para la
+   reputación.
+4. **Probar la hipótesis del bootloader** — **la rama ya existe**: el job
+   `build-windows-pyinstaller-rebuilt-bootloader` instala PyInstaller desde su
+   sdist con `PYINSTALLER_COMPILE_BOOTLOADER=1` y construye con
+   `-Flavour pyinstaller-rebuilt`. Falta **ejecutarlo y escanear el resultado**.
+   La propia documentación de PyInstaller recomienda recompilar el bootloader
+   precisamente por los falsos positivos que causa el precompilado compartido por
+   miles de ejecutables:
+   <https://pyinstaller.org/en/stable/bootloader-building.html>
+5. **Enviar informes de falso positivo** a Zillya, SecureAge, Bkav Pro y Skyhigh.
+   Es lo que realmente limpia la página de VirusTotal, y por tanto lo que
+   desarma la acusación pública.
 
 Mientras eso no exista, el resultado es **una pista sólida, no una regla**.
+
+El conjunto de medidas legítimas —frente a la evasión, que queda fuera de
+alcance— está recogido en
+`03-Promt-MAESTRO-resultado/LEGITIMATE-FALSE-POSITIVE-REDUCTION.md`.
 
 ---
 

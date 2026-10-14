@@ -37,16 +37,33 @@
     ./packaging/build_windows_pyinstaller.ps1
     ./packaging/build_windows_pyinstaller.ps1 -Mode onefile
 
+    # Same build, distinct artifact names, for comparing configurations:
+    ./packaging/build_windows_pyinstaller.ps1 -Flavour pyinstaller-rebuilt
+
 .NOTES
     Like the shipping script, --file-version / --product-version must be plain
     four-part numeric values. A version such as "2.0.0.dev0" makes the version
     resource invalid, which is the failure recorded for Nuitka in
     03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md section 4.
+
+    This script does not build the bootloader; that happens when PyInstaller is
+    *installed*. To produce the rebuilt-bootloader arm, install PyInstaller with
+    PYINSTALLER_COMPILE_BOOTLOADER=1 from the sdist and then run this script with
+    -Flavour pyinstaller-rebuilt. PyInstaller documents rebuilding the bootloader
+    as a way to avoid antivirus false positives caused by the widely shared
+    pre-compiled one:
+    https://pyinstaller.org/en/stable/bootloader-building.html
 #>
 [CmdletBinding()]
 param(
     [ValidateSet('onedir', 'onefile', 'both')]
-    [string]$Mode = 'both'
+    [string]$Mode = 'both',
+
+    # Distinguishes artifacts when more than one PyInstaller configuration is
+    # built, so the standard build and the rebuilt-bootloader build can be
+    # scanned side by side without overwriting each other. The default
+    # reproduces the original artifact names exactly.
+    [string]$Flavour = 'pyinstaller'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -118,7 +135,7 @@ $sep = [IO.Path]::PathSeparator
 function Build-TboPyInstaller {
     param([Parameter(Mandatory)][ValidateSet('onedir', 'onefile')][string]$Kind)
 
-    $name = "tbo-pyinstaller-$Kind"
+    $name = "tbo-$Flavour-$Kind"
     $layout = if ($Kind -eq 'onedir') { '--onedir' } else { '--onefile' }
 
     Write-Host "=== PyInstaller $Kind -> $name ===" -ForegroundColor Cyan
@@ -170,7 +187,7 @@ function Build-TboPyInstaller {
         # Both are zipped so the artifact is complete for a human, while the
         # bare .exe remains available for a VirusTotal submission.
         Copy-Item "$workspaceRoot\COPYING" $appDir -Force
-        $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-pyinstaller-onedir-portable.zip"
+        $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-$Flavour-onedir-portable.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
         Compress-Archive -Path "$appDir\*" -DestinationPath $zipPath
         # PyInstaller names the executable after --name, so the onedir payload
@@ -181,7 +198,7 @@ function Build-TboPyInstaller {
     else {
         $exePath = Join-Path $distDir "$name.exe"
         if (-not (Test-Path $exePath)) { throw "expected onefile output not found: $exePath" }
-        $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-pyinstaller-onefile.zip"
+        $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-$Flavour-onefile.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
         Compress-Archive -Path $exePath -DestinationPath $zipPath
     }
@@ -218,7 +235,7 @@ switch ($Mode) {
     }
 }
 
-$manifestPath = Join-Path $outputDir "TBO-$version-pyinstaller-windows.json"
+$manifestPath = Join-Path $outputDir "TBO-$version-$Flavour-windows.json"
 [IO.File]::WriteAllText($manifestPath, ($results | ConvertTo-Json -Depth 4))
 
 Write-Host "PyInstaller Windows build complete." -ForegroundColor Green

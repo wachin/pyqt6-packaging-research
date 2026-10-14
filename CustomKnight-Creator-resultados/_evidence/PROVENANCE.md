@@ -10,7 +10,7 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Pinned commit | `158ec2f259cb220b6d81fe409fb64c367c2fc893` |
 | Described as | `v1.0.2` |
 | Licence | GPL (`LICENSE.md`) |
-| Extracted (UTC) | 2026-10-13 |
+| Extracted (UTC) | 2026-10-14 |
 | Files | 3 |
 | Total size | 20,821 bytes |
 
