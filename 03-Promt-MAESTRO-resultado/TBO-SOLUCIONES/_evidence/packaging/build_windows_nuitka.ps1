@@ -64,12 +64,63 @@ if (-not $builtExe) {
 }
 
 Copy-Item $builtExe.Directory.FullName $appDistDir -Recurse -Force
-Copy-Item "$workspaceRoot\COPYING" "$distDir\" -Force
 
 $portableZipPath = Join-Path $outputDir "TBO-$version-Windows-x64-portable.zip"
 if (Test-Path $portableZipPath) {
     Remove-Item $portableZipPath -Force
 }
-Compress-Archive -Path "$appDistDir", "$distDir\COPYING" -DestinationPath $portableZipPath
+
+# ---------------------------------------------------------------- packaging ---
+# Do NOT use Compress-Archive here.
+#
+# Windows PowerShell 5.1's Compress-Archive writes the entry separator as a
+# BACKSLASH. The ZIP specification (APPNOTE.TXT) requires a forward slash, and
+# archives that break this rule extract wrongly everywhere except Windows: on
+# Linux or macOS, `unzip` treats "\" as an ordinary character in the filename,
+# so the whole tree collapses into one directory of files literally named
+# "TBO\python312.dll". The previous build produced exactly that: a zip with 277
+# of 278 entries using backslashes.
+#
+# [System.IO.Compression.ZipFile] writes conformant forward slashes, and the
+# check afterwards fails the build rather than shipping another broken archive.
+$stagingDir = Join-Path $outputDir "TBO-$version-Windows-x64-portable"
+Remove-Item $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
+
+Copy-Item $appDistDir $stagingDir -Recurse -Force
+Copy-Item "$workspaceRoot\COPYING" $stagingDir -Force
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::CreateFromDirectory(
+    $stagingDir,
+    $portableZipPath,
+    [System.IO.Compression.CompressionLevel]::Optimal,
+    $false)   # $false = do not nest everything under an extra base directory
+
+# ------------------------------------------------------------------- verify ---
+$archive = [System.IO.Compression.ZipFile]::OpenRead($portableZipPath)
+try {
+    $malformed = @($archive.Entries | Where-Object { $_.FullName.Contains('\') })
+    $entries = $archive.Entries.Count
+} finally {
+    $archive.Dispose()
+}
+
+if ($malformed.Count -gt 0) {
+    Write-Error ("The archive is not ZIP-conformant: {0} of {1} entries use a backslash separator. " +
+                 "Everything except Windows will extract it incorrectly." -f $malformed.Count, $entries)
+}
+
+$hasExe = $false
+$archive = [System.IO.Compression.ZipFile]::OpenRead($portableZipPath)
+try {
+    $hasExe = @($archive.Entries | Where-Object { $_.FullName -eq 'TBO/TBO.exe' }).Count -gt 0
+} finally {
+    $archive.Dispose()
+}
+if (-not $hasExe) {
+    Write-Error "The archive does not contain TBO/TBO.exe at the expected path."
+}
 
 Write-Output "Windows build complete: $portableZipPath"
+Write-Output ("  {0} entries, all with forward-slash separators; TBO/TBO.exe present" -f $entries)

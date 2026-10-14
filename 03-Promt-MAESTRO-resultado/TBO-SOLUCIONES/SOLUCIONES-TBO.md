@@ -676,4 +676,86 @@ alcance— está recogido en
 
 ---
 
+## 12. El ZIP de Windows no era conforme a la especificación (2026-10)
+
+Otro fallo que no rompe nada y por eso nadie lo ve.
+
+### 12.1 Síntoma
+
+Al descomprimir el portable de Windows en Linux, el árbol se desparramaba: **278
+entradas sueltas en el primer nivel**, con nombres como:
+
+```
+TBO\_bz2.pyd
+TBO\libcrypto-3.dll
+TBO\PyQt6\Qt6\plugins\platforms\qwindows.dll
+```
+
+En Windows, el mismo zip se ve perfectamente: una carpeta `TBO/` con el `.exe` y
+sus dependencias. **Por eso el fallo sobrevive a cualquier revisión hecha en
+Windows.**
+
+### 12.2 Causa raíz
+
+`Compress-Archive` de Windows PowerShell 5.1 escribe el separador de entradas
+como **barra invertida**. La especificación ZIP (APPNOTE.TXT) exige **barra
+normal**. Medido sobre el artefacto real:
+
+| Zip | Entradas | Con `\` | Con `/` | ¿Conforme? |
+|---|---|---|---|---|
+| `TBO-2.0.0.dev0-Windows-x64-portable.zip` | 278 | **277** | 0 | **NO** |
+| `tbo-windows.zip` (el envoltorio del artifact) | 2 | 0 | 2 | sí |
+| `tbo-macos.zip` (hecho con `ditto`) | 1 | 0 | 0 | sí |
+
+Dos conclusiones que importan:
+
+- **No es culpa de GitHub Actions.** El zip que envuelve el artifact lo crea la
+  plataforma y es correcto. El defecto está en el zip interno, que lo crea TBO.
+- **`ditto` en macOS sí es conforme**, así que el problema era exclusivo de la
+  rama de Windows.
+
+En Linux o macOS, `unzip` trata `\` como un carácter cualquiera del nombre, así
+que en vez de un árbol se obtienen 277 ficheros planos con la barra invertida
+dentro del nombre. Cualquier herramienta estricta hace lo mismo.
+
+### 12.3 Arreglo
+
+Sustituir `Compress-Archive` por `[System.IO.Compression.ZipFile]`, que escribe
+barras normales:
+
+```powershell
+[System.IO.Compression.ZipFile]::CreateFromDirectory(
+    $stagingDir, $portableZipPath,
+    [System.IO.Compression.CompressionLevel]::Optimal,
+    $false)
+```
+
+Aplicado en `packaging/build_windows_nuitka.ps1` y, por el mismo defecto, en
+`packaging/build_windows_pyinstaller.ps1`.
+
+### 12.4 La parte que evita que vuelva
+
+El script **verifica el zip que acaba de crear** y falla si alguna entrada lleva
+barra invertida:
+
+```powershell
+$malformed = @($archive.Entries | Where-Object { $_.FullName.Contains('\') })
+if ($malformed.Count -gt 0) { Write-Error "..." }
+```
+
+Sin esa comprobación, el arreglo depende de que nadie vuelva a escribir
+`Compress-Archive` por costumbre. Con ella, CI lo detecta.
+
+### 12.5 La lección
+
+> Un artefacto que se ve bien en la plataforma donde se construye puede estar
+> roto en todas las demás.
+
+Es el mismo patrón que el fallo de recursos de §9: el build termina en verde, y
+solo se descubre al mirar el resultado desde otro sitio. Y aquí el zip **es** el
+artefacto de publicación, así que el defecto lo habría visto cualquier usuario de
+Linux o macOS que intentara inspeccionarlo.
+
+---
+
 Dios les bendiga

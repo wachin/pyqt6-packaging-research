@@ -7,12 +7,12 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Source tree | `PyQt6-Apps/TBO` |
 | Tracked as | independent clone (ignored by this repository) |
 | Upstream | https://github.com/wachin/TBO |
-| Pinned commit | `17047b1ba3db15b2cb23ab6a68202487aaec38f0` |
-| Described as | `17047b1` |
+| Pinned commit | `dc3190c6088dbd44d0f3ab7bff3e869d7faebb91` |
+| Described as | `dc3190c` |
 | Licence | GPL (`LICENSE`) |
 | Extracted (UTC) | 2026-10-14 |
 | Files | 24 |
-| Total size | 177,219 bytes |
+| Total size | 180,214 bytes |
 
 > Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.
 
@@ -21,8 +21,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Original path | Bytes | Why it is included |
 |---|---|---|
 | `packaging/build_appimage.sh` | 5,477 | AppImage build script. |
-| `packaging/build_windows_nuitka.ps1` | 2,908 | Windows build (Nuitka) driver - the shipping Windows build. |
-| `packaging/build_windows_pyinstaller.ps1` | 10,854 | Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application. |
+| `packaging/build_windows_nuitka.ps1` | 5,124 | Windows build (Nuitka) driver - the shipping Windows build. |
+| `packaging/build_windows_pyinstaller.ps1` | 11,633 | Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application. |
 | `packaging/build_macos.sh` | 2,583 | macOS build (PyInstaller) driver. |
 | `packaging/build.sh` | 2,030 | Top-level local packaging driver (includes the Flatpak step). |
 | `packaging/generate_icon.py` | 2,632 | Icon generator; the explicit output-dir bug is recorded in SOLUCIONES-TBO.md. |

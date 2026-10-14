@@ -69,6 +69,10 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Item Env:PYTHONIOENCODING UTF-8
 
+# For ZipFile / CreateFromDirectory, used instead of Compress-Archive so the
+# produced archives use conformant forward-slash separators.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 $workspaceRoot = Split-Path -Parent "$PSScriptRoot"
 $distDir = Join-Path $workspaceRoot "build\dist"
 $tmpDir = Join-Path $workspaceRoot "build\tmp\pyinstaller"
@@ -189,7 +193,11 @@ function Build-TboPyInstaller {
         Copy-Item "$workspaceRoot\COPYING" $appDir -Force
         $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-$Flavour-onedir-portable.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-        Compress-Archive -Path "$appDir\*" -DestinationPath $zipPath
+        # ZipFile, not Compress-Archive: see the packaging comment in
+        # build_windows_nuitka.ps1. Compress-Archive writes backslash
+        # separators, which break extraction everywhere except Windows.
+        [System.IO.Compression.ZipFile]::CreateFromDirectory(
+            $appDir, $zipPath, [System.IO.Compression.CompressionLevel]::Optimal, $false)
         # PyInstaller names the executable after --name, so the onedir payload
         # is <name>\<name>.exe, not <name>\tbo.exe.
         $exePath = Join-Path $appDir "$name.exe"
@@ -200,7 +208,14 @@ function Build-TboPyInstaller {
         if (-not (Test-Path $exePath)) { throw "expected onefile output not found: $exePath" }
         $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-$Flavour-onefile.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-        Compress-Archive -Path $exePath -DestinationPath $zipPath
+        $archive = [System.IO.Compression.ZipFile]::Open(
+            $zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
+        try {
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                $archive, $exePath, (Split-Path $exePath -Leaf)) | Out-Null
+        } finally {
+            $archive.Dispose()
+        }
     }
 
     # ----------------------------------------------------------------- report --
