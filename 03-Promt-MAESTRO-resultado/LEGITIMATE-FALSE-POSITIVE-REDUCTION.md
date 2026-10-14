@@ -113,14 +113,42 @@ only ever test on Linux. **Both flags are required for the Windows arm**, and
 this detail is missing from most write-ups that recommend "rebuilding the
 bootloader".
 
-Credentials for the mechanism, not for the outcome: whether the rebuilt Windows
-bootloader actually reduces the detection count is **still unmeasured**. The arm
-exists to answer that.
+#### Result: it was tested, and it did not work
 
-**Why it plausibly works:** the rebuilt bootloader has different bytes from the
+Measured on 2026-10-14, same commit, version and metadata, unsigned, UPX
+disabled. Screenshot in `experiments/pyinstaller-vs-nuitka/evidence/`:
+
+| Arm | VirusTotal |
+|---|---|
+| Nuitka standalone | **0 / 71** |
+| PyInstaller onedir | **3 / 73** — Bkav Pro, Zillya, SecureAge |
+| PyInstaller onefile | **3 / 73** — Bkav Pro, Zillya, SecureAge |
+| PyInstaller onefile, **rebuilt bootloader** | **2 / 70** — Bkav Pro, SecureAge |
+
+**Rebuilding the bootloader removed one detection** (Zillya disappeared), so the
+shared pre-compiled stub is not irrelevant. **But two engines flagged the rebuilt
+build anyway.**
+
+That refutes the hypothesis. If the widely shared bootloader were the cause, new
+bytes would have cleared it; they did not. The rebuilt bootloader is a real but
+partial effect, and it is **not a fix** — so this section is a description of a
+technique that was tried, not a recommendation.
+
+The evidence also points somewhere more specific. The **onedir** arm was flagged
+too, and onedir does not self-extract at all. The common factor across all four
+PyInstaller builds is the **embedded CPython runtime and PyInstaller's archive
+format**, not the extraction step and not the stub. Changing the bootloader cannot
+touch that.
+
+With the build-side options exhausted, what remains is: **sign** (untested here),
+**report the false positives to Bkav and SecureAge**, or use a different freezer
+— which is what happened.
+
+**Why it was plausible:** the rebuilt bootloader has different bytes from the
 stock one that every other PyInstaller application shares, so a signature written
-against the stock stub no longer matches. This is a legitimate engineering act:
-you are compiling the tool from its own public source.
+against the stock stub would no longer match. It is still a legitimate engineering
+act — you are compiling the tool from its own public source — it simply turned
+out not to be sufficient.
 
 **What is not verified:** this research has **not measured** whether rebuilding
 the bootloader drops the count to zero. It is documented as a mitigation by the

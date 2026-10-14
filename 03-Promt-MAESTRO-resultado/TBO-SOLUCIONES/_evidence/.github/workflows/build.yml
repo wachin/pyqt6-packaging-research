@@ -124,108 +124,35 @@ jobs:
             build/output/TBO-*-Windows-x64-portable.zip
             build/dist/TBO/TBO.exe
 
-  # Builds the same application with the other freezer, in both bundle layouts,
-  # so the two can be compared on the same binaries. Upload each .exe to
-  # VirusTotal and record the result; nothing here assumes which one fares
-  # better. The Nuitka build above remains the shipping Windows artifact.
-  build-windows-pyinstaller:
-    runs-on: windows-2025
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-          architecture: "x64"
-
-      - name: Install Python dependencies (PyInstaller toolchain)
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r packaging/requirements-windows-pyinstaller.txt
-
-      - name: Build Windows executables with PyInstaller (onedir + onefile)
-        run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File packaging/build_windows_pyinstaller.ps1 -Mode both
-
-      - name: Upload PyInstaller artifacts
-        uses: actions/upload-artifact@v5
-        with:
-          name: tbo-windows-pyinstaller
-          path: |
-            build/output/TBO-*-Windows-x64-pyinstaller-*.zip
-            build/output/TBO-*-pyinstaller-windows.json
-            build/dist/tbo-pyinstaller-onedir/tbo-pyinstaller-onedir.exe
-            build/dist/tbo-pyinstaller-onefile.exe
-
-  # Same application, same flags, but PyInstaller's bootloader is compiled from
-  # source instead of using the pre-compiled stub that ships in the wheel and is
-  # therefore shared with thousands of unrelated executables. PyInstaller
-  # documents this as a way to avoid antivirus false positives:
-  #   https://pyinstaller.org/en/stable/bootloader-building.html
+  # The two Windows PyInstaller arms were REMOVED after being measured. Do not
+  # reinstate them without reading the result first.
   #
-  # This is a measurement arm, not a shipping build. Scan its .exe alongside the
-  # other two and record the result; whether it actually drops the detection
-  # count is not established by any evidence in this repository yet.
-  build-windows-pyinstaller-rebuilt-bootloader:
-    runs-on: windows-2025
-    steps:
-      - uses: actions/checkout@v5
+  # Same commit, same version, same PE metadata, unsigned, UPX disabled:
+  #
+  #   Nuitka standalone                        0 / 71
+  #   PyInstaller onedir                       3 / 73   Bkav Pro, Zillya, SecureAge
+  #   PyInstaller onefile                      3 / 73   Bkav Pro, Zillya, SecureAge
+  #   PyInstaller onefile, rebuilt bootloader  2 / 70   Bkav Pro, SecureAge
+  #
+  # Rebuilding the bootloader from source did remove one detection (Zillya), so
+  # the shared pre-compiled stub is not irrelevant - but Bkav Pro and SecureAge
+  # flagged it anyway. The bootloader is therefore not the cause, and there is
+  # nothing left to change on the build side.
+  #
+  # Note that the *onedir* arm was flagged too, and onedir does not self-extract.
+  # The common factor across every PyInstaller build is the embedded CPython
+  # runtime and PyInstaller's archive format, not the extraction step.
+  #
+  # PyInstaller is still used below for the AppImage and macOS builds. Those are
+  # unaffected: the detections above are Windows engine heuristics.
+  #
+  # The scripts remain in packaging/ (build_windows_pyinstaller.ps1,
+  # requirements-windows-pyinstaller.txt) and can still be run locally. Full
+  # record and screenshots:
+  #   pyqt6-packaging-research/03-Promt-MAESTRO-resultado/
+  #     TBO-SOLUCIONES/SOLUCIONES-TBO.md section 11
+  #   pyqt6-packaging-research/experiments/pyinstaller-vs-nuitka/evidence/
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-          architecture: "x64"
-
-      - name: Install PyInstaller built from source, with a freshly compiled bootloader
-        shell: pwsh
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r packaging/requirements-windows-pyinstaller.txt
-
-          # Every line here is load-bearing, and two of them are easy to drop by
-          # mistake:
-          #
-          #   uninstall       - an existing copy would simply be kept.
-          #   cache remove    - pip would rebuild from its cached wheel and the
-          #                     bootloader would never recompile.
-          #   --no-binary     - forces the sdist instead of the wheel.
-          #   COMPILE_BOOTLOADER - the one that actually matters on Windows.
-          #
-          # Measured with PyInstaller 6.22.3: the sdist's pre-compiled
-          # Windows-64bit-intel/run.exe is BYTE-IDENTICAL to the wheel's
-          # (sha256 581ea23e..., 311808 bytes). So --no-binary alone changes
-          # nothing on Windows - pip would reuse the same stub every other
-          # application uses. Only PYINSTALLER_COMPILE_BOOTLOADER forces the
-          # compile. On Linux the sdist carries no pre-built bootloader for the
-          # platform, so it compiles anyway and the flag looks redundant there.
-          python -m pip uninstall -y PyInstaller
-          python -m pip cache remove PyInstaller
-          $env:PYINSTALLER_COMPILE_BOOTLOADER = "1"
-          # Same constraint as requirements-windows-pyinstaller.txt, so the two
-          # PyInstaller arms differ only in where the bootloader came from.
-          python -m pip install --verbose --no-binary=PyInstaller "pyinstaller>=6.0"
-
-      - name: Confirm the bootloader was actually rebuilt
-        shell: pwsh
-        # A silent fall-back to the pre-built wheel would make this arm a
-        # duplicate of the one above, which is worse than a failed job.
-        run: |
-          python -m pip show -f PyInstaller | Select-String -Pattern 'bootloader' | Select-Object -First 5
-          python -c "import PyInstaller, pathlib; p = pathlib.Path(PyInstaller.__file__).parent / 'bootloader'; print('bootloader dir:', p); print(sorted(x.name for x in p.iterdir()))"
-
-      - name: Build Windows executables with the rebuilt bootloader
-        run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File packaging/build_windows_pyinstaller.ps1 -Mode both -Flavour pyinstaller-rebuilt
-
-      - name: Upload rebuilt-bootloader artifacts
-        uses: actions/upload-artifact@v5
-        with:
-          name: tbo-windows-pyinstaller-rebuilt-bootloader
-          path: |
-            build/output/TBO-*-Windows-x64-pyinstaller-rebuilt-*.zip
-            build/output/TBO-*-pyinstaller-rebuilt-windows.json
-            build/dist/tbo-pyinstaller-rebuilt-onedir/tbo-pyinstaller-rebuilt-onedir.exe
-            build/dist/tbo-pyinstaller-rebuilt-onefile.exe
 
   build-macos:
     runs-on: macos-15-intel

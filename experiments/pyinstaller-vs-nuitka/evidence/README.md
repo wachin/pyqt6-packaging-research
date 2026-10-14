@@ -10,6 +10,7 @@ measurement recorded in `../RESULTS-2026-10-TBO.md`, section B.1 of
 | `vt-nuitka-TBO.exe-0of71.png` | Nuitka standalone `TBO.exe` | **0 / 71** |
 | `vt-pyinstaller-onedir-3of73.png` | PyInstaller onedir | **3 / 73** |
 | `vt-pyinstaller-onefile-3of73.png` | PyInstaller onefile | **3 / 73** |
+| `vt-pyinstaller-rebuilt-bootloader-onefile-2of70.png` | PyInstaller onefile, bootloader compiled from source | **2 / 70** |
 
 Each screenshot shows the VirusTotal file page: community score, detection
 summary, and the full per-engine list.
@@ -28,6 +29,7 @@ Screenshot file hashes, for integrity:
 475e58f0da5b35b860e63d1050a9b010fe6eb6afad0b1616edaf48a102d17398  vt-nuitka-TBO.exe-0of71.png
 b326557d8ed65297b9031cb9a2a805408a0702d0f13717b00968ec887fd3f53f  vt-pyinstaller-onedir-3of73.png
 6e6621832a7e38a80e18c61597a7f0bdf8619897d05b49091b50df8fca11e33e  vt-pyinstaller-onefile-3of73.png
+f451b20cf4c01d4461f3a54950e8fdab8249d0de5f81ebd048202ee99359c758  vt-pyinstaller-rebuilt-bootloader-onefile-2of70.png
 ```
 
 ## How to read them

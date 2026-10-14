@@ -521,10 +521,11 @@ los mismos metadatos PE, sin firma y con UPX desactivado en las tres (ver §10).
 | `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7.117.824 B | **0 / 71** |
 | `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2.019.109 B | **3 / 73** |
 | `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38.802.576 B | **3 / 73** |
+| `tbo-pyinstaller-rebuilt-onefile.exe` | PyInstaller, **bootloader recompilado** | onefile | `107d539b5f26d2c652919b6ce6fc8fd954b99bc992b204117611c81ca94c16a2` | 38.803.385 B | **2 / 70** |
 
 Los tres SHA-256 se recalcularon sobre los artefactos en disco y **coinciden con
 los enlaces de VirusTotal**, así que los ficheros de los que hablamos son
-exactamente los que produjo el CI de este repositorio. Las capturas de las tres
+exactamente los que produjo el CI de este repositorio. Las capturas de las cuatro
 páginas se guardan en `experiments/pyinstaller-vs-nuitka/evidence/`.
 
 **Qué motor marcó cada cosa:**
@@ -537,8 +538,10 @@ páginas se guardan en `experiments/pyinstaller-vs-nuitka/evidence/`.
 | onefile | Bkav Pro | `W32.Malware.7730AFD` |
 | onefile | Zillya | `Trojan.Script.2226` |
 | onefile | SecureAge | `Malicious` |
+| onefile recompilado | Bkav Pro | `W32.Malware.7730AFD` |
+| onefile recompilado | SecureAge | `Malicious` |
 
-Las dos páginas de PyInstaller agregan la etiqueta `trojan.script/wacatac`, con
+Las páginas de PyInstaller agregan la etiqueta `trojan.script/wacatac`, con
 categoría y familia `trojan`.
 
 ### 11.2 Interpretación: son 3 de 73, y con forma de falso positivo
@@ -563,8 +566,30 @@ con una amenaza real — una detección real seguiría a los bytes.
 
 **Cambia el supuesto más repetido del área.** La idea de que `onedir` evita las
 heurísticas de autoextracción que hacen sospechoso a `onefile` **no se sostiene**:
-las dos ramas de PyInstaller sacaron 3/73 con los mismos dos motores. El factor
-común es el **bootloader de PyInstaller**, no el layout del bundle.
+las dos ramas de PyInstaller sacaron 3/73 con los mismos dos motores.
+
+**Y se probó la hipótesis del bootloader: queda refutada.** PyInstaller documenta
+recompilar el bootloader desde el código fuente como forma de evitar los falsos
+positivos que causa el stub precompilado que comparten miles de ejecutables. Se
+construyó una cuarta rama que lo hace:
+
+| Rama | Resultado |
+|---|---|
+| onefile, bootloader de fábrica | 3 / 73 — Bkav Pro, Zillya, SecureAge |
+| onefile, **bootloader recompilado** | 2 / 70 — Bkav Pro, SecureAge |
+
+Zillya desapareció, así que el bootloader **no es irrelevante**. Pero **Bkav Pro y
+SecureAge lo marcaron igual**: si el stub compartido fuera la causa, unos bytes
+nuevos la habrían eliminado.
+
+Junto con lo anterior, esto **acota la causa de forma útil**: la rama `onedir`
+también salió marcada y `onedir` no se autoextrae, así que tampoco es la
+extracción. Lo que comparten las cuatro builds de PyInstaller es el **intérprete
+de CPython embebido y el formato de archivo de PyInstaller** — dos cosas que el
+desarrollador no controla.
+
+Por eso **se eliminaron las dos ramas de PyInstaller para Windows del CI de TBO**.
+La pregunta queda cerrada con la evidencia disponible.
 
 **No cambia nada más allá de esta aplicación.** Las condiciones a tener presentes:
 
@@ -627,17 +652,21 @@ Verificado en disco: `dist/TBO/` contiene 1 entrada (`TBO.exe`) y
 3. **Repetir con firma Authenticode**, que cambia las heurísticas y no está
    probado aquí. Es el mecanismo que la investigación sí respalda para la
    reputación.
-4. **Probar la hipótesis del bootloader** — **la rama ya existe**: el job
-   `build-windows-pyinstaller-rebuilt-bootloader` instala PyInstaller desde su
-   sdist con `PYINSTALLER_COMPILE_BOOTLOADER=1` y construye con
-   `-Flavour pyinstaller-rebuilt`. Falta **ejecutarlo y escanear el resultado**.
-   La propia documentación de PyInstaller recomienda recompilar el bootloader
-   precisamente por los falsos positivos que causa el precompilado compartido por
-   miles de ejecutables:
-   <https://pyinstaller.org/en/stable/bootloader-building.html>
-5. **Enviar informes de falso positivo** a Zillya, SecureAge, Bkav Pro y Skyhigh.
-   Es lo que realmente limpia la página de VirusTotal, y por tanto lo que
-   desarma la acusación pública.
+4. ~~Probar la hipótesis del bootloader~~ — **hecho, y refutada**: se construyó y
+   se escaneó la rama con el bootloader recompilado, y el resultado fue 2/70 frente
+   a 3/73. Zillya desapareció; Bkav Pro y SecureAge marcaron igual. La propia
+   documentación de PyInstaller recomienda recompilar el bootloader por los falsos
+   positivos del precompilado compartido
+   (<https://pyinstaller.org/en/stable/bootloader-building.html>), pero **no es
+   suficiente**.
+5. **Enviar informes de falso positivo** a Bkav Pro y SecureAge (y a Zillya y
+   Skyhigh para las builds antiguas). Es lo único medido que limpia la página de
+   VirusTotal, y por tanto lo que desarma la acusación pública.
+6. **Probar la firma Authenticode**, que sigue sin probarse y es el único lever
+   que la investigación respalda para la reputación.
+
+Las dos ramas de PyInstaller para Windows **se eliminaron del CI** de TBO: no
+queda nada que cambiar del lado del build.
 
 Mientras eso no exista, el resultado es **una pista sólida, no una regla**.
 

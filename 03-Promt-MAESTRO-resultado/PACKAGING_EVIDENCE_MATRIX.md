@@ -133,6 +133,7 @@ layout. Screenshots of the three report pages are kept as primary evidence in
 | `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7,117,824 B | **0 / 71** |
 | `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2,019,109 B | **3 / 73** |
 | `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38,802,576 B | **3 / 73** |
+| `tbo-pyinstaller-rebuilt-onefile.exe` | PyInstaller, bootloader compiled from source | onefile | `107d539b5f26d2c652919b6ce6fc8fd954b99bc992b204117611c81ca94c16a2` | 38,803,385 B | **2 / 70** |
 
 Which engines flagged, and with what:
 
@@ -144,6 +145,8 @@ Which engines flagged, and with what:
 | onefile | Bkav Pro | `W32.Malware.7730AFD` |
 | onefile | Zillya | `Trojan.Script.2226` |
 | onefile | SecureAge | `Malicious` |
+| onefile, rebuilt bootloader | Bkav Pro | `W32.Malware.7730AFD` |
+| onefile, rebuilt bootloader | SecureAge | `Malicious` |
 
 Both PyInstaller pages aggregate to the popular threat label
 `trojan.script/wacatac`, category and family label `trojan`.
@@ -169,7 +172,19 @@ malware, which would follow the bytes.
 **What this changes.** The most common assumption in this area — that `onedir`
 avoids the self-extraction heuristics which make `onefile` look suspicious — is
 **not supported**: both PyInstaller layouts scored 3/73 with the same two engines.
-The differentiator is PyInstaller's bootloader, not the bundle layout.
+
+**The build-side hypothesis was then tested and refuted.** PyInstaller documents
+rebuilding the bootloader from source as a way to avoid false positives caused by
+the widely shared pre-compiled stub. A fourth arm did exactly that:
+**3/73 became 2/70** — Zillya disappeared, **Bkav Pro and SecureAge flagged it
+anyway**. New bootloader bytes would have cleared it if the stub were the cause.
+
+Together with the `onedir` result that narrows the cause usefully: the non
+self-extracting `onedir` arm was flagged too, so it is not the extraction step,
+and it is not the bootloader. What every PyInstaller build shares is the
+**embedded CPython runtime and PyInstaller's archive format**, neither of which
+the developer controls. The Windows PyInstaller arms were consequently removed
+from TBO's CI, and the question is closed on the evidence available.
 
 **What this does not establish.** A single application, a single build of each
 arm, at a single point in time. Conditions to keep in view:
@@ -196,7 +211,7 @@ obfuscation, packing or binary mutation.
 | "Nuitka avoids AV detections" | case studies: no project uses Nuitka. TBO (2026-10): the Nuitka arm scored **0 / 71** | one controlled measurement | **Supported for this application**; still anecdote for the general claim | MEDIUM (observation HIGH, generalisation LOW) |
 | "onedir eliminates false positives" | TBO (2026-10) directly contradicts it: onedir scored **3 / 73**, identical to onefile, flagged by the same two engines | one controlled measurement, and it is the arm that refutes the claim | **Not supported.** The differentiator appears to be the bootloader, not the layout | MEDIUM |
 | Generic engines flag unsigned PyInstaller builds | TBO (2026-10): the 6 detections are `Malicious` (no family), `BehavesLike.…` (behavioural), and unnamed script trojans; two engines shared, the third differs between arms; all major engines clean | one controlled measurement with the per-engine list | Detections of this shape read as heuristic **false positives**; the honest response is a vendor report, not a rebuild | MEDIUM |
-| Rebuilding the bootloader avoids the shared-stub detections | PyInstaller's own documentation recommends building the bootloader to "avoid anti-virus false positives that result from the wide-spread use of pre-compiled bootloaders" | primary source (tool documentation), **not measured here** | Plausible and documented, and now implemented as a CI arm in TBO so it can be measured; do not state it as a cure | MEDIUM (documented) / NOT VERIFIED (effect) |
+| Rebuilding the bootloader avoids the shared-stub detections | PyInstaller's documentation recommends it; **tested on TBO 2026-10-14**: 3/73 → 2/70, one engine cleared, two remained | measured, **negative** | The shared bootloader is a contributing factor but **not the cause**; it is not a fix. The remaining trigger is the embedded CPython runtime / PyInstaller archive format | HIGH (for the refutation) |
 | False-positive reports are what clear the report page | no project in the case set implements the process; the TBO measurement identifies the four engines to contact | recommendation with a concrete target list | Vendors do remove generic detections, and a clean page removes the accusers' evidence; keep a record of submissions and outcomes | MEDIUM |
 | Untrusted Windows signature keeps SmartScreen warnings | napari stopgap Apple-cert signature | direct workflow comment (PAPS §7, `make_bundle_conda.yml:470-472`) | Supported: a non-Windows-trusted signature does not remove warnings | HIGH |
 | Signing is the intended reputation mechanism | napari (Azure on releases; otherwise warnings) | direct implementation + docs | Supported as a practice | HIGH |
