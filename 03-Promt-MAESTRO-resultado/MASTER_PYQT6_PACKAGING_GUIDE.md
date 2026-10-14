@@ -616,15 +616,49 @@ converge on. [REPEATED + MODERATE EVIDENCE]
 
 ## 12. Windows Antivirus / VirusTotal
 
-### What the evidence actually supports
+### Update (2026-10): the first measurement now exists
 
-**No project records any antivirus/VirusTotal/SmartScreen measurement.** The
-studies repeatedly and explicitly say so (CARA §7, CustomKnight §7, dikte §7,
-napari §7, pyzo §7, napari-packaging §7). Therefore:
+**Every statement below about "no data" applied to the five case studies, and it
+is still true of them.** But this research has since produced its own
+measurement, on TBO, and it is the first controlled one here: the same
+application, version and PE metadata built three ways, unsigned, UPX disabled in
+all three.
 
-- **NOT supported:** "PyInstaller causes antivirus detections."
-- **NOT supported:** "Nuitka does not cause antivirus detections."
-- **NOT supported:** "onedir eliminates false positives."
+| Arm | VirusTotal |
+|---|---|
+| Nuitka standalone, `9f8a79c1…` | **not flagged** |
+| PyInstaller onedir, `e4fd5035…` | **flagged** |
+| PyInstaller onefile, `94ba5787…` | **flagged** |
+
+Two consequences worth stating plainly, because they contradict what this
+section previously left open:
+
+1. **PyInstaller vs Nuitka is no longer purely anecdotal here.** For this
+   application the PyInstaller builds were flagged and the Nuitka build was not.
+2. **`onedir` is not an antivirus remedy.** Both PyInstaller layouts were
+   flagged, so the differentiator looks like PyInstaller's bootloader rather than
+   the bundle layout. The earlier "plausible but unmeasured" note was wrong in
+   its implication.
+
+Caveats that keep this a lead rather than a rule: **n = 1**, no detection counts
+or engine names were captured, the artifacts are unsigned and versioned
+`2.0.0.dev0`, and VirusTotal scores drift. Full record:
+`PACKAGING_EVIDENCE_MATRIX.md` section B.1 and
+`TBO-SOLUCIONES/SOLUCIONES-TBO.md` section 11.
+
+### What the case-study evidence actually supports
+
+**No case-study project records any antivirus/VirusTotal/SmartScreen
+measurement.** The studies repeatedly and explicitly say so (CARA §7,
+CustomKnight §7, dikte §7, napari §7, pyzo §7, napari-packaging §7). Therefore,
+*as claims about those projects*:
+
+- **NOT supported by the case studies:** "PyInstaller causes antivirus
+  detections." (The TBO measurement above is the first data point, not proof.)
+- **NOT supported by the case studies:** "Nuitka does not cause antivirus
+  detections."
+- **NOT supported, and now contradicted for one application:** "onedir
+  eliminates false positives."
 - **Supported (weakly, as correlations people report, not measurements):**
   - Unsigned onefile self-extracting executables are a well-documented
     false-positive population (CustomKnight study describes its own artifact as
@@ -636,7 +670,8 @@ napari §7, pyzo §7, napari-packaging §7). Therefore:
     the untrusted Apple-cert signature keeps SmartScreen warnings — i.e., a
     signature that is not Windows-trusted does NOT remove warnings).
   - UPX is generally discouraged in modern guidance (repeated in all
-    tutorials), but no project measures its effect.
+    tutorials), but no project measures its effect. The TBO measurement says
+    nothing about UPX: it was disabled in all three arms.
   - napari's ~600 MB installer "may avoid some heuristic scans" is stated as
     speculation even by the study that mentions it. [NOT VERIFIED]
 
@@ -644,24 +679,26 @@ napari §7, pyzo §7, napari-packaging §7). Therefore:
 
 | Technique | Evidence from projects | Evidence strength | Possible antivirus impact |
 |---|---|---|---|
-| Unsigned onefile | CustomKnight (artifact is exactly this; issues #22) | Correlational, widely reported; no VT data | Likely increases heuristic detections; NOT proven |
-| Unsigned onedir | CARA, dikte, pyzo (all unsigned on Windows) | No measurements | Unknown; onedir avoids self-extraction heuristics (plausible) but unmeasured |
+| Unsigned onefile | CustomKnight (artifact is exactly this; issues #22); TBO (flagged) | Case studies: correlational. TBO: measured, flagged | Increases heuristic detections for the one application measured; n = 1 |
+| Unsigned onedir | CARA, dikte, pyzo (all unsigned on Windows); TBO (flagged) | TBO: measured, **flagged** | `onedir` does **not** avoid detection on the evidence available; the self-extraction hypothesis is not supported |
 | Authenticode signing | napari (Azure on final tags; untrusted stopgap otherwise) | Signing shown to be the intended trust mechanism; no detection counts | Reputation anchor for SmartScreen/AV; does NOT guarantee clean results; untrusted sigs keep warnings |
 | Timestamping | napari (RFC 3161); recommended everywhere | Documented practice, no AV data | Keeps signature validity; not an AV factor per se |
-| UPX avoided | CARA requests it (unprovisioned); others absent | No measurements; tutorials discourage UPX | Correlational; avoiding it is cheap and conservative |
-| Onefile avoided | CARA/dikte/pyzo choose onedir for operational reasons | Operational rationale observed | No measured AV link |
-| Nuitka compiled output | None (no project uses it) | Anecdotal only | Unknown; NOT VERIFIED |
+| UPX avoided | CARA requests it (unprovisioned); others absent; TBO disabled in all arms | No measurements; tutorials discourage UPX | Correlational; avoiding it is cheap and conservative |
+| Onefile avoided | CARA/dikte/pyzo choose onedir for operational reasons; TBO flagged both layouts | Operational rationale observed; TBO shows no AV benefit from onedir | No measured AV benefit from choosing onedir |
+| Nuitka compiled output | No case study uses it; TBO (not flagged) | One controlled measurement | Not flagged for the one application measured; n = 1 |
 | Version/metadata consistency | dikte/pyzo Inno metadata; CARA icon only | Present but unmeasured | Consistent identity is part of reputation; unmeasured |
 | Public source + transparent CI + checksums | napari strongest; others partial | Documented transparency practices | Reputation/trust; does not directly change heuristics |
 | False-positive submission | None implements it | Recommended by all tutorials | A process to clear real detections; no project data |
 
 ### Bottom line
 
-The only evidence-backed statements are: (a) an untrusted/absent signature keeps
-Windows warnings (napari), and (b) signing is the legitimate mechanism the
-serious project relies on. Everything about detection *rates* is unmeasured.
-Treat any number of VirusTotal detections as a point-in-time, engine-specific
-signal, never an absolute security verdict. [INFERENCE]
+The evidence-backed statements are: (a) an untrusted/absent signature keeps
+Windows warnings (napari); (b) signing is the legitimate mechanism the serious
+projects rely on; and now (c) for one application, PyInstaller was flagged in both
+layouts while Nuitka was not, which is a lead rather than a rule. Treat any number
+of VirusTotal detections as a point-in-time, engine-specific signal, never an
+absolute security verdict — and never respond to a false positive with
+obfuscation, packing or binary mutation. [INFERENCE]
 
 ---
 

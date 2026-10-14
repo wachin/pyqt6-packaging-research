@@ -23,13 +23,16 @@ is worse than having no Skill at all. Every Skill here therefore carries a
 "What is NOT verified here" section, and the two largest gaps in the research
 are handled by *omission* rather than by confident advice:
 
-- **There is no antivirus / VirusTotal Skill.** Not one project in the case
-  studies measured anything about detections. A Skill would have nothing
-  verified to say, and would inevitably teach an agent to guess. If you want
-  this answered, run `experiments/pyinstaller-vs-nuitka/` and turn the result
-  into a Skill afterwards.
-- **Nuitka is not presented as a solution.** No case study uses it. The
-  decisions Skill says so explicitly and points at the experiment instead.
+- **There is still no antivirus / VirusTotal Skill.** The case studies measured
+  nothing about detections, and although a first measurement now exists (TBO,
+  2026-10: both PyInstaller arms flagged, the Nuitka arm not), **it is n = 1 with
+  no detection counts**. That is a lead, not a procedure — a Skill built on it
+  would teach an agent to generalise from a single sample. The two packaging
+  Skills state the measurement precisely as evidence and say what it does not
+  support. Earn the Skill by repeating the measurement, not by having one result.
+- **Nuitka is not presented as a solution.** No case study uses it, and the
+  single measurement is not enough to change that. The decisions Skill says so
+  explicitly and points at the experiment instead.
 
 Conversely, the skills lean hard on what *is* solid: the `.deb` audit procedure,
 the GLIBC baseline rule, inside-out macOS signing, the Inno Setup signing order,
@@ -59,7 +62,9 @@ section E, and the Status section of the root `README.md`).
 
 Regenerate or extend them when:
 
-- the controlled experiment produces real antivirus data;
+- the antivirus measurement is repeated across several releases and captures
+  detection counts and engine names — only then is there something a Skill can
+  state as a rule;
 - the `[TEMPLATE — MUST BE TESTED]` blocks in the tutorials have actually been
   executed;
 - a Skill's procedure fails in practice — that is a bug in the Skill, and the

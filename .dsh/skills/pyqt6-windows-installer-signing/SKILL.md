@@ -140,17 +140,25 @@ Established by napari's own workflow comments:
 Windows signing is the **largest shared gap** in the case studies: CARA,
 CustomKnight-Creator, dikte and pyzo ship unsigned Windows artifacts.
 
-## 6. What is NOT verified here
+## 6. What is and is not verified here
 
-- That PyInstaller or Nuitka change antivirus detection rates. **Nobody in this
-  research has measured it.** Do not repeat either claim as fact.
+**Measured (2026-10, one application):** the same code, version and PE metadata,
+unsigned, UPX disabled in every arm. Both PyInstaller builds — onedir *and*
+onefile — were flagged by VirusTotal; the Nuitka build was not. So for that
+application the freezer was the differentiator, and **`onedir` was no protection
+at all**. It is n = 1 with no detection counts recorded: report it as a lead, not
+a rule.
+
+**Not verified:**
+
+- Detection *rates*, or which engines and categories were involved.
 - That signing reduces detection counts.
-- That onedir avoids heuristics.
+- That this transfers to another application. Bundle contents drive heuristics.
 
-If you need these answered for your application, run the controlled experiment:
-`experiments/pyinstaller-vs-nuitka/` in this repository. Interpret VirusTotal as
-a point-in-time signal to investigate, never as a verdict — and never respond to
-a false positive with obfuscation, packing or binary mutation.
+If antivirus behaviour matters for your application, measure it rather than argue
+it: `experiments/pyinstaller-vs-nuitka/` in this repository. Interpret VirusTotal
+as a point-in-time signal to investigate, never as a verdict — and never respond
+to a false positive with obfuscation, packing or binary mutation.
 
 ## 7. Checklist
 

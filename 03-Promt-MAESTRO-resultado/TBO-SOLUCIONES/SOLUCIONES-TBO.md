@@ -505,4 +505,85 @@ resultado de VirusTotal es una señal puntual de un motor concreto, no un veredi
 
 ---
 
+## 11. Primera medición real: PyInstaller vs Nuitka en VirusTotal (2026-10)
+
+Esto cierra la laguna más grande de toda la investigación. Hasta ahora la matriz
+de evidencia decía `NO DATA` en todas las filas de antivirus: **ningún proyecto
+de los estudiados había publicado jamás una medición**.
+
+Ya está hecha, sobre TBO, con las tres builds del mismo commit, la misma versión,
+los mismos metadatos PE, sin firma y con UPX desactivado en las tres (ver §10).
+
+### 11.1 Resultado
+
+| Artefacto | Herramienta | Layout | SHA-256 | Tamaño | VirusTotal |
+|---|---|---|---|---|---|
+| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7.117.824 B | **no marcado** |
+| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2.019.109 B | **marcado** |
+| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38.802.576 B | **marcado** |
+
+Los tres SHA-256 se recalcularon sobre los artefactos en disco y **coinciden con
+los enlaces de VirusTotal**, así que los ficheros de los que hablamos son
+exactamente los que produjo el CI de este repositorio.
+
+### 11.2 Qué cambia y qué no
+
+**Cambia el supuesto más repetido del área.** La idea de que `onedir` evita las
+heurísticas de autoextracción que hacen sospechoso a `onefile` **no se sostiene**
+en esta medición: los dos layouts de PyInstaller salieron marcados. Si el
+resultado se mantiene, el factor diferencial es el **bootloader de PyInstaller**,
+no el layout del bundle.
+
+**No cambia nada más allá de esta aplicación.** Las condiciones a tener presentes:
+
+- **n = 1.** Una aplicación, una build de cada rama, un momento concreto. La
+  regla de esta misma matriz aplica: una muestra es ruido.
+- **Faltan los recuentos.** "Marcado" abarca desde un único motor heurístico
+  hasta una mayoría; el número cambia por completo la interpretación. **No se
+  capturaron ni el número de detecciones ni los nombres de los motores.**
+- **Sin firma, y versión `2.0.0.dev0`.** Tanto la ausencia de firma como una
+  versión de desarrollo son señales débiles por sí mismas.
+- **Historial de envío no controlado.** Un hash que VirusTotal nunca ha visto se
+  trata distinto de uno con historial.
+- TBO es software GPL, con pocos usuarios y sin historial de descargas.
+
+### 11.3 Un artefacto que confunde: el `.exe` suelto
+
+En el listado de los artefactos descargados, el mismo `TBO.exe` aparece dos
+veces: una anotada **"No funciona"** y otra **"Este funciona"**. No es un defecto
+de compilación.
+
+El job de CI sube **el zip completo y además el `.exe` suelto**:
+
+- el `.exe` extraído del artifact por separado no tiene su carpeta hermana
+  (`_internal` en PyInstaller, los DLL en Nuitka) → **no arranca**;
+- el `.exe` que vive dentro del zip portable, con sus hermanos, → **funciona**.
+
+Lo mismo pasa con `tbo-pyinstaller-onedir.exe`.
+
+El `.exe` suelto se sube a propósito, porque es lo que se manda a VirusTotal. Pero
+**no debe presentarse como una aplicación ejecutable**. Si el artifact se
+distribuye a personas, conviene etiquetarlo como "solo para escaneo" o dejar
+únicamente el zip.
+
+Verificado en disco: `dist/TBO/` contiene 1 entrada (`TBO.exe`) y
+`dist/tbo-pyinstaller-onedir/` contiene 1 entrada (el `.exe`).
+
+### 11.4 Qué haría falta para que esto sea concluyente
+
+1. **Capturar el detalle**: número de detecciones, motores, y categoría
+   (malware / PUA / heurístico) de cada artefacto.
+2. **Repetir en varias releases.** Un único par de builds no distingue una
+   propiedad de la herramienta de una casualidad de ese build.
+3. **Repetir con firma Authenticode**, que cambia las heurísticas y no está
+   probado aquí.
+4. **Probar la hipótesis del bootloader**: un tercer build con `--noupx` ya está,
+   pero faltaría una rama con un bootloader reconstruido o un `onedir` de
+   PyInstaller sin bootloader self-extracting, para separar "bootloader" de
+   "PyInstaller" como causa.
+
+Mientras eso no exista, el resultado es **una pista sólida, no una regla**.
+
+---
+
 Dios les bendiga

@@ -172,16 +172,23 @@ section E, which lists what could **not** be verified.
 
 In particular, these are **not established** and must never be stated as fact:
 
-- that PyInstaller causes antivirus detections;
-- that Nuitka avoids them;
-- that onedir eliminates false positives;
 - that UPX increases detections;
 - that code signing guarantees a clean VirusTotal result;
-- the exact Qt plugin or translation inventory inside any frozen artifact.
+- the exact Qt plugin or translation inventory inside any frozen artifact;
+- any *rate* — how many engines flag what, for any project.
 
-**No project in the case set publishes any antivirus detection data.** If you
-are asked about antivirus behaviour, say that it is unmeasured in this research
-and point at `experiments/pyinstaller-vs-nuitka/`.
+One measurement now exists, so state it precisely rather than either denying or
+over-claiming it. In 2026-10 the same TBO application was built three ways
+(unsigned, UPX disabled, identical metadata): **both PyInstaller arms were
+flagged and the Nuitka arm was not**, which also refutes the idea that `onedir`
+avoids detection. It is **n = 1**, with no detection counts captured. Report it
+as a lead, cite `PACKAGING_EVIDENCE_MATRIX.md` §B.1, and never generalise it into
+"PyInstaller causes detections" or "Nuitka avoids them".
+
+**No case-study project publishes any antivirus detection data.** If you are
+asked about antivirus behaviour, say that the five studied projects measured
+nothing, cite the single TBO measurement described above, and point at
+`experiments/pyinstaller-vs-nuitka/` for the repeatable kit.
 
 ### Do not turn unverified findings into procedure
 
@@ -235,7 +242,7 @@ at all.
 | `<project>-resultados/` | Per-case-study `PACKAGING_STUDY.md`, `PYQT6_PACKAGING_TUTORIAL.md` and `_evidence/`. |
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
-| `experiments/pyinstaller-vs-nuitka/` | The controlled build-tool experiment. Not yet executed end to end. |
+| `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit. Its own CI workflow has not been run; the equivalent comparison was measured on TBO instead. |
 | `.dsh/skills/` | Agent Skills derived from the verified findings. |
 
 ### If you are asked to package a PyQt6 application

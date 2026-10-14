@@ -523,14 +523,24 @@ confidence-labelled evidence matrix, and a consolidated master guide plus master
 tutorial. Each case study is backed by an `_evidence/` pack pinned to an exact
 commit.
 
-The **validation phase is not complete**, and `PACKAGING_EVIDENCE_MATRIX.md`
-says so explicitly. The following remain unverified:
+The **validation phase is no longer empty**, and the first real measurement has
+changed one of the headline conclusions.
 
-- **Antivirus / VirusTotal behaviour.** No project in the case set publishes
-  detection data. Whether PyInstaller or Nuitka changes false-positive rates is
-  still an open question, and it cannot be answered by reading repositories.
-- **Nuitka.** None of the five case studies uses it, even though TBO does on
-  Windows — so the tool that matters most here has no upstream evidence.
+**Measured in 2026-10 (TBO):** the same application, version and PE metadata,
+unsigned, UPX disabled, built three ways. **The PyInstaller builds — onedir *and*
+onefile — were flagged by VirusTotal; the Nuitka build was not.** That also
+refutes the common assumption that `onedir` avoids detection. It is **n = 1**,
+with no detection counts captured, so it is a lead and not a rule. Full record:
+`PACKAGING_EVIDENCE_MATRIX.md` §B.1 and
+`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md` §11.
+
+Still unverified:
+
+- **Antivirus / VirusTotal *rates*.** Flagged / not-flagged is now known for one
+  application; the number of engines and which engines were not captured, and no
+  case-study project publishes detection data at all.
+- **Nuitka at scale.** None of the five case studies uses it. There is now one
+  measurement on TBO, and nothing more.
 - **`.deb` in upstream projects.** None of the five ships one, and no project
   even has a `debian/` directory. The only working `.deb` evidence is TBO's.
 - **Exact Qt plugin and translation inventories** inside any frozen artifact.
@@ -539,11 +549,11 @@ says so explicitly. The following remain unverified:
 
 Next steps, in order:
 
-1. **Run the controlled experiment.** The kit is built and its PyInstaller arms
-   are validated locally, but **no run has produced antivirus data yet**. That
-   requires executing `experiments/pyinstaller-vs-nuitka/workflow-experiment.yml`
-   on a GitHub runner and recording the results with
-   `experiments/pyinstaller-vs-nuitka/RESULTS-TEMPLATE.md`.
+1. **Capture the detection detail and repeat.** Record the detection count, the
+   engine names and the categories for each artifact, and repeat across several
+   releases — one build pair does not separate a property of the tool from a
+   coincidence of that build. The generic kit for this is
+   `experiments/pyinstaller-vs-nuitka/`.
 2. Finish the TBO `.deb` and AppImage cycle end to end.
 3. Replace the `[TEMPLATE — MUST BE TESTED]` blocks in the tutorials with
    instructions that have actually been executed.

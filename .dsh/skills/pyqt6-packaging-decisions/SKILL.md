@@ -89,20 +89,41 @@ Note the evidence gap: **none of the five upstream case studies ships a `.deb`
 at all.** The validated `.deb` experience here comes from TBO — see the
 `pyqt6-deb-packaging` skill.
 
-## 4. What is NOT established (do not repeat these as fact)
+## 4. What the evidence does and does not say about antivirus
 
-- That PyInstaller causes antivirus detections. No project measured it.
-- That Nuitka avoids them. No project uses Nuitka.
-- That onedir eliminates false positives. Plausible, unmeasured.
-- That UPX increases detections. Correlational only — but disabling UPX is free,
-  so disable it.
-- That code signing guarantees a clean VirusTotal result. It does not; it is a
+This is the area where the honest answer changed in 2026-10, so state it
+precisely instead of repeating the folklore in either direction.
+
+**One controlled measurement now exists.** The same application, version and PE
+metadata, unsigned and with UPX disabled in every arm, built three ways:
+
+| Arm | VirusTotal |
+|---|---|
+| Nuitka standalone | not flagged |
+| PyInstaller onedir | **flagged** |
+| PyInstaller onefile | **flagged** |
+
+What that supports: for that application the PyInstaller builds were flagged and
+the Nuitka build was not. It also **refutes the idea that `onedir` avoids
+detection** — both PyInstaller layouts were flagged, so the differentiator looks
+like PyInstaller's bootloader rather than the bundle layout.
+
+What it does **not** support, and what you must not tell a user:
+
+- that "PyInstaller causes detections" or "Nuitka avoids them" as general rules.
+  It is **n = 1**, on one GPL application with no download history;
+- any *rate*: no detection counts or engine names were captured;
+- that UPX increases detections — correlational only, though disabling it is
+  free, so disable it;
+- that code signing guarantees a clean VirusTotal result. It does not; it is a
   reputation anchor, and an untrusted certificate does not even remove
   SmartScreen warnings (napari documented this about its own stopgap).
 
-Treat a VirusTotal count as a point-in-time, engine-specific signal to
-investigate — never as a verdict or a score to optimise. This is distribution
-and reputation work, not evasion.
+If antivirus behaviour matters for the project in front of you, measure it rather
+than argue it: `experiments/pyinstaller-vs-nuitka/` is the repeatable kit. Treat a
+VirusTotal count as a point-in-time, engine-specific signal to investigate — never
+as a verdict or a score to optimise. This is distribution and reputation work,
+not evasion.
 
 ## 5. Before you build
 

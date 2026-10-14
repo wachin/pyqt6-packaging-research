@@ -119,14 +119,56 @@ Compact, evidence-oriented reference for the major conclusions in
 
 ## B. Antivirus / VirusTotal evidence (special table)
 
+### B.1 First measurement in this research (TBO, 2026-10)
+
+Until now this section said "no data" throughout: no case-study project had ever
+published a detection count. TBO has now been scanned in three builds produced
+from the same commit, the same version and the same PE metadata, all unsigned and
+all with UPX disabled. The only differences are the freezer and the bundle
+layout.
+
+| Artifact | Freezer | Layout | SHA-256 | Size | VirusTotal |
+|---|---|---|---|---|---|
+| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7,117,824 B | **not flagged** |
+| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2,019,109 B | **flagged** |
+| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38,802,576 B | **flagged** |
+
+**Verified here:** the SHA-256 values were recomputed from the build artifacts on
+disk and match the hashes in the VirusTotal links, so the files under discussion
+are exactly the ones this repository's CI produced.
+
+**Not verified here:** the VirusTotal verdicts themselves. VirusTotal cannot be
+read without an API key, so the flagged / not-flagged column is the repository
+owner's report rather than an independent observation, and the detection counts
+and engine names were not captured.
+
+**What this changes.** The most common assumption in this area — that `onedir`
+avoids the self-extraction heuristics which make `onefile` look suspicious — is
+**not supported** by this measurement: both PyInstaller layouts were flagged. If
+it holds, the differentiator is PyInstaller's bootloader, not the bundle layout.
+
+**What this does not establish.** A single application, a single build of each
+arm, at a single point in time. Conditions to keep in view:
+
+- **n = 1.** The evidence matrix's own rule applies: one sample is noise.
+- **Detection counts are missing.** "Flagged" spans everything from one heuristic
+  engine to a large majority, and the number changes the interpretation entirely.
+- Unsigned, and versioned `2.0.0.dev0`. Both the absent signature and a
+  development version string are themselves weak negative signals.
+- Submission history is uncontrolled. A hash VirusTotal has never seen before is
+  treated differently from one with a track record.
+- TBO is GPL software with a small user base and no download history.
+
+### B.2 Claims table
+
 | Claim | Evidence from projects | Evidence strength | Conclusion | Confidence |
 |---|---|---|---|---|
-| "PyInstaller causes AV detections" | none measured; CustomKnight artifact is the described risk profile | NO DATA | Cannot be determined from the case studies | — |
-| "Nuitka avoids AV detections" | no project uses Nuitka | anecdote only (tutorials) | NOT VERIFIED | — |
-| "onedir eliminates false positives" | CARA/dikte/pyzo choose onedir for operational reasons | operational, not AV data | NOT VERIFIED as an AV claim | — |
+| "PyInstaller causes AV detections" | case studies: none measured. TBO (2026-10): both PyInstaller arms flagged, see B.1 | one controlled measurement, same application as the clean Nuitka arm | **Supported for this application**; not yet evidence of a general rule | MEDIUM (observation HIGH, generalisation LOW) |
+| "Nuitka avoids AV detections" | case studies: no project uses Nuitka. TBO (2026-10): the Nuitka arm was not flagged | one controlled measurement | **Supported for this application**; still anecdote for the general claim | MEDIUM (observation HIGH, generalisation LOW) |
+| "onedir eliminates false positives" | TBO (2026-10) directly contradicts it for this application: onedir was flagged too | one controlled measurement, and it is the arm that refutes the claim | **Not supported.** The differentiator appears to be the bootloader, not the layout | MEDIUM |
 | Untrusted Windows signature keeps SmartScreen warnings | napari stopgap Apple-cert signature | direct workflow comment (PAPS §7, `make_bundle_conda.yml:470-472`) | Supported: a non-Windows-trusted signature does not remove warnings | HIGH |
 | Signing is the intended reputation mechanism | napari (Azure on releases; otherwise warnings) | direct implementation + docs | Supported as a practice | HIGH |
-| UPX increases detections | no project measures it | general guidance repeated in tutorials | NOT VERIFIED (plausible correlation; avoid it) | LOW |
+| UPX increases detections | no project measures it; TBO disabled UPX in **all three** arms, so the measurement above says nothing about UPX | general guidance repeated in tutorials | NOT VERIFIED (plausible correlation; avoid it) | LOW |
 | Large installer (~600 MB) avoids heuristics | napari | speculation in the study itself | NOT VERIFIED | LOW |
 | VirusTotal result = absolute security verdict | none | — | Rejected: VT is a point-in-time, engine-specific signal | HIGH (as a methodological statement) |
 
@@ -136,7 +178,7 @@ Compact, evidence-oriented reference for the major conclusions in
 
 | Contradiction | Side A | Side B | Classification / resolution | Confidence |
 |---|---|---|---|---|
-| Bundle mode | onefile (CustomKnight) | onedir (CARA/dikte/pyzo) | onedir is the better default; onefile only when a single naked exe is the requirement | HIGH (choice), NOT VERIFIED (AV link) |
+| Bundle mode | onefile (CustomKnight) | onedir (CARA/dikte/pyzo) | onedir is the better default; onefile only when a single naked exe is the requirement | HIGH (choice), **refuted as an AV remedy** by TBO B.1 (both layouts flagged) |
 | DEB model | native deps (CARA/pyzo/dikte tutorials) | bundled runtime (CustomKnight/napari tutorials) | tradeoff; native preferred when distro `python3-pyqt6` exists; bundled must be disclosed | MEDIUM |
 | AppImage construction | manual AppDir + appimagetool (dikte, OBSERVED) | linuxdeploy-plugin-qt (tutorials, RECOMMENDED) | only manual is observed; pin/checksum whichever tool | MEDIUM |
 | Freezing vs conda | freezers (4 projects) | conda constructor (napari) | driven by plugin-ecosystem requirement, not preference | HIGH |
@@ -162,16 +204,25 @@ Compact, evidence-oriented reference for the major conclusions in
 
 ## E. Items that could not be verified from the studies (explicitly)
 
-These are flagged as NOT VERIFIED and must not be treated as facts:
+These were flagged as NOT VERIFIED and must not be treated as facts. Items 1-3
+and 6 have since been partially addressed by the TBO measurement in section B.1;
+the rest stand unchanged.
 
-1. VirusTotal detection counts / rates for any project.
+1. ~~VirusTotal detection counts / rates for any project.~~ **Partially
+   addressed** for exactly one application: flagged / not-flagged is known for
+   three TBO builds (B.1), but **no detection counts or engine names were
+   captured**, so "how many engines" remains unknown.
 2. SmartScreen behavior of any project's Windows artifact (including napari's
-   Azure-signed `.exe`).
-3. Whether onedir vs onefile or PyInstaller vs Nuitka changes detection rates.
+   Azure-signed `.exe`). Still unverified; the TBO measurement did not test
+   SmartScreen.
+3. ~~Whether onedir vs onefile or PyInstaller vs Nuitka changes detection
+   rates.~~ **Addressed for one application** (B.1): PyInstaller flagged in both
+   layouts, Nuitka not flagged. Rates remain unknown and n = 1.
 4. Whether Azure Artifact Signing materially reduces SmartScreen warnings.
 5. The exact Qt plugin/translation inventories inside any frozen artifact.
 6. The performance/startup/size tradeoff of PyInstaller vs Nuitka on the same
-   application.
+   application. **Size is now known** for one application (B.1); start-up and
+   eventual runtime behaviour are not.
 7. Whether CARA's Windows ZIPs are signed outside the repository.
 8. The mechanism that produced CustomKnight's separate x64/ARM64 macOS zips.
 9. Whether a signed, notarized, stapled DMG flow works as well as
@@ -183,12 +234,14 @@ These are flagged as NOT VERIFIED and must not be treated as facts:
 
 ---
 
-## F. TBO follow-up evidence (2026-08)
+## F. TBO follow-up evidence (2026-08 onwards)
 
-Real fixes applied while packaging **TBO** (github.com/wachin/TBO), a PyQt6
-app built with Nuitka (Windows) and PyInstaller (macOS/Linux) on GitHub
-Actions. Recorded in
-`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md`.
+Real fixes applied while packaging **TBO** (github.com/wachin/TBO), a PyQt6 app
+built with Nuitka (Windows) and PyInstaller (macOS/Linux) on GitHub Actions.
+Recorded in `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md`.
+
+Sections 1-8 are 2026-08; sections 9-11 (the resource-collection defect, the
+toolchain pin, and this measurement) are 2026-10.
 
 | Technique | Project | Evidence | Observed behavior | Conclusion | Confidence |
 |---|---|---|---|---|---|
@@ -207,7 +260,10 @@ Actions. Recorded in
 | Rolling `continuous` tag used as a checksum pin | TBO | SOLUCIONES §9.5 | the asset was republished 2026-10-04, so the pinned SHA-256 stopped matching and the build failed | pin a **versioned** release; the checksum failing is the desired outcome, the pin choice was wrong | HIGH |
 | Icon filename must match `Icon=` in the `.desktop` entry | TBO | SOLUCIONES §9.5 | appimagetool 1.9.1 refuses to build with `Icon=org.tbo.TBO` while the AppDir contains `tbo.png` | name the icon after the application ID; older rolling builds tolerated it | HIGH |
 | Green CI is not a working artifact | TBO | SOLUCIONES §9 | five jobs green while the published AppImage had been missing 14 UI icons since August | smoke test the built artifact in CI; nothing else catches a silently incomplete bundle | HIGH |
-| Freezer comparison on the real application | TBO | SOLUCIONES §10 | Windows had only ever been built with Nuitka; the PyInstaller false-positive claim was never measured on TBO | a PyInstaller Windows build now exists with identical metadata and no UPX, to be scanned alongside it | HIGH (for the setup), NOT VERIFIED (for any detection result) |
+| Freezer comparison on the real application | TBO | SOLUCIONES §10 | Windows had only ever been built with Nuitka; the PyInstaller false-positive claim was never measured on TBO | a PyInstaller Windows build now exists with identical metadata and no UPX, to be scanned alongside it | HIGH (for the setup) |
+| PyInstaller toolchain missing from the comparison job | TBO | SOLUCIONES §10 | CI failed with `No module named PyInstaller`: the job installed `requirements-windows.txt`, the Nuitka toolchain | give each freezer its own requirements file; the job's own exit-code check turned it into a one-line message | HIGH |
+| **Measured freezer comparison** | TBO | SOLUCIONES §11; matrix B.1 | PyInstaller onedir and onefile both flagged by VirusTotal; the Nuitka build of the same commit was not | for this application PyInstaller is the differentiator, **not** the onedir/onefile layout; n = 1 and no detection counts, so treat as a lead, not a rule | MEDIUM (observation HIGH, generalisation LOW) |
+| A bare onedir executable published as an artifact | TBO | SOLUCIONES §11.3 | the CI artifact uploads both the complete zip and the loose `.exe`; extracted alone the `.exe` cannot start and was reported as "no funciona" | the loose `.exe` is wanted for scanning, so label it as scan-only rather than shipping it as a runnable app | HIGH |
 
 ### Note: re-citation of the `.gitignore` / submodule-dirt row
 
