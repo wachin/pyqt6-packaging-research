@@ -82,6 +82,41 @@ The three steps matter: uninstall any existing copy, clear the cached wheel so
 `pip` cannot reuse a pre-built one, and force an sdist install. Requires a C
 toolchain — MSVC on the Windows runner, which is already there for Nuitka.
 
+#### Measured: which of the two flags actually does the work
+
+This was tested rather than assumed, on Linux with PyInstaller 6.22.3 held
+constant, and the result contains a trap worth knowing.
+
+Installing from the sdist does produce a locally compiled bootloader, with
+different bytes from the wheel's — that is the whole point:
+
+| Install method | `Linux-64bit-intel/run` |
+|---|---|
+| wheel (default `pip install pyinstaller`) | `220bf3c7…`, 72,464 B |
+| sdist (`--no-binary=PyInstaller`) | `b8771ca4…`, 68,472 B |
+
+**But the sdist ships pre-compiled bootloaders for some platforms, and for
+Windows the one it ships is byte-identical to the wheel's:**
+
+```text
+sdist  PyInstaller/bootloader/Windows-64bit-intel/run.exe  581ea23e…  311,808 B
+wheel  PyInstaller/bootloader/Windows-64bit-intel/run.exe  581ea23e…  311,808 B
+```
+
+So on Windows, `--no-binary=PyInstaller` **on its own changes nothing**: pip
+reuses the same pre-built stub that every other application uses. It is
+`PYINSTALLER_COMPILE_BOOTLOADER=1` that forces the compile.
+
+On Linux the sdist happens to carry no pre-built bootloader for the platform, so
+it compiles regardless — which is exactly why the flag looks redundant if you
+only ever test on Linux. **Both flags are required for the Windows arm**, and
+this detail is missing from most write-ups that recommend "rebuilding the
+bootloader".
+
+Credentials for the mechanism, not for the outcome: whether the rebuilt Windows
+bootloader actually reduces the detection count is **still unmeasured**. The arm
+exists to answer that.
+
 **Why it plausibly works:** the rebuilt bootloader has different bytes from the
 stock one that every other PyInstaller application shares, so a signature written
 against the stock stub no longer matches. This is a legitimate engineering act:

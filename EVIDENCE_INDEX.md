@@ -18,7 +18,7 @@ python3 tools/extract_evidence.py
 | CustomKnight-Creator - Hollow Knight mod tool | `CustomKnight-Creator` | `158ec2f259cb` | GPL | `CustomKnight-Creator-resultados/_evidence/` | 3 | The negative example: onefile on all platforms, ubuntu-latest GLIBC, no signing, no release automation. |
 | napari - scientific image viewer | `napari` | `908b3ed80ccb` | BSD | `napari-resultados/_evidence/` | 14 | Freezing rejected in favour of conda constructor; delegates all packaging to napari/packaging. |
 | napari/packaging - dedicated packaging + installer infrastructure | `napari-packaging` | `5befa97fdd90` | NO LICENCE FILE FOUND | `napari-packaging-resultados/_evidence/` | 12 | The most auditable installer pipeline in the set: conda constructor + NSIS/pkg, SHA-pinned actions, artifact smoke test. NO LICENCE FILE - evidence only, do not reuse. |
-| TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux) | `PyQt6-Apps/TBO` *(independent clone)* | `f3d5e4b34b42` | GPL | `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/_evidence/` | 24 | Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder. |
+| TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux) | `PyQt6-Apps/TBO` *(independent clone)* | `61065c0d4a39` | GPL | `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/_evidence/` | 24 | Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder. |
 
 ## How to read an evidence pack
 
@@ -41,5 +41,5 @@ The extracted files keep their upstream licence. **CARA, CustomKnight-Creator, d
 
 - Projects: 7
 - Files: 102
-- Total size: 744,346 bytes
+- Total size: 745,207 bytes
 - Generated: 2026-10-14

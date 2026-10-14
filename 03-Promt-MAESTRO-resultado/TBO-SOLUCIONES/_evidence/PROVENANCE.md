@@ -7,12 +7,12 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Source tree | `PyQt6-Apps/TBO` |
 | Tracked as | independent clone (ignored by this repository) |
 | Upstream | https://github.com/wachin/TBO |
-| Pinned commit | `f3d5e4b34b428425a8fd6e0458e635a5a733705b` |
-| Described as | `f3d5e4b` |
+| Pinned commit | `61065c0d4a39cab5eb8f4ced78c048572566d263` |
+| Described as | `61065c0` |
 | Licence | GPL (`LICENSE`) |
 | Extracted (UTC) | 2026-10-14 |
 | Files | 24 |
-| Total size | 179,858 bytes |
+| Total size | 180,719 bytes |
 
 > Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.
 
@@ -40,7 +40,7 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | `debian/changelog` | 410 | Debian changelog driving the package version. |
 | `debian/copyright` | 1,730 | Debian copyright/attribution file. |
 | `debian/source/format` | 12 | Source package format (3.0 quilt). |
-| `.github/workflows/build.yml` | 8,956 | Release pipeline producing the wheel/sdist, .deb, Flatpak, Windows and macOS artifacts. |
+| `.github/workflows/build.yml` | 9,817 | Release pipeline producing the wheel/sdist, .deb, Flatpak, Windows and macOS artifacts. |
 | `.github/workflows/ci.yml` | 1,572 | CI tests. |
 | `docs/GitHub-Actions-Solutions/PACKAGING-RESOURCE-COLLECTION-BUG.md` | 3,724 | The resource-collection defect: bundles that built green and shipped without their icons and translations. |
 | `pyproject.toml` | 1,770 | Build metadata (version source for the .deb and Nuitka --file-version). |

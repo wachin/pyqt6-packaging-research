@@ -181,8 +181,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r packaging/requirements-windows-pyinstaller.txt
-          # All three steps are required: an existing install would be kept, and
-          # a cached wheel would be reused, so the bootloader would never rebuild.
+
+          # Every line here is load-bearing, and two of them are easy to drop by
+          # mistake:
+          #
+          #   uninstall       - an existing copy would simply be kept.
+          #   cache remove    - pip would rebuild from its cached wheel and the
+          #                     bootloader would never recompile.
+          #   --no-binary     - forces the sdist instead of the wheel.
+          #   COMPILE_BOOTLOADER - the one that actually matters on Windows.
+          #
+          # Measured with PyInstaller 6.22.3: the sdist's pre-compiled
+          # Windows-64bit-intel/run.exe is BYTE-IDENTICAL to the wheel's
+          # (sha256 581ea23e..., 311808 bytes). So --no-binary alone changes
+          # nothing on Windows - pip would reuse the same stub every other
+          # application uses. Only PYINSTALLER_COMPILE_BOOTLOADER forces the
+          # compile. On Linux the sdist carries no pre-built bootloader for the
+          # platform, so it compiles anyway and the flag looks redundant there.
           python -m pip uninstall -y PyInstaller
           python -m pip cache remove PyInstaller
           $env:PYINSTALLER_COMPILE_BOOTLOADER = "1"
