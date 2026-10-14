@@ -7,8 +7,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Source tree | `PyQt6-Apps/TBO` |
 | Tracked as | independent clone (ignored by this repository) |
 | Upstream | https://github.com/wachin/TBO |
-| Pinned commit | `5633db57b66d6164aa9d052294cd186c8827b4fa` |
-| Described as | `5633db5` |
+| Pinned commit | `17047b1ba3db15b2cb23ab6a68202487aaec38f0` |
+| Described as | `17047b1` |
 | Licence | GPL (`LICENSE`) |
 | Extracted (UTC) | 2026-10-14 |
 | Files | 24 |

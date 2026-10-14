@@ -53,6 +53,37 @@ The rebuilt-bootloader build lost Zillya and kept the other two. Both
 PyInstaller pages aggregate to the popular threat label `trojan.script/wacatac`,
 with `trojan` as the category and family label.
 
+## The other platforms, same release
+
+The Windows detections turn out to be specific to the Windows binary. Two further
+scans of the same release, screenshots in `evidence/`:
+
+| Artifact | Format submitted | Result |
+|---|---|---|
+| `TBO-2.0.0.dev0-x86_64.AppImage` | the ELF executable itself (`c065c1c3…`) | **0 / 64** |
+| `tbo-macos.zip` | a ZIP containing another ZIP (`22d5d093…`) | **0 / 73**, but ~22 engines reported **Timeout** |
+
+**The AppImage result is the informative one.** Three of the four engines that
+flag the Windows `.exe` — **Bkav Pro**, **Skyhigh (SWG)** and **Zillya** — scanned
+this AppImage and reported it **clean**. Only SecureAge could not process it
+("Unable to process this file type", which several Windows-only engines also
+reported for an ELF).
+
+The AppImage's payload is itself a PyInstaller `onedir` build, so the same
+toolchain, the same bootloader family and the same embedded CPython are all
+present in a file those engines find harmless. That sharpens the conclusion from
+observation 5: **the detections are specific to the Windows PE binary**, not to
+PyInstaller's contents in general. It also reads better than the first
+interpretation of the bootloader test — the bootloader *is* a Windows PE stub, and
+rebuilding it changed the bytes without changing the structure the heuristic
+reacts to.
+
+**The macOS result is weak evidence and should not be quoted as a clean scan.**
+The submitted file was a ZIP containing a second ZIP, and the engines listed
+against it mostly report Timeout rather than Undetected — including two of the
+engines relevant here (Zillya, Skyhigh SWG). To make it meaningful, submit the
+Mach-O binary itself, from `TBO.app/Contents/MacOS/TBO` inside the `.app`.
+
 ## Observations
 
 **1. The magnitude is small, and the pattern is heuristic.** Three engines out of
@@ -131,6 +162,12 @@ PyInstaller's bootloader does not clear it.** One detection went away and two
 stayed, and because the non-self-extracting `onedir` arm was flagged as well, the
 remaining cause is the embedded CPython runtime and PyInstaller's archive format
 — neither of which the developer controls.
+
+And it locates the problem precisely: **it is specific to the Windows PE
+binary.** The same release's AppImage, whose payload is also a PyInstaller build,
+was scanned by three of the four flagging engines and came back clean. So this is
+not a reason to abandon PyInstaller on Linux or macOS — the AppImage and the
+`.app` are judged on different terms.
 
 It still does not establish that PyInstaller causes detections in general: **n = 1**,
 unsigned, on a GPL application with no download history.

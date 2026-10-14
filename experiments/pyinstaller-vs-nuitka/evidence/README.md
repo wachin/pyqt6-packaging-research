@@ -11,6 +11,13 @@ measurement recorded in `../RESULTS-2026-10-TBO.md`, section B.1 of
 | `vt-pyinstaller-onedir-3of73.png` | PyInstaller onedir | **3 / 73** |
 | `vt-pyinstaller-onefile-3of73.png` | PyInstaller onefile | **3 / 73** |
 | `vt-pyinstaller-rebuilt-bootloader-onefile-2of70.png` | PyInstaller onefile, bootloader compiled from source | **2 / 70** |
+| `vt-linux-appimage-0of64.png` | Linux AppImage (the ELF binary itself) | **0 / 64** |
+| `vt-macos-zip-0of73.png` | macOS `.app` inside two nested ZIPs | **0 / 73**, but ~22 engines timed out |
+
+The last two are the same release as the Windows artifacts. Read the caveats in
+`../RESULTS-2026-10-TBO.md`: the AppImage result is solid and shows the Windows
+detections do not carry over to Linux; the macOS one is weak evidence because the
+file submitted was a ZIP inside a ZIP, and most engines never completed.
 
 Each screenshot shows the VirusTotal file page: community score, detection
 summary, and the full per-engine list.
@@ -30,6 +37,8 @@ Screenshot file hashes, for integrity:
 b326557d8ed65297b9031cb9a2a805408a0702d0f13717b00968ec887fd3f53f  vt-pyinstaller-onedir-3of73.png
 6e6621832a7e38a80e18c61597a7f0bdf8619897d05b49091b50df8fca11e33e  vt-pyinstaller-onefile-3of73.png
 f451b20cf4c01d4461f3a54950e8fdab8249d0de5f81ebd048202ee99359c758  vt-pyinstaller-rebuilt-bootloader-onefile-2of70.png
+e9bf8db550e86779a21a3d05eb3c8669c8f76eca0d4e8d266afb72802550a384  vt-linux-appimage-0of64.png
+3cf6f2c718e533902608e0a5b0dc939a857eb6fcccdfeea2ed23757c1cd28959  vt-macos-zip-0of73.png
 ```
 
 ## How to read them
