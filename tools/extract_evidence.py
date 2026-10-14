@@ -209,6 +209,7 @@ PROJECTS: list[dict] = [
             ("packaging/build_macos.sh", "macOS build (PyInstaller) driver."),
             ("packaging/build.sh", "Top-level local packaging driver (includes the Flatpak step)."),
             ("packaging/generate_icon.py", "Icon generator; the explicit output-dir bug is recorded in SOLUCIONES-TBO.md."),
+            ("packaging/make_portable_zip.py", "Creates the Windows portable ZIP with conformant forward-slash entry names, because PowerShell 5.1 cannot be trusted to; see SOLUCIONES-TBO.md section 12."),
             ("packaging/update_translations.sh", "Translation (.qm) generation."),
             ("packaging/tbo.desktop", "Linux desktop entry."),
             ("packaging/org.tbo.TBO.appdata.xml", "AppStream metadata."),

@@ -7,12 +7,12 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Source tree | `PyQt6-Apps/TBO` |
 | Tracked as | independent clone (ignored by this repository) |
 | Upstream | https://github.com/wachin/TBO |
-| Pinned commit | `dc3190c6088dbd44d0f3ab7bff3e869d7faebb91` |
-| Described as | `dc3190c` |
+| Pinned commit | `6e9f490f41f8fbfd9fa1b83f4356251d9eee73bf` |
+| Described as | `6e9f490` |
 | Licence | GPL (`LICENSE`) |
 | Extracted (UTC) | 2026-10-14 |
-| Files | 24 |
-| Total size | 180,214 bytes |
+| Files | 25 |
+| Total size | 184,328 bytes |
 
 > Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.
 
@@ -21,11 +21,12 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Original path | Bytes | Why it is included |
 |---|---|---|
 | `packaging/build_appimage.sh` | 5,477 | AppImage build script. |
-| `packaging/build_windows_nuitka.ps1` | 5,124 | Windows build (Nuitka) driver - the shipping Windows build. |
-| `packaging/build_windows_pyinstaller.ps1` | 11,633 | Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application. |
+| `packaging/build_windows_nuitka.ps1` | 4,912 | Windows build (Nuitka) driver - the shipping Windows build. |
+| `packaging/build_windows_pyinstaller.ps1` | 11,752 | Windows build (PyInstaller) driver, added to make the two freezers comparable on the same application. |
 | `packaging/build_macos.sh` | 2,583 | macOS build (PyInstaller) driver. |
 | `packaging/build.sh` | 2,030 | Top-level local packaging driver (includes the Flatpak step). |
 | `packaging/generate_icon.py` | 2,632 | Icon generator; the explicit output-dir bug is recorded in SOLUCIONES-TBO.md. |
+| `packaging/make_portable_zip.py` | 4,207 | Creates the Windows portable ZIP with conformant forward-slash entry names, because PowerShell 5.1 cannot be trusted to; see SOLUCIONES-TBO.md section 12. |
 | `packaging/update_translations.sh` | 1,849 | Translation (.qm) generation. |
 | `packaging/tbo.desktop` | 338 | Linux desktop entry. |
 | `packaging/org.tbo.TBO.appdata.xml` | 1,458 | AppStream metadata. |

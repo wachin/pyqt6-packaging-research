@@ -69,10 +69,6 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Item Env:PYTHONIOENCODING UTF-8
 
-# For ZipFile / CreateFromDirectory, used instead of Compress-Archive so the
-# produced archives use conformant forward-slash separators.
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-
 $workspaceRoot = Split-Path -Parent "$PSScriptRoot"
 $distDir = Join-Path $workspaceRoot "build\dist"
 $tmpDir = Join-Path $workspaceRoot "build\tmp\pyinstaller"
@@ -193,11 +189,11 @@ function Build-TboPyInstaller {
         Copy-Item "$workspaceRoot\COPYING" $appDir -Force
         $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-$Flavour-onedir-portable.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-        # ZipFile, not Compress-Archive: see the packaging comment in
-        # build_windows_nuitka.ps1. Compress-Archive writes backslash
-        # separators, which break extraction everywhere except Windows.
-        [System.IO.Compression.ZipFile]::CreateFromDirectory(
-            $appDir, $zipPath, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        # Zipped by packaging/make_portable_zip.py. See the packaging comment in
+        # build_windows_nuitka.ps1: neither Compress-Archive nor any .NET zip API
+        # can be trusted to write conformant separators from PowerShell 5.1.
+        python "$workspaceRoot\packaging\make_portable_zip.py" $appDir $zipPath
+        if ($LASTEXITCODE -ne 0) { throw "make_portable_zip.py failed with exit code $LASTEXITCODE" }
         # PyInstaller names the executable after --name, so the onedir payload
         # is <name>\<name>.exe, not <name>\tbo.exe.
         $exePath = Join-Path $appDir "$name.exe"
@@ -208,14 +204,14 @@ function Build-TboPyInstaller {
         if (-not (Test-Path $exePath)) { throw "expected onefile output not found: $exePath" }
         $zipPath = Join-Path $outputDir "TBO-$version-Windows-x64-$Flavour-onefile.zip"
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-        $archive = [System.IO.Compression.ZipFile]::Open(
-            $zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
-        try {
-            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-                $archive, $exePath, (Split-Path $exePath -Leaf)) | Out-Null
-        } finally {
-            $archive.Dispose()
-        }
+        # The helper archives a directory, so the single executable is staged
+        # first; the archive then holds one entry named after the executable.
+        $oneFileStage = Join-Path $workDir "zip-stage-$Flavour"
+        Remove-Item $oneFileStage -Recurse -Force -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Force -Path $oneFileStage | Out-Null
+        Copy-Item $exePath $oneFileStage -Force
+        python "$workspaceRoot\packaging\make_portable_zip.py" $oneFileStage $zipPath
+        if ($LASTEXITCODE -ne 0) { throw "make_portable_zip.py failed with exit code $LASTEXITCODE" }
     }
 
     # ----------------------------------------------------------------- report --

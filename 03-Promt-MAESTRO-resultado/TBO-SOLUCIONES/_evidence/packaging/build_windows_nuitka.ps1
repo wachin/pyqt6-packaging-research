@@ -71,18 +71,29 @@ if (Test-Path $portableZipPath) {
 }
 
 # ---------------------------------------------------------------- packaging ---
-# Do NOT use Compress-Archive here.
+# Do NOT use Compress-Archive, and do not use ZipFile::CreateFromDirectory
+# either. Both write BACKSLASH entry separators, and the ZIP specification
+# (APPNOTE.TXT section 4.4.17.1) requires a forward slash. The consequence is
+# that the tree collapses on extraction anywhere except Windows: on Linux or
+# macOS, unzip treats "\" as an ordinary character in the filename, so the
+# archive unpacks into 277 files literally named "TBO\python312.dll".
 #
-# Windows PowerShell 5.1's Compress-Archive writes the entry separator as a
-# BACKSLASH. The ZIP specification (APPNOTE.TXT) requires a forward slash, and
-# archives that break this rule extract wrongly everywhere except Windows: on
-# Linux or macOS, `unzip` treats "\" as an ordinary character in the filename,
-# so the whole tree collapses into one directory of files literally named
-# "TBO\python312.dll". The previous build produced exactly that: a zip with 277
-# of 278 entries using backslashes.
+#   * Compress-Archive (Windows PowerShell 5.1) writes backslashes.
+#   * ZipFile::CreateFromDirectory writes backslashes too, unless the *host*
+#     application targets .NET Framework 4.6.1 or later. Windows PowerShell 5.1
+#     targets an older framework, so it keeps the old behaviour. Microsoft
+#     documents this at:
+#     https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/mitigation-ziparchiveentry-fullname-path-separator
 #
-# [System.IO.Compression.ZipFile] writes conformant forward slashes, and the
-# check afterwards fails the build rather than shipping another broken archive.
+# So the archive is built by packaging/make_portable_zip.py instead. CPython's
+# zipfile normalises the separator in ZipInfo.__init__ ("ensure paths always use
+# forward slashes ... as required by the ZIP format specification"), and that
+# script builds the entry names from Path.parts and then re-reads the archive it
+# wrote, failing if any entry still carries a backslash.
+#
+# The same script does the verification, deliberately: reading
+# ZipArchiveEntry.FullName is subject to the very switch described above, so a
+# PowerShell-side check could report a conformant archive as broken.
 $stagingDir = Join-Path $outputDir "TBO-$version-Windows-x64-portable"
 Remove-Item $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
@@ -90,37 +101,10 @@ New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
 Copy-Item $appDistDir $stagingDir -Recurse -Force
 Copy-Item "$workspaceRoot\COPYING" $stagingDir -Force
 
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::CreateFromDirectory(
-    $stagingDir,
-    $portableZipPath,
-    [System.IO.Compression.CompressionLevel]::Optimal,
-    $false)   # $false = do not nest everything under an extra base directory
-
-# ------------------------------------------------------------------- verify ---
-$archive = [System.IO.Compression.ZipFile]::OpenRead($portableZipPath)
-try {
-    $malformed = @($archive.Entries | Where-Object { $_.FullName.Contains('\') })
-    $entries = $archive.Entries.Count
-} finally {
-    $archive.Dispose()
-}
-
-if ($malformed.Count -gt 0) {
-    Write-Error ("The archive is not ZIP-conformant: {0} of {1} entries use a backslash separator. " +
-                 "Everything except Windows will extract it incorrectly." -f $malformed.Count, $entries)
-}
-
-$hasExe = $false
-$archive = [System.IO.Compression.ZipFile]::OpenRead($portableZipPath)
-try {
-    $hasExe = @($archive.Entries | Where-Object { $_.FullName -eq 'TBO/TBO.exe' }).Count -gt 0
-} finally {
-    $archive.Dispose()
-}
-if (-not $hasExe) {
-    Write-Error "The archive does not contain TBO/TBO.exe at the expected path."
+$stagingRoot = (Get-Item $stagingDir).FullName
+python "$workspaceRoot\packaging\make_portable_zip.py" $stagingRoot $portableZipPath
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "make_portable_zip.py failed with exit code $LASTEXITCODE; no archive was published."
 }
 
 Write-Output "Windows build complete: $portableZipPath"
-Write-Output ("  {0} entries, all with forward-slash separators; TBO/TBO.exe present" -f $entries)

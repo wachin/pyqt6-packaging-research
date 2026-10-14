@@ -718,20 +718,82 @@ En Linux o macOS, `unzip` trata `\` como un carácter cualquiera del nombre, as�
 que en vez de un árbol se obtienen 277 ficheros planos con la barra invertida
 dentro del nombre. Cualquier herramienta estricta hace lo mismo.
 
-### 12.3 Arreglo
+### 12.3 Arreglo, y los dos intentos fallidos que hicieron falta
 
-Sustituir `Compress-Archive` por `[System.IO.Compression.ZipFile]`, que escribe
-barras normales:
+**Intento 1 — `ZipFile::CreateFromDirectory`. Falso.**
 
-```powershell
-[System.IO.Compression.ZipFile]::CreateFromDirectory(
-    $stagingDir, $portableZipPath,
-    [System.IO.Compression.CompressionLevel]::Optimal,
-    $false)
+Di por hecho que escribe barras normales. Microsoft documenta lo contrario: el
+separador depende del **framework objetivo de la aplicación anfitriona**, y
+**Windows PowerShell 5.1 apunta a una versión anterior a 4.6.1**, así que conserva
+el comportamiento antiguo:
+
+> Starting with apps that target the .NET Framework 4.6.1, the path separator
+> used in the `ZipArchiveEntry.FullName` property has changed from the backslash
+> used in previous versions of .NET Framework to a forward slash.
+> — <https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/mitigation-ziparchiveentry-fullname-path-separator>
+
+`CreateFromDirectory` tenía **el mismo defecto** que `Compress-Archive`. La
+dependencia no es del método, sino de quién lo ejecuta.
+
+**Intento 2 — pasar el nombre de la entrada explícitamente. Descartado.**
+
+Parecía eliminar la dependencia, pero el interruptor afecta a la propiedad
+`ZipArchiveEntry.FullName`, y **leer** también pasa por ahí. Una comprobación en
+PowerShell podría declarar roto un zip correcto. No es un buen sitio para
+verificar nada.
+
+**Solución final — construir y verificar en Python.**
+
+`packaging/make_portable_zip.py` crea el archivo. CPython normaliza el separador
+en `ZipInfo.__init__`, y el propio código fuente lo dice:
+
+```python
+# This is used to ensure paths in generated ZIP files always use
+# forward slashes as the directory separator, as required by the
+# ZIP format specification.
+if os.sep != "/" and os.sep in filename:
+    filename = filename.replace(os.sep, "/")
 ```
 
-Aplicado en `packaging/build_windows_nuitka.ps1` y, por el mismo defecto, en
-`packaging/build_windows_pyinstaller.ps1`.
+El script además construye los nombres desde `Path.parts` —no desde la forma en
+texto, porque en Windows `str(Path)` ya lleva barras invertidas entre
+componentes— y **vuelve a leer el archivo que acaba de escribir**, fallando si
+alguna entrada conserva una barra invertida. Si un componente del nombre llevara
+una barra invertida literal, se niega a archivar en vez de convertir en silencio
+un nombre en una ruta.
+
+La diferencia de fondo con los dos intentos anteriores: **Python lo puedo
+ejecutar y probar aquí.** Los dos primeros dependían de una suposición sobre
+Windows que no podía comprobar. Este no.
+
+Probado con tres casos: árbol normal (5 entradas, todas con `/`, estructura
+correcta), componente con barra invertida literal (rechazado, sin crear el zip) y
+árbol mixto.
+
+Aplicado en `packaging/build_windows_nuitka.ps1` y
+`packaging/build_windows_pyinstaller.ps1`, que ahora solo comprueban el código de
+salida del script.
+
+### 12.3.1 La comprobación que añadí detectó mis propios errores
+
+Vale la pena registrar cómo se descubrió, porque es el argumento a favor de la
+comprobación.
+
+El build tenía que haber pasado en verde: el zip se creaba, el `.exe` estaba, y
+nada avisaba. Lo que lo tumbó fue la aserción que yo mismo había añadido unas
+horas antes, precisamente para que este fallo no volviera:
+
+```powershell
+$malformed = @($archive.Entries | Where-Object { $_.FullName.Contains('\') })
+if ($malformed.Count -gt 0) { Write-Error "..." }
+```
+
+Al ejecutarse en CI encontró barras invertidas —en un zip creado por mi
+"arreglo"— y falló el job. **Sin esa aserción, habría publicado otro archivo
+igual de roto y habría dado el problema por resuelto.**
+
+Un arreglo sin comprobación se apoya en que la suposición sea correcta. Con
+comprobación, la suposición se verifica sola en cada build.
 
 ### 12.4 La parte que evita que vuelva
 
