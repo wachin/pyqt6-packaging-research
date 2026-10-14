@@ -5,6 +5,7 @@ application** rather than the minimal probe in `app/`, so the numbers are not
 comparable with a probe run — but the method is the one this kit exists to make
 repeatable.
 
+Primary evidence: the VirusTotal screenshots in `evidence/`.
 Detailed write-ups: `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md`
 §10-11 and `03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md` §B.1.
 
@@ -12,7 +13,7 @@ Detailed write-ups: `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md
 
 | Field | Value |
 |---|---|
-| Date | 2026-10 |
+| Date | 2026-10-14 |
 | Application | TBO 2.0.0.dev0 (github.com/wachin/TBO) |
 | Python | 3.12 (GitHub `windows-2025` runner) |
 | PyQt6 | pinned via `packaging/requirements-windows*.txt` |
@@ -22,70 +23,112 @@ Detailed write-ups: `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md
 | UPX | **disabled in all three arms** |
 | Build workflow | `github.com/wachin/TBO` → *Build executables* |
 
-## Arms
+## Result
 
-| Arm | Freezer | Layout | SHA-256 | Size | VirusTotal |
+| Arm | Freezer | Layout | SHA-256 | Size (bytes) | VirusTotal |
 |---|---|---|---|---|---|
-| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7,117,824 B | **not flagged** |
-| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2,019,109 B | **flagged** |
-| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38,802,576 B | **flagged** |
+| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7,117,824 | **0 / 71** |
+| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2,019,109 | **3 / 73** |
+| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38,802,576 | **3 / 73** |
 
 The SHA-256 values were **recomputed from the build artifacts on disk** and match
 the hashes in the VirusTotal links, so these are exactly the files TBO's CI
 produced.
 
-## VirusTotal
+## Which engines flagged, and with what
 
-| Arm | SHA-256 submitted | Total detections | Engines | Categories | Report URL |
-|---|---|---|---|---|---|
-| Nuitka | `9f8a79c1…8181b` | **not captured** | not captured | not captured | `virustotal.com/gui/file/9f8a79c1…8181b` |
-| PyInstaller onedir | `e4fd5035…d840a` | **not captured** | not captured | not captured | `virustotal.com/gui/file/e4fd5035…d840a` |
-| PyInstaller onefile | `94ba5787…cd5f1` | **not captured** | not captured | not captured | `virustotal.com/gui/file/94ba5787…cd5f1` |
+| Arm | Engine | Detection |
+|---|---|---|
+| onedir | SecureAge | `Malicious` |
+| onedir | Zillya | `Trojan.Script.2226` |
+| onedir | Skyhigh (SWG) | `BehavesLike.Win32.Backdoor.rc` |
+| onefile | Bkav Pro | `W32.Malware.7730AFD` |
+| onefile | Zillya | `Trojan.Script.2226` |
+| onefile | SecureAge | `Malicious` |
 
-**This is the main weakness of the run.** "Flagged" and "not flagged" is all that
-was recorded. Whether the onefile arm was flagged by one heuristic engine or by a
-majority changes the interpretation completely, and the difference between a
-generic heuristic name and a named malware family is the difference between a
-known false-positive pattern and something worth investigating properly.
-
-## Other measurements
-
-Not captured: start-up time, installed tree size, `QT_DEBUG_PLUGINS=1` output,
-SmartScreen behaviour.
+Both PyInstaller pages aggregate to the popular threat label
+`trojan.script/wacatac`, with `trojan` as the category and family label.
 
 ## Observations
 
-- **The bundle layout was not the differentiator.** Both PyInstaller arms were
-  flagged, onedir included. The common factor is PyInstaller's bootloader, not
-  the self-extracting wrapper — which is the opposite of the assumption the
-  research previously carried as "plausible but unmeasured".
-- **Sizes are not comparable as download sizes.** The onedir arm's executable is
-  only 1.9 MB because the payload sits in the sibling `_internal/` tree; the
-  onefile arm is 37 MB because it embeds everything. Compare the *portable zip*
-  sizes, not the bare executables.
-- **A published bare `.exe` from the onedir arm confuses users.** The CI artifact
-  contains both the complete zip and the loose executable (the latter is what you
-  submit for scanning). Extracted alone, without `_internal/`, the loose
-  executable cannot start and was reported as "does not work". It is scan-only and
-  should be labelled as such.
+**1. The magnitude is small, and the pattern is heuristic.** Three engines out of
+73 — about 4% — and every one of the industry's major engines reports clean:
+Microsoft, Kaspersky, BitDefender, ESET, Sophos, Avast, AVG, Google, Fortinet,
+CrowdStrike, Palo Alto, Symantec, Trend Micro, McAfee, SentinelOne, Ikarus,
+Elastic, Vipre, Webroot, Xcitium and the rest of the 73.
+
+**2. The detections are generic or behavioural, not signature matches.** Two of
+the six are `SecureAge → Malicious` (no family named at all) and
+`Skyhigh (SWG) → BehavesLike.Win32.Backdoor.rc`, which is explicitly a behavioural
+rule. `Trojan.Script.2226` names no real family either. Nothing here names a
+specific malware that anyone could act on.
+
+**3. Two of the three flagging engines are shared, the third differs.** SecureAge
+and Zillya flag **both** PyInstaller arms identically; the third engine is Bkav
+Pro on onefile and Skyhigh on onedir. Two closely related builds of the same code
+disagreeing about the third detection is the signature of an unstable heuristic,
+not of a signature matching a real threat — a genuine detection would tend to
+follow the bytes.
+
+**4. The bundle layout is not the differentiator.** Both PyInstaller layouts
+scored 3/73, with the same two engines. This refutes the common assumption that
+`onedir` avoids the self-extraction heuristics that make `onefile` suspicious. The
+common factor between the two flagged builds is PyInstaller's bootloader.
+
+**5. `wacatac` is a family name with a false-positive reputation.** VirusTotal's
+popular threat label is an aggregate, and it is worth knowing that it is widely
+associated with generic false positives on installers.
+
+The reading that fits all five observations is **generic false positives from
+heuristic engines**, not evidence of malware.
+
+**6. Sizes are not comparable as download sizes.** The onedir arm's executable is
+2.0 MB because the payload sits in the sibling `_internal/` tree; the onefile arm
+is 38.8 MB because it embeds everything. Compare the *portable zip* sizes, not the
+bare executables.
+
+**7. A published bare `.exe` from the onedir arm confuses users.** The CI
+artifact contains both the complete zip and the loose executable (the latter is
+what you submit for scanning). Extracted alone, without `_internal/`, the loose
+executable cannot start and was reported as "does not work". It is scan-only and
+should be labelled as such.
 
 ## Conclusion for this run
 
-For this application, on this day, the PyInstaller builds were flagged and the
-Nuitka build was not.
+For this application, on this day: **Nuitka 0/71, PyInstaller 3/73 in both
+layouts**, with the PyInstaller detections coming from a small number of engines
+whose verdicts are generic and mutually inconsistent.
 
-It is **n = 1**, unsigned, on a GPL application with no download history, with no
-detection counts. It is a lead worth pursuing, not a rule, and it must not be
-restated as "PyInstaller causes detections" or "Nuitka avoids them".
+That confirms the *direction* of the long-standing claim — PyInstaller was
+flagged and Nuitka was not — while showing that the *severity* is far lower than
+"flagged as a virus" suggests. It does not establish that PyInstaller causes
+detections in general: it is **n = 1**, unsigned, on a GPL application with no
+download history.
+
+## Recommended response
+
+These look like false positives, and the correct handling is procedural, not
+technical:
+
+- Do **not** rebuild, obfuscate, pack or mutate the binary to make a scanner
+  quieter. That is evasion, and it is both wrong and counterproductive.
+- Submit a false-positive report to the engines involved, through each vendor's
+  official channel. The relevant ones here are **Zillya**, **SecureAge**,
+  **Bkav Pro** and **Skyhigh (SWG)**. Include: the SHA-256, the detection name,
+  the project's source URL, and a one-line explanation that it is an unsigned
+  PyInstaller build of an open-source PyQt6 application.
+- Note in the release notes which engines were reported and when.
+- Consider whether 3/73 with every major engine clean justifies switching
+  freezers at all. Signing is the lever the research actually supports for
+  reputation, and none of these arms was signed.
 
 ## Follow-ups
 
-- [ ] Capture the detection count, engine names and categories for each artifact.
-- [ ] Repeat across several releases.
-- [ ] Repeat with Authenticode signing — a signature changes heuristics and none
-      of these arms was signed.
+- [x] Capture the detection count and engine names — done, see above.
+- [ ] Repeat across several releases. One build pair does not separate a property
+      of the tool from a coincidence of that build.
+- [ ] Repeat with Authenticode signing. A signature changes heuristics and none of
+      these arms was signed.
 - [ ] Isolate the cause: is it the PyInstaller bootloader specifically? Compare
       against a PyInstaller build with a locally rebuilt bootloader.
-- [ ] If a false positive appears: capture engine, malware name, SHA-256 and
-      source URL, then submit through that vendor's official false-positive
-      portal. Track the response. Do not obfuscate, pack or mutate the binary.
+- [ ] If a vendor clears a detection, record when, so the trend is visible.

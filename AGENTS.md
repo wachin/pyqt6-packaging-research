@@ -179,11 +179,15 @@ In particular, these are **not established** and must never be stated as fact:
 
 One measurement now exists, so state it precisely rather than either denying or
 over-claiming it. In 2026-10 the same TBO application was built three ways
-(unsigned, UPX disabled, identical metadata): **both PyInstaller arms were
-flagged and the Nuitka arm was not**, which also refutes the idea that `onedir`
-avoids detection. It is **n = 1**, with no detection counts captured. Report it
-as a lead, cite `PACKAGING_EVIDENCE_MATRIX.md` §B.1, and never generalise it into
-"PyInstaller causes detections" or "Nuitka avoids them".
+(unsigned, UPX disabled, identical metadata): **Nuitka 0/71; PyInstaller 3/73 in
+both onedir and onefile**, flagged by a handful of engines whose verdicts are
+generic (`Malicious`, `BehavesLike.…`) or name no real family, while every major
+engine reports clean. That shape reads as heuristic false positives, and it
+refutes the idea that `onedir` avoids detection. It is **n = 1**. Report it as a
+lead, cite `PACKAGING_EVIDENCE_MATRIX.md` §B.1, and never generalise it into
+"PyInstaller causes detections" or "Nuitka avoids them". Never propose obfuscation
+or a rebuild to silence a scanner — the response to a suspected false positive is
+a report to the vendor.
 
 **No case-study project publishes any antivirus detection data.** If you are
 asked about antivirus behaviour, say that the five studied projects measured

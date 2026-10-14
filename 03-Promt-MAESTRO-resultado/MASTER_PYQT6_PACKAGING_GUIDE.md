@@ -626,25 +626,35 @@ all three.
 
 | Arm | VirusTotal |
 |---|---|
-| Nuitka standalone, `9f8a79c1…` | **not flagged** |
-| PyInstaller onedir, `e4fd5035…` | **flagged** |
-| PyInstaller onefile, `94ba5787…` | **flagged** |
+| Nuitka standalone, `9f8a79c1…` | **0 / 71** |
+| PyInstaller onedir, `e4fd5035…` | **3 / 73** |
+| PyInstaller onefile, `94ba5787…` | **3 / 73** |
+
+The three detections are worth reading before reacting to the count: `SecureAge →
+Malicious` names no family, `Skyhigh (SWG) → BehavesLike.…` is explicitly a
+behavioural rule, `Zillya → Trojan.Script.2226` names no known family, and
+`Bkav Pro → W32.Malware.7730AFD` is generic. Two engines flag both PyInstaller
+arms while the third differs between them, and **every major engine reports
+clean** — Microsoft, Kaspersky, BitDefender, ESET, Sophos, Avast, AVG, Google,
+Fortinet, CrowdStrike, Palo Alto, Symantec, Trend Micro, McAfee, SentinelOne. The
+shape of that is generic heuristic false positives, not a signature match.
 
 Two consequences worth stating plainly, because they contradict what this
 section previously left open:
 
 1. **PyInstaller vs Nuitka is no longer purely anecdotal here.** For this
-   application the PyInstaller builds were flagged and the Nuitka build was not.
-2. **`onedir` is not an antivirus remedy.** Both PyInstaller layouts were
-   flagged, so the differentiator looks like PyInstaller's bootloader rather than
-   the bundle layout. The earlier "plausible but unmeasured" note was wrong in
-   its implication.
+   application the PyInstaller builds scored 3/73 and the Nuitka build 0/71.
+2. **`onedir` is not an antivirus remedy.** Both PyInstaller layouts scored
+   identically with the same two engines, so the differentiator looks like
+   PyInstaller's bootloader rather than the bundle layout. The earlier "plausible
+   but unmeasured" note was wrong in its implication.
 
-Caveats that keep this a lead rather than a rule: **n = 1**, no detection counts
-or engine names were captured, the artifacts are unsigned and versioned
-`2.0.0.dev0`, and VirusTotal scores drift. Full record:
-`PACKAGING_EVIDENCE_MATRIX.md` section B.1 and
-`TBO-SOLUCIONES/SOLUCIONES-TBO.md` section 11.
+Caveats that keep this a lead rather than a rule: **n = 1**, the artifacts are
+unsigned and versioned `2.0.0.dev0`, no TBO download history exists, and
+VirusTotal scores drift. Full record and screenshots:
+`PACKAGING_EVIDENCE_MATRIX.md` section B.1,
+`TBO-SOLUCIONES/SOLUCIONES-TBO.md` section 11, and
+`experiments/pyinstaller-vs-nuitka/evidence/`.
 
 ### What the case-study evidence actually supports
 

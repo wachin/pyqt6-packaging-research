@@ -143,22 +143,32 @@ CustomKnight-Creator, dikte and pyzo ship unsigned Windows artifacts.
 ## 6. What is and is not verified here
 
 **Measured (2026-10, one application):** the same code, version and PE metadata,
-unsigned, UPX disabled in every arm. Both PyInstaller builds — onedir *and*
-onefile — were flagged by VirusTotal; the Nuitka build was not. So for that
-application the freezer was the differentiator, and **`onedir` was no protection
-at all**. It is n = 1 with no detection counts recorded: report it as a lead, not
-a rule.
+unsigned, UPX disabled in every arm. **Nuitka 0/71. PyInstaller 3/73 in *both*
+onedir and onefile**, so `onedir` was no protection at all.
+
+Read the detections rather than the count. They were a generic `Malicious` with no
+family named, a behavioural `BehavesLike.…`, and script-trojan names with no known
+family; two engines flagged both PyInstaller arms while the third differed; and
+**every major engine reported clean** — Microsoft, Kaspersky, BitDefender, ESET,
+Sophos, Avast, Google, Fortinet, CrowdStrike, Palo Alto, Symantec, Trend Micro,
+SentinelOne. That shape is generic heuristic false positives.
+
+So for that application the freezer was the differentiator, and 3/73 with the
+majors clean does **not** by itself justify abandoning PyInstaller. It is n = 1.
 
 **Not verified:**
 
-- Detection *rates*, or which engines and categories were involved.
-- That signing reduces detection counts.
-- That this transfers to another application. Bundle contents drive heuristics.
+- Any trend over time, or behaviour for another application. Bundle contents
+  drive heuristics.
+- That signing reduces detection counts — but signing is the reputation lever the
+  research does support, and none of these arms was signed, so it remains the
+  first thing to try.
 
 If antivirus behaviour matters for your application, measure it rather than argue
-it: `experiments/pyinstaller-vs-nuitka/` in this repository. Interpret VirusTotal
-as a point-in-time signal to investigate, never as a verdict — and never respond
-to a false positive with obfuscation, packing or binary mutation.
+it: `experiments/pyinstaller-vs-nuitka/` in this repository. Interpret a
+VirusTotal score as a point-in-time signal to investigate, never as a verdict —
+and never respond to a false positive with obfuscation, packing or binary
+mutation. Submit a vendor report instead.
 
 ## 7. Checklist
 

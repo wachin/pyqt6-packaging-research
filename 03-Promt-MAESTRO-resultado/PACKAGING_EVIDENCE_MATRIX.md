@@ -125,47 +125,77 @@ Until now this section said "no data" throughout: no case-study project had ever
 published a detection count. TBO has now been scanned in three builds produced
 from the same commit, the same version and the same PE metadata, all unsigned and
 all with UPX disabled. The only differences are the freezer and the bundle
-layout.
+layout. Screenshots of the three report pages are kept as primary evidence in
+`experiments/pyinstaller-vs-nuitka/evidence/`.
 
 | Artifact | Freezer | Layout | SHA-256 | Size | VirusTotal |
 |---|---|---|---|---|---|
-| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7,117,824 B | **not flagged** |
-| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2,019,109 B | **flagged** |
-| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38,802,576 B | **flagged** |
+| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7,117,824 B | **0 / 71** |
+| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2,019,109 B | **3 / 73** |
+| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38,802,576 B | **3 / 73** |
+
+Which engines flagged, and with what:
+
+| Arm | Engine | Detection |
+|---|---|---|
+| onedir | SecureAge | `Malicious` |
+| onedir | Zillya | `Trojan.Script.2226` |
+| onedir | Skyhigh (SWG) | `BehavesLike.Win32.Backdoor.rc` |
+| onefile | Bkav Pro | `W32.Malware.7730AFD` |
+| onefile | Zillya | `Trojan.Script.2226` |
+| onefile | SecureAge | `Malicious` |
+
+Both PyInstaller pages aggregate to the popular threat label
+`trojan.script/wacatac`, category and family label `trojan`.
 
 **Verified here:** the SHA-256 values were recomputed from the build artifacts on
 disk and match the hashes in the VirusTotal links, so the files under discussion
-are exactly the ones this repository's CI produced.
+are exactly the ones this repository's CI produced. The per-engine lists are read
+from screenshots of the report pages, which are checked in.
 
-**Not verified here:** the VirusTotal verdicts themselves. VirusTotal cannot be
-read without an API key, so the flagged / not-flagged column is the repository
-owner's report rather than an independent observation, and the detection counts
-and engine names were not captured.
+**Scale of the result.** Three engines out of 73 — about 4% — and every major
+engine reports clean: Microsoft, Kaspersky, BitDefender, ESET, Sophos, Avast,
+AVG, Google, Fortinet, CrowdStrike, Palo Alto, Symantec, Trend Micro, McAfee,
+SentinelOne and the rest.
+
+**The detections are generic or behavioural, not signature matches.**
+`SecureAge → Malicious` names no family; `Skyhigh (SWG) → BehavesLike.…` is
+explicitly a behavioural rule; `Trojan.Script.2226` names no real family. And two
+of the three flagging engines are shared between the arms while the third differs
+(Bkav Pro on onefile, Skyhigh on onedir) — closely related builds disagreeing is
+the signature of an unstable heuristic rather than of a signature matching real
+malware, which would follow the bytes.
 
 **What this changes.** The most common assumption in this area — that `onedir`
 avoids the self-extraction heuristics which make `onefile` look suspicious — is
-**not supported** by this measurement: both PyInstaller layouts were flagged. If
-it holds, the differentiator is PyInstaller's bootloader, not the bundle layout.
+**not supported**: both PyInstaller layouts scored 3/73 with the same two engines.
+The differentiator is PyInstaller's bootloader, not the bundle layout.
 
 **What this does not establish.** A single application, a single build of each
 arm, at a single point in time. Conditions to keep in view:
 
 - **n = 1.** The evidence matrix's own rule applies: one sample is noise.
-- **Detection counts are missing.** "Flagged" spans everything from one heuristic
-  engine to a large majority, and the number changes the interpretation entirely.
 - Unsigned, and versioned `2.0.0.dev0`. Both the absent signature and a
   development version string are themselves weak negative signals.
 - Submission history is uncontrolled. A hash VirusTotal has never seen before is
   treated differently from one with a track record.
 - TBO is GPL software with a small user base and no download history.
+- Scores drift. These screenshots record one moment and must be reproduced, not
+  quoted as current.
+
+**Reading.** The pattern that fits all of the above is **generic false positives
+from heuristic engines**, not evidence of malware. The correct response is
+procedural — submit reports to the vendors involved and carry on — never
+obfuscation, packing or binary mutation.
 
 ### B.2 Claims table
 
 | Claim | Evidence from projects | Evidence strength | Conclusion | Confidence |
 |---|---|---|---|---|
 | "PyInstaller causes AV detections" | case studies: none measured. TBO (2026-10): both PyInstaller arms flagged, see B.1 | one controlled measurement, same application as the clean Nuitka arm | **Supported for this application**; not yet evidence of a general rule | MEDIUM (observation HIGH, generalisation LOW) |
-| "Nuitka avoids AV detections" | case studies: no project uses Nuitka. TBO (2026-10): the Nuitka arm was not flagged | one controlled measurement | **Supported for this application**; still anecdote for the general claim | MEDIUM (observation HIGH, generalisation LOW) |
-| "onedir eliminates false positives" | TBO (2026-10) directly contradicts it for this application: onedir was flagged too | one controlled measurement, and it is the arm that refutes the claim | **Not supported.** The differentiator appears to be the bootloader, not the layout | MEDIUM |
+| "Nuitka avoids AV detections" | case studies: no project uses Nuitka. TBO (2026-10): the Nuitka arm scored **0 / 71** | one controlled measurement | **Supported for this application**; still anecdote for the general claim | MEDIUM (observation HIGH, generalisation LOW) |
+| "onedir eliminates false positives" | TBO (2026-10) directly contradicts it: onedir scored **3 / 73**, identical to onefile, flagged by the same two engines | one controlled measurement, and it is the arm that refutes the claim | **Not supported.** The differentiator appears to be the bootloader, not the layout | MEDIUM |
+| Generic engines flag unsigned PyInstaller builds | TBO (2026-10): the 6 detections are `Malicious` (no family), `BehavesLike.…` (behavioural), and unnamed script trojans; two engines shared, the third differs between arms; all major engines clean | one controlled measurement with the per-engine list | Detections of this shape read as heuristic **false positives**; the honest response is a vendor report, not a rebuild | MEDIUM |
 | Untrusted Windows signature keeps SmartScreen warnings | napari stopgap Apple-cert signature | direct workflow comment (PAPS §7, `make_bundle_conda.yml:470-472`) | Supported: a non-Windows-trusted signature does not remove warnings | HIGH |
 | Signing is the intended reputation mechanism | napari (Azure on releases; otherwise warnings) | direct implementation + docs | Supported as a practice | HIGH |
 | UPX increases detections | no project measures it; TBO disabled UPX in **all three** arms, so the measurement above says nothing about UPX | general guidance repeated in tutorials | NOT VERIFIED (plausible correlation; avoid it) | LOW |
@@ -209,9 +239,9 @@ and 6 have since been partially addressed by the TBO measurement in section B.1;
 the rest stand unchanged.
 
 1. ~~VirusTotal detection counts / rates for any project.~~ **Partially
-   addressed** for exactly one application: flagged / not-flagged is known for
-   three TBO builds (B.1), but **no detection counts or engine names were
-   captured**, so "how many engines" remains unknown.
+   addressed** for exactly one application: the counts and per-engine lists are
+   known for three TBO builds (B.1) — Nuitka 0/71, both PyInstaller arms 3/73.
+   Rates over time, and behaviour for any other application, remain unknown.
 2. SmartScreen behavior of any project's Windows artifact (including napari's
    Azure-signed `.exe`). Still unverified; the TBO measurement did not test
    SmartScreen.
@@ -262,7 +292,7 @@ toolchain pin, and this measurement) are 2026-10.
 | Green CI is not a working artifact | TBO | SOLUCIONES §9 | five jobs green while the published AppImage had been missing 14 UI icons since August | smoke test the built artifact in CI; nothing else catches a silently incomplete bundle | HIGH |
 | Freezer comparison on the real application | TBO | SOLUCIONES §10 | Windows had only ever been built with Nuitka; the PyInstaller false-positive claim was never measured on TBO | a PyInstaller Windows build now exists with identical metadata and no UPX, to be scanned alongside it | HIGH (for the setup) |
 | PyInstaller toolchain missing from the comparison job | TBO | SOLUCIONES §10 | CI failed with `No module named PyInstaller`: the job installed `requirements-windows.txt`, the Nuitka toolchain | give each freezer its own requirements file; the job's own exit-code check turned it into a one-line message | HIGH |
-| **Measured freezer comparison** | TBO | SOLUCIONES §11; matrix B.1 | PyInstaller onedir and onefile both flagged by VirusTotal; the Nuitka build of the same commit was not | for this application PyInstaller is the differentiator, **not** the onedir/onefile layout; n = 1 and no detection counts, so treat as a lead, not a rule | MEDIUM (observation HIGH, generalisation LOW) |
+| **Measured freezer comparison** | TBO | SOLUCIONES §11; matrix B.1; `experiments/pyinstaller-vs-nuitka/evidence/` | Nuitka **0/71**; PyInstaller onedir **3/73** and onefile **3/73**, flagged by generic or behavioural detections with all major engines clean | for this application the freezer is the differentiator, **not** the onedir/onefile layout; the shape of the detections reads as false positives; n = 1, so treat as a lead, not a rule | MEDIUM (observation HIGH, generalisation LOW) |
 | A bare onedir executable published as an artifact | TBO | SOLUCIONES §11.3 | the CI artifact uploads both the complete zip and the loose `.exe`; extracted alone the `.exe` cannot start and was reported as "no funciona" | the loose `.exe` is wanted for scanning, so label it as scan-only rather than shipping it as a runnable app | HIGH |
 
 ### Note: re-citation of the `.gitignore` / submodule-dirt row

@@ -527,18 +527,20 @@ The **validation phase is no longer empty**, and the first real measurement has
 changed one of the headline conclusions.
 
 **Measured in 2026-10 (TBO):** the same application, version and PE metadata,
-unsigned, UPX disabled, built three ways. **The PyInstaller builds — onedir *and*
-onefile — were flagged by VirusTotal; the Nuitka build was not.** That also
-refutes the common assumption that `onedir` avoids detection. It is **n = 1**,
-with no detection counts captured, so it is a lead and not a rule. Full record:
-`PACKAGING_EVIDENCE_MATRIX.md` §B.1 and
-`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md` §11.
+unsigned, UPX disabled, built three ways. **Nuitka 0/71. PyInstaller 3/73 in
+*both* layouts** — flagged by a handful of engines whose detections are generic or
+behavioural, while every major engine reports clean. That confirms the direction
+of the long-standing claim and refutes the assumption that `onedir` avoids
+detection. It is **n = 1**, so it is a lead and not a rule. Full record:
+`PACKAGING_EVIDENCE_MATRIX.md` §B.1,
+`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md` §11, and the
+screenshots in `experiments/pyinstaller-vs-nuitka/evidence/`.
 
 Still unverified:
 
-- **Antivirus / VirusTotal *rates*.** Flagged / not-flagged is now known for one
-  application; the number of engines and which engines were not captured, and no
-  case-study project publishes detection data at all.
+- **Antivirus behaviour beyond one application, and any trend over time.** The
+  counts are known for one release; no case-study project publishes detection data
+  at all, and the result must be reproduced before it is generalised.
 - **Nuitka at scale.** None of the five case studies uses it. There is now one
   measurement on TBO, and nothing more.
 - **`.deb` in upstream projects.** None of the five ships one, and no project

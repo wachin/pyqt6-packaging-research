@@ -518,34 +518,83 @@ los mismos metadatos PE, sin firma y con UPX desactivado en las tres (ver §10).
 
 | Artefacto | Herramienta | Layout | SHA-256 | Tamaño | VirusTotal |
 |---|---|---|---|---|---|
-| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7.117.824 B | **no marcado** |
-| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2.019.109 B | **marcado** |
-| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38.802.576 B | **marcado** |
+| `TBO.exe` | Nuitka | standalone | `9f8a79c1c6cf55cf6700334f585a2e9a61f04ce15eb723bacc0a1c7c20a1818b` | 7.117.824 B | **0 / 71** |
+| `tbo-pyinstaller-onedir.exe` | PyInstaller | onedir | `e4fd50350ca15e6f456dd746f04332849db31714375174122275e970e96d840a` | 2.019.109 B | **3 / 73** |
+| `tbo-pyinstaller-onefile.exe` | PyInstaller | onefile | `94ba578707ebc5c90591520c8f6c3ce392aa3d1c76bc2100b53413f887acd5f1` | 38.802.576 B | **3 / 73** |
 
 Los tres SHA-256 se recalcularon sobre los artefactos en disco y **coinciden con
 los enlaces de VirusTotal**, así que los ficheros de los que hablamos son
-exactamente los que produjo el CI de este repositorio.
+exactamente los que produjo el CI de este repositorio. Las capturas de las tres
+páginas se guardan en `experiments/pyinstaller-vs-nuitka/evidence/`.
 
-### 11.2 Qué cambia y qué no
+**Qué motor marcó cada cosa:**
+
+| Artefacto | Motor | Detección |
+|---|---|---|
+| onedir | SecureAge | `Malicious` |
+| onedir | Zillya | `Trojan.Script.2226` |
+| onedir | Skyhigh (SWG) | `BehavesLike.Win32.Backdoor.rc` |
+| onefile | Bkav Pro | `W32.Malware.7730AFD` |
+| onefile | Zillya | `Trojan.Script.2226` |
+| onefile | SecureAge | `Malicious` |
+
+Las dos páginas de PyInstaller agregan la etiqueta `trojan.script/wacatac`, con
+categoría y familia `trojan`.
+
+### 11.2 Interpretación: son 3 de 73, y con forma de falso positivo
+
+El número cambia por completo la lectura. **Tres motores de 73 — un 4% — y todos
+los grandes están limpios**: Microsoft, Kaspersky, BitDefender, ESET, Sophos,
+Avast, AVG, Google, Fortinet, CrowdStrike, Palo Alto, Symantec, Trend Micro,
+McAfee, SentinelOne.
+
+Y las detecciones son **genéricas o de comportamiento, no firmas**:
+
+- `SecureAge → Malicious` no nombra ninguna familia;
+- `Skyhigh (SWG) → BehavesLike.Win32.Backdoor.rc` es explícitamente una regla de
+  comportamiento ("BehavesLike");
+- `Trojan.Script.2226` tampoco nombra una familia real.
+
+Además, **dos de los tres motores son comunes y el tercero difiere**: SecureAge y
+Zillya marcan las dos ramas igual, pero la tercera es Bkav Pro en onefile y
+Skyhigh en onedir. Dos builds del mismo código que no coinciden en la tercera
+detección es la firma de una **heurística inestable**, no de una firma que case
+con una amenaza real — una detección real seguiría a los bytes.
 
 **Cambia el supuesto más repetido del área.** La idea de que `onedir` evita las
-heurísticas de autoextracción que hacen sospechoso a `onefile` **no se sostiene**
-en esta medición: los dos layouts de PyInstaller salieron marcados. Si el
-resultado se mantiene, el factor diferencial es el **bootloader de PyInstaller**,
-no el layout del bundle.
+heurísticas de autoextracción que hacen sospechoso a `onefile` **no se sostiene**:
+las dos ramas de PyInstaller sacaron 3/73 con los mismos dos motores. El factor
+común es el **bootloader de PyInstaller**, no el layout del bundle.
 
 **No cambia nada más allá de esta aplicación.** Las condiciones a tener presentes:
 
 - **n = 1.** Una aplicación, una build de cada rama, un momento concreto. La
   regla de esta misma matriz aplica: una muestra es ruido.
-- **Faltan los recuentos.** "Marcado" abarca desde un único motor heurístico
-  hasta una mayoría; el número cambia por completo la interpretación. **No se
-  capturaron ni el número de detecciones ni los nombres de los motores.**
 - **Sin firma, y versión `2.0.0.dev0`.** Tanto la ausencia de firma como una
   versión de desarrollo son señales débiles por sí mismas.
 - **Historial de envío no controlado.** Un hash que VirusTotal nunca ha visto se
   trata distinto de uno con historial.
-- TBO es software GPL, con pocos usuarios y sin historial de descargas.
+- **Las puntuaciones derivan.** Las capturas registran un momento; hay que
+  reproducirlas, no citarlas como actuales.
+- `wacatac` es un nombre de familia con reputación de falso positivo en
+  instaladores.
+
+### 11.2.1 Qué hacer con esto
+
+Lo que encaja con las cinco observaciones es **falsos positivos genéricos de
+motores heurísticos**, no evidencia de malware. La respuesta correcta es
+procedimental, no técnica:
+
+- **No** reconstruir, ofuscar, empaquetar ni mutar el binario para silenciar un
+  escáner. Eso es evasión, y además es contraproducente.
+- **Enviar un informe de falso positivo** a los motores implicados por su canal
+  oficial: **Zillya**, **SecureAge**, **Bkav Pro** y **Skyhigh (SWG)**. Incluir
+  SHA-256, nombre de la detección, URL del código fuente y una línea explicando
+  que es una build sin firmar de una aplicación PyQt6 de código abierto.
+- Anotar en las notas de la release qué motores reportaron y cuándo.
+- Preguntarse si **3/73 con todos los grandes limpios** justifica cambiar de
+  herramienta. El mecanismo que la investigación sí respalda para la reputación es
+  **firmar**, y ninguna de estas tres builds estaba firmada.
 
 ### 11.3 Un artefacto que confunde: el `.exe` suelto
 

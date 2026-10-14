@@ -99,31 +99,42 @@ metadata, unsigned and with UPX disabled in every arm, built three ways:
 
 | Arm | VirusTotal |
 |---|---|
-| Nuitka standalone | not flagged |
-| PyInstaller onedir | **flagged** |
-| PyInstaller onefile | **flagged** |
+| Nuitka standalone | **0 / 71** |
+| PyInstaller onedir | **3 / 73** |
+| PyInstaller onefile | **3 / 73** |
 
-What that supports: for that application the PyInstaller builds were flagged and
-the Nuitka build was not. It also **refutes the idea that `onedir` avoids
-detection** — both PyInstaller layouts were flagged, so the differentiator looks
-like PyInstaller's bootloader rather than the bundle layout.
+Read the detections, not just the count. They were `SecureAge → Malicious` (no
+family named), `Skyhigh (SWG) → BehavesLike.…` (a behavioural rule),
+`Zillya → Trojan.Script.2226` (no known family) and `Bkav Pro → W32.Malware…`
+(generic). Two engines flagged both PyInstaller arms while the third differed
+between them, and **every major engine reported clean** — Microsoft, Kaspersky,
+BitDefender, ESET, Sophos, Avast, Google, Fortinet, CrowdStrike, Palo Alto,
+Symantec, Trend Micro, SentinelOne. That shape is generic heuristic false
+positives, not a signature match.
+
+What that supports: for that application the PyInstaller builds scored 3/73 and
+the Nuitka build 0/71, and it **refutes the idea that `onedir` avoids
+detection** — both layouts scored identically, so the differentiator looks like
+PyInstaller's bootloader rather than the bundle layout.
 
 What it does **not** support, and what you must not tell a user:
 
 - that "PyInstaller causes detections" or "Nuitka avoids them" as general rules.
   It is **n = 1**, on one GPL application with no download history;
-- any *rate*: no detection counts or engine names were captured;
 - that UPX increases detections — correlational only, though disabling it is
   free, so disable it;
 - that code signing guarantees a clean VirusTotal result. It does not; it is a
   reputation anchor, and an untrusted certificate does not even remove
-  SmartScreen warnings (napari documented this about its own stopgap).
+  SmartScreen warnings (napari documented this about its own stopgap);
+- that a 3/73 result warrants abandoning PyInstaller. With every major engine
+  clean, the research-backed lever is **signing**, plus a vendor false-positive
+  report — not switching freezers.
 
 If antivirus behaviour matters for the project in front of you, measure it rather
 than argue it: `experiments/pyinstaller-vs-nuitka/` is the repeatable kit. Treat a
-VirusTotal count as a point-in-time, engine-specific signal to investigate — never
-as a verdict or a score to optimise. This is distribution and reputation work,
-not evasion.
+VirusTotal score as a point-in-time, engine-specific signal to investigate — never
+as a verdict to optimise against, and never as a reason to obfuscate, pack or
+mutate a binary.
 
 ## 5. Before you build
 
