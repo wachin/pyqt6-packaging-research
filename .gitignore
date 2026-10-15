@@ -48,5 +48,6 @@
 # Anchored to the root so it cannot accidentally match a nested directory of the
 # same name inside an evidence pack.
 /PyQt6-Apps/TBO/
+PyQt6-Apps/
 
 PyQt6-Apps/TBO-GitHub-Actions-Executables/
