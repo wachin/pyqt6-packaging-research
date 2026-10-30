@@ -187,7 +187,7 @@ porque el repositorio solo tenía `COPYING` (GPL-3.0) y no `LICENSE`.
    al final.
 2. Cuando lo creé, lo puse inicialmente en **la carpeta equivocada**:
    - ❌ `/home/wachin/Dev3/TBO/LICENSE` (mi clon personal)
-   - ✅ `/home/wachin/Dev3/pyqt6-packaging-research/PyQt6-Apps/TBO/LICENSE`
+   - ✅ `/home/wachin/Dev3/pyqt6-packaging-research/my-PyQt6-Apps/TBO/LICENSE`
      (el sub-módulo que es el que usa GitHub Actions)
 3. Al hacer `git add .` en el sub-módulo me decía "nothing to commit" porque el
    archivo no estaba en esa carpeta.
@@ -464,7 +464,7 @@ un *smoke test* del artefacto (solo napari y pyzo lo hacen); TBO construía pero
 no ejecutaba.
 
 La regla general, escrita también en
-`PyQt6-Apps/TBO/docs/GitHub-Actions-Solutions/PACKAGING-RESOURCE-COLLECTION-BUG.md`:
+`my-PyQt6-Apps/TBO/docs/GitHub-Actions-Solutions/PACKAGING-RESOURCE-COLLECTION-BUG.md`:
 
 > Cuando un comando de build copia datos de la aplicación, el **destino** debe
 > coincidir con la ruta que el código lee en tiempo de ejecución, no con la ruta

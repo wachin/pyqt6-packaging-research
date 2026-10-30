@@ -23,12 +23,11 @@ this repository, you have misread the task — stop and ask.
 
 This is the most important rule in this file, and the easiest to get wrong.
 
-This repository pins six upstream projects as **Git submodules**, and keeps two
-applications belonging to the owner (`PyQt6-Apps/TBO` and
-`PyQt6-Apps/lucio-iva-calculator`) alongside them as ordinary independent clones
-that this repository deliberately **ignores**. All eight were obtained **to be
-read**, so that their packaging, signing, installer and release-automation
-infrastructure could be studied side by side. Nothing more.
+This repository pins **eight projects as Git submodules**: six third-party case
+studies, plus two applications belonging to the owner
+(`my-PyQt6-Apps/TBO` and `my-PyQt6-Apps/lucio-iva-calculator`). All eight were
+obtained **to be read**, so that their packaging, signing, installer and
+release-automation infrastructure could be studied side by side. Nothing more.
 
 A forker running
 
@@ -38,9 +37,8 @@ git clone --recurse-submodules https://github.com/wachin/pyqt6-packaging-researc
 git submodule update --init --recursive
 ```
 
-will end up with six full source trees on disk. The two applications under
-`PyQt6-Apps/` are not fetched, because they are not submodules. **None of the
-eight is part of this project. They are exhibits.**
+will end up with all eight full source trees on disk, the two owner applications
+included. **None of them is part of this project. They are exhibits.**
 
 ### You MUST NOT
 
@@ -91,47 +89,55 @@ directly. Start from `EVIDENCE_INDEX.md`.
 
 ### What the studied projects are
 
-Six of them are Git submodules. The other two, TBO and Lucio IVA Calculator, are
-independent clones kept under `PyQt6-Apps/` and ignored by this repository.
+All eight are Git submodules. Six are third-party case studies at the top level;
+two are the owner's own applications under `my-PyQt6-Apps/`.
 
-| Path | Upstream | How it is tracked | Why it is here |
-|---|---|---|---|
-| `dikte/` | yusufipk/dikte | submodule | Small PyQt6 app; the only implemented AppImage in the set. |
-| `CustomKnight-Creator/` | cmot17/CustomKnight-Creator | submodule | The negative example: onefile, unsigned, no release automation. |
-| `pyzo/` | pyzo/pyzo | submodule | Mature desktop app; onedir, Inno Setup, full macOS signing in CI. |
-| `CARA/` | pguntermann/CARA | submodule | Real-world PyQt6 app; local macOS signing and notarization. |
-| `napari/` | napari/napari | submodule | Large scientific app; rejected freezing in favour of conda. |
-| `napari-packaging/` | napari/packaging | submodule | The most auditable installer pipeline in the set. |
-| `PyQt6-Apps/TBO/` | wachin/TBO | **independent clone, ignored here** | The owner's own app; the only source of validated `.deb` and Flatpak-manifest evidence, and the only measured freezer comparison. |
-| `PyQt6-Apps/lucio-iva-calculator/` | wachin/lucio-iva-calculator | **independent clone, ignored here** | The owner's own app; switched its Windows freezer to Nuitka after antivirus results, and verifies its frozen archive's contents before publishing. |
+| Path | Upstream | Why it is here |
+|---|---|---|
+| `dikte/` | yusufipk/dikte | Small PyQt6 app; the only implemented AppImage in the set. |
+| `CustomKnight-Creator/` | cmot17/CustomKnight-Creator | The negative example: onefile, unsigned, no release automation. |
+| `pyzo/` | pyzo/pyzo | Mature desktop app; onedir, Inno Setup, full macOS signing in CI. |
+| `CARA/` | pguntermann/CARA | Real-world PyQt6 app; local macOS signing and notarization. |
+| `napari/` | napari/napari | Large scientific app; rejected freezing in favour of conda. |
+| `napari-packaging/` | napari/packaging | The most auditable installer pipeline in the set. |
+| `my-PyQt6-Apps/TBO/` | wachin/TBO | The owner's own app; the only source of validated `.deb` and Flatpak-manifest evidence, and the only controlled freezer measurement. |
+| `my-PyQt6-Apps/lucio-iva-calculator/` | wachin/lucio-iva-calculator | The owner's own app; switched its Windows freezer to Nuitka after antivirus results, and verifies its frozen archive's contents before publishing. |
 
 None of these is a dependency of this repository. All of them are exhibits.
 
-### The exceptions: the two owner applications
+### The two owner applications
 
-`PyQt6-Apps/TBO` and `PyQt6-Apps/lucio-iva-calculator` are the repository
-owner's own applications, not third-party case studies. They are deliberately
-**not** submodules: they are separate clones with their own `.git`, ignored by
-this repository through anchored patterns (`/PyQt6-Apps/TBO/`,
-`/PyQt6-Apps/lucio-iva-calculator/`) in `.gitignore`.
+`my-PyQt6-Apps/TBO` and `my-PyQt6-Apps/lucio-iva-calculator` are the repository
+owner's own applications rather than third-party case studies. They are pinned as
+submodules **exactly like the other six**, so every rule in "You MUST NOT" above
+applies to them unchanged.
 
-They are therefore the only trees here that **are** meant to be edited and built.
-When working on one:
+Two things are still different about them:
 
-- commit in its own repository (`git -C PyQt6-Apps/TBO ...`), never through this
-  one — this repository tracks nothing about it;
-- trigger its GitHub Actions by pushing to its own remote;
-- everything else in section 1 still applies unchanged: no imports, no dependency
-  manifests, and the six submodules remain read-only.
+1. **Their studies live beside them**, at `my-PyQt6-Apps/<app>-resultados/`. Those
+   directories are ordinary tracked content of this repository: the submodule is a
+   gitlink, the study next to it is normal files. Editing a study is editing this
+   repository; editing the application is editing another one.
+2. **The owner does change them**, so "do not commit inside them" has a practical
+   exception that belongs to the human, not to an agent working on the research.
+   If you are asked to change one of the two applications, do it in its own
+   repository and push to its own remote:
 
-Their studies and evidence packs live beside them, at
-`PyQt6-Apps/<name>-resultados/`, and **those are tracked here**. Note the
-asymmetry: the clone is ignored, the results are not. That is why the ignore
-patterns must stay anchored — a bare `PyQt6-Apps/` would silently swallow both
-result directories.
+   ```bash
+   git -C my-PyQt6-Apps/TBO status
+   git -C my-PyQt6-Apps/TBO commit -am "..."
+   git -C my-PyQt6-Apps/TBO push origin master
+   ```
 
-Because neither is a submodule, `git submodule update --init --recursive` will
-never touch them, and a fresh clone of this repository does not contain them.
+   Because it is now a submodule, the parent repository then records that new
+   commit as a changed gitlink. That is intended — it is what pins the research
+   to the code the studies describe — but it means a push to the application is
+   followed by a commit here, and the evidence packs must be regenerated so
+   `PROVENANCE.md` names the new commit.
+
+Note that `ignore = dirty` is set for all eight, so build output, `venv/` and
+`__pycache__` inside those trees do not show up as modifications. A *changed
+commit* still shows, deliberately.
 
 ---
 
@@ -139,16 +145,15 @@ never touch them, and a fresh clone of this repository does not contain them.
 
 The project root is detected by walking upward from the working directory to the
 first directory containing `.git`. Because **every studied tree has its own
-`.git`** — the six submodules and the two clones under `PyQt6-Apps/` alike — an
-agent whose working directory is inside one of them may not load this file at
-all.
+`.git`** — all eight submodules alike — an agent whose working directory is inside
+one of them may not load this file at all.
 
 Therefore:
 
 - **Work from the repository root** when doing research work. Do not `cd` into a
   studied tree for that.
-- If you are editing one of the owner applications deliberately (see "The
-  exceptions"), you will be inside it by necessity; carry the rules from
+- If you are editing one of the two owner applications deliberately (see "The two
+  owner applications"), you will be inside it by necessity; carry the rules from
   section 1 with you.
 - If you find yourself operating inside `dikte/`, `pyzo/`, `CARA/`, `napari/`,
   `napari-packaging/` or `CustomKnight-Creator/`, stop: you are in the wrong
@@ -205,7 +210,7 @@ idea that `onedir` avoids detection. It is **n = 1**. Cite
 NSIS installer and `0/65` for the portable ZIP, recorded after the project moved
 its Windows build from PyInstaller to Nuitka for that reason. No scan artifact was
 preserved, but the two files are still in its `v0.1.1` release, so
-`PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6 records their
+`my-PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6 records their
 SHA-256 and the claim can be re-queried. Confidence: **MEDIUM**, self-reported.
 
 Never generalise either into "PyInstaller causes detections" or "Nuitka avoids
@@ -268,7 +273,7 @@ at all.
 | `SKILLS.md` | The six Skills, what they cover, and what they deliberately refuse to cover. |
 | `EVIDENCE_INDEX.md` | Every evidence pack with its pinned commit and licence. |
 | `<project>-resultados/` | Per-case-study `PACKAGING_STUDY.md`, `PYQT6_PACKAGING_TUTORIAL.md` and `_evidence/`. |
-| `PyQt6-Apps/<app>-resultados/` | The same two documents and an `_evidence/` pack for the two owner applications, placed beside their (ignored) clones. |
+| `my-PyQt6-Apps/<app>-resultados/` | The same two documents and an `_evidence/` pack for the two owner applications, placed beside their submodules. |
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit. Its own CI workflow has not been run; the equivalent comparison was measured on TBO instead. |
@@ -297,12 +302,14 @@ Three traps this repository has already hit. Do not reintroduce them.
   also matches `napari-resultados/_evidence/napari/`, which silently excluded
   **12 real evidence files** from git. Anchor such patterns to the root (`/x/`)
   or scope them to the directory that needs them.
-- **The same trap, hit again.** A bare `PyQt6-Apps/` was added while ignoring the
-  two clones, and it swallowed everything under `PyQt6-Apps/` — including the
-  `PyQt6-Apps/<app>-resultados/` directories that must be tracked. Caught before
-  it was committed, by running `git check-ignore` on the paths that were about to
-  be created. Do that whenever you add or change an ignore rule: check the paths
-  you *want* tracked as well as the ones you want ignored.
+- **The same trap, hit again — and then dissolved.** A bare `PyQt6-Apps/` was
+  once added here while those two trees were independent clones, and it swallowed
+  everything under the directory, including the `<app>-resultados/` folders that
+  must be tracked. Caught before it was committed, by running `git check-ignore`
+  on the paths that were about to be created. The pattern is gone now: the two
+  applications are submodules, so nothing in this file can or should affect them.
+  The habit is what survives — whenever you add or change an ignore rule, check
+  the paths you *want* tracked as well as the ones you want ignored.
 
 Before finishing any change, verify:
 
@@ -318,9 +325,10 @@ git -C <submodule> status --short                                        # expec
 
 A change in this repository is complete when:
 
-- [ ] No submodule working tree was modified. (The two applications under
-      `PyQt6-Apps/` are not submodules: their changes belong in their own
-      repositories, never in this one.)
+- [ ] No submodule working tree was modified. (If the change is deliberately in
+      one of the two owner applications, it was committed in *its* repository and
+      this one only recorded the new gitlink, with the evidence packs
+      regenerated.)
 - [ ] No evidence file was edited by hand; packs were regenerated if needed.
 - [ ] `sha256sum -c SHA256SUMS` passes in every `_evidence/` directory touched.
 - [ ] Any new claim is labelled with its confidence, and unverified material is

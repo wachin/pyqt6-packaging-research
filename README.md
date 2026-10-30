@@ -109,20 +109,20 @@ Six upstream projects are included as Git submodules:
 | `napari` | Study a large, mature scientific Python/Qt application and its release architecture. |
 | `napari-packaging` | Study napari's dedicated packaging and installer infrastructure. |
 
-Two more are studied as **independent clones** of the owner's own applications,
-because both can be edited and pushed to their own remotes without this
-repository pinning a commit:
+Two more submodules are the owner's own applications, studied for the reasons the
+next table gives:
 
-| Clone | Purpose in this research |
+| Submodule | Purpose in this research |
 | --- | --- |
-| `PyQt6-Apps/TBO` | The *validation ground* of this repository: the only source of real, working `.deb`, AppImage and Flatpak evidence, and the only project here with a **measured** freezer comparison (Nuitka vs PyInstaller). |
-| `PyQt6-Apps/lucio-iva-calculator` | The project that switched its Windows freezer to Nuitka on the strength of antivirus results, and the only one that verifies its frozen archive's contents before publishing. |
+| `my-PyQt6-Apps/TBO` | The *validation ground* of this repository: the only source of real, working `.deb`, AppImage and Flatpak evidence, and the only project here with a **controlled** freezer comparison (Nuitka vs PyInstaller). |
+| `my-PyQt6-Apps/lucio-iva-calculator` | The project that switched its Windows freezer to Nuitka on the strength of antivirus results, and the only one that verifies its frozen archive's contents before publishing. |
 
-The six submodules remain independent upstream repositories, recorded here
-through Git submodules. The two clones under `PyQt6-Apps/` are treated
-differently: they are ordinary checkouts that this repository ignores, so they
-can be edited and pushed to their own remotes. Their studies and evidence packs
-live beside them, at `PyQt6-Apps/<name>-resultados/`.
+All eight are pinned the same way: a gitlink in `.gitmodules`, `ignore = dirty` so
+build output inside them does not show as a modification, and an evidence pack
+pinned to the exact commit. The two owner applications are still different in two
+respects — the owner does edit them and push to their own remotes, and their
+studies sit beside them at `my-PyQt6-Apps/<name>-resultados/` rather than at the
+repository root with the six third-party case studies.
 
 ## Repository structure
 
@@ -139,12 +139,11 @@ pyqt6-packaging-research/
 │   ├── PROMPTS-README.md                   # how to use the two prompts
 │   ├── TOP-FINDINGS-DIGEST.md              # one-page digest of the headline findings
 │   └── TBO-SOLUCIONES/             # validated fixes found while packaging TBO
-├── PyQt6-Apps/
-│   ├── TBO/                        # independent clone, NOT a submodule (git-ignored)
+├── my-PyQt6-Apps/                  # the two owner applications
+│   ├── TBO/                        # submodule
 │   ├── TBO-resultados/             # its study + evidence pack
-│   ├── lucio-iva-calculator/       # independent clone (git-ignored)
-│   ├── lucio-iva-calculator-resultados/   # its study + evidence pack
-│   └── TBO-GitHub-Actions-Executables/   # build outputs (git-ignored)
+│   ├── lucio-iva-calculator/       # submodule
+│   └── lucio-iva-calculator-resultados/   # its study + evidence pack
 ├── CARA/                           # submodule
 ├── CustomKnight-Creator/           # submodule
 ├── dikte/                          # submodule
@@ -223,7 +222,7 @@ thing; copying GPL packaging code into your own application is another.
 | `MASTER_PYQT6_PACKAGING_GUIDE.md` | Cross-project conclusions, contradictions, decision tree, release checklist. |
 | `PYQT6_MASTER_PACKAGING_TUTORIAL.md` | End-to-end tutorial assembled from all case studies. |
 | `PACKAGING_EVIDENCE_MATRIX.md` | Compact evidence table with a HIGH / MEDIUM / LOW / NOT VERIFIED confidence label per claim, plus an explicit list of what could **not** be verified. |
-| `TBO-SOLUCIONES/` | Fix log for a real application: twelve numbered sections covering the ZIP, the resource bug, the Debian package and the freezer measurement. Its evidence pack lives at `PyQt6-Apps/TBO-resultados/_evidence/`. |
+| `TBO-SOLUCIONES/` | Fix log for a real application: twelve numbered sections covering the ZIP, the resource bug, the Debian package and the freezer measurement. Its evidence pack lives at `my-PyQt6-Apps/TBO-resultados/_evidence/`. |
 
 ### Controlled experiment
 
@@ -290,19 +289,19 @@ Check their current state with:
 git submodule status
 ```
 
-When you clone with submodules you will get six complete third-party source
-trees on disk. **They are not libraries and they are not dependencies of this
+When you clone with submodules you will get eight complete source trees on disk:
+the six third-party case studies plus the owner's two applications under
+`my-PyQt6-Apps/`. **None of them is a library or a dependency of this
 repository.** They are exhibits, cloned to be read:
 
 - do not import them, and do not add them to any dependency manifest;
 - do not modify them, and do not run their build or release workflows;
 - do not treat their age or state as a defect in this repository.
 
-The two applications under `PyQt6-Apps/` are not among them: neither is a
-submodule, so a fork does not fetch them. They are separate clones of the
-owner's own applications, ignored by this repository through `.gitignore`. Their
-studies and evidence packs under `PyQt6-Apps/*-resultados/` **are** tracked, so
-you can read the research without cloning them.
+If you only want the research, `--recurse-submodules` is unnecessary: the two
+documents and the evidence pack of every study are ordinary tracked files, at
+`<project>-resultados/` and `my-PyQt6-Apps/<app>-resultados/`. A plain clone gets
+all of them and none of the source trees.
 
 If you use an AI agent here, `AGENTS.md` states this as a hard rule. To inspect
 what a studied project actually did, read its evidence pack under
@@ -564,7 +563,7 @@ scan artifacts, but the files themselves are still in its `v0.1.1` release, so
 the study recovers their SHA-256 and the claim can be re-queried. This is a
 second, independent sign in the same direction — and still not a property of the
 freezer. Full record:
-`PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6.
+`my-PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6.
 
 Still unverified:
 

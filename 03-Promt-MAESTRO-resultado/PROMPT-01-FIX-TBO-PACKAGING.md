@@ -7,7 +7,7 @@ Aplicar las guías maestras de empaquetado PyQt6 para **reparar los builds falli
 ## Ubicación del proyecto
 
 ```
-/home/wachin/Dev3/pyqt6-packaging-research/PyQt6-Apps/TBO/
+/home/wachin/Dev3/pyqt6-packaging-research/my-PyQt6-Apps/TBO/
 ```
 
 ## Instrucciones generales

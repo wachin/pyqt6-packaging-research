@@ -4,11 +4,10 @@
 Why this exists
 ---------------
 The case studies describe and cite the real packaging files (for example
-``packaging/build-appimage.sh`` lines 41-49) but do not embed them. Most of those
-files live inside Git submodules pinned to a commit, so a citation breaks as soon
-as a submodule is updated. (TBO is the exception: it is an ordinary independent
-clone ignored by this repository.) This script copies the files that actually
-participate in producing (or installing) a distributable into::
+``packaging/build-appimage.sh`` lines 41-49) but do not embed them. They live
+inside Git submodules pinned to a commit, so a citation breaks as soon as a
+submodule is updated. This script copies the files that actually participate in
+producing (or installing) a distributable into::
 
     <results-dir>/_evidence/<original/relative/path>
 
@@ -199,10 +198,10 @@ PROJECTS: list[dict] = [
     },
     {
         "key": "lucio-iva-calculator",
-        "submodule": "PyQt6-Apps/lucio-iva-calculator",
-        "results": "PyQt6-Apps/lucio-iva-calculator-resultados",
+        "submodule": "my-PyQt6-Apps/lucio-iva-calculator",
+        "results": "my-PyQt6-Apps/lucio-iva-calculator-resultados",
         "label": "Lucio IVA Calculator - own PyQt6 app (Nuitka on Windows, PyInstaller elsewhere)",
-        "note": "Independent clone of the owner's own application. The only project in the set whose Windows freezer was changed from PyInstaller to Nuitka on the strength of antivirus results, and the only one that verifies its Linux onefile archive's contents before publishing. Recorded VirusTotal figures are 0/68 for the installer and 0/65 for the portable ZIP at 0.1.1; PACKAGING_STUDY.md section 2 states exactly what that record does and does not establish.",
+        "note": "One of the owner's own applications, pinned as a sub-module. The only project in the set whose Windows freezer was changed from PyInstaller to Nuitka on the strength of antivirus results, and the only one that verifies its Linux onefile archive's contents before publishing. Recorded VirusTotal figures are 0/68 for the installer and 0/65 for the portable ZIP at 0.1.1; PACKAGING_STUDY.md section 6 states exactly what that record does and does not establish.",
         "files": [
             (".github/workflows/build.yml", "Six-stage pipeline: build, then download the artifact and run it (--smoke-test) on every platform. The Windows leg also installs the NSIS installer silently and runs both the installed and the portable executable. Release is gated on v* tags and generates SHA256SUMS.txt."),
             ("build/build_windows.ps1", "Nuitka standalone driver plus the NSIS invocation. The version is injected into the .nsi by three exact-literal String.Replace calls."),
@@ -225,10 +224,10 @@ PROJECTS: list[dict] = [
     },
     {
         "key": "TBO",
-        "submodule": "PyQt6-Apps/TBO",
-        "results": "PyQt6-Apps/TBO-resultados",
+        "submodule": "my-PyQt6-Apps/TBO",
+        "results": "my-PyQt6-Apps/TBO-resultados",
         "label": "TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux)",
-        "note": "Not a case study in the same sense: this is the owner's own application, kept as an independent clone rather than a sub-module. It is the only source of validated .deb evidence and the only project here with a Flatpak manifest and a recorded antivirus measurement. The fix log lives in 03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md; the packaging study is the one in this folder.",
+        "note": "Not a case study in the same sense: this is the owner's own application, pinned as a sub-module like the rest. It is the only source of validated .deb evidence and the only project here with a Flatpak manifest and a controlled freezer measurement. The fix log lives in 03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md; the packaging study is the one in this folder.",
         "files": [
             ("packaging/build_appimage.sh", "AppImage build script."),
             ("packaging/build_windows_nuitka.ps1", "Windows build (Nuitka) driver - the shipping Windows build."),
@@ -302,10 +301,11 @@ def is_submodule(path: str) -> bool:
 def source_url(path: str) -> str:
     """Upstream URL of a studied source tree.
 
-    Most trees are sub-modules, so their URL comes from .gitmodules. TBO is the
-    exception: it used to be a sub-module and is now an ordinary independent
-    clone checked out under this repository and ignored by it, so its URL has to
-    come from its own Git configuration.
+    All eight studied trees are sub-modules, so their URL normally comes from
+    .gitmodules. The fallback to the tree's own Git configuration is kept
+    deliberately: it is what makes the script still produce a provenance record
+    if a tree is ever demoted to an independent clone again, which is exactly the
+    state TBO was in before it was re-added as a sub-module.
     """
     url = run_git(["config", "-f", ".gitmodules", "--get", f"submodule.{path}.url"], ROOT)
     if url:

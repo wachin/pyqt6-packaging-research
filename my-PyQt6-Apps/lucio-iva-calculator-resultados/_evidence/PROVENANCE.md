@@ -4,8 +4,8 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Source tree | `PyQt6-Apps/lucio-iva-calculator` |
-| Tracked as | independent clone (ignored by this repository) |
+| Source tree | `my-PyQt6-Apps/lucio-iva-calculator` |
+| Tracked as | submodule |
 | Upstream | https://github.com/wachin/lucio-iva-calculator |
 | Pinned commit | `4db15fa9962241dbdac9967a670872331fa7d692` |
 | Described as | `v0.1.1-22-g4db15fa` |
@@ -14,7 +14,7 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 | Files | 17 |
 | Total size | 123,398 bytes |
 
-> Independent clone of the owner's own application. The only project in the set whose Windows freezer was changed from PyInstaller to Nuitka on the strength of antivirus results, and the only one that verifies its Linux onefile archive's contents before publishing. Recorded VirusTotal figures are 0/68 for the installer and 0/65 for the portable ZIP at 0.1.1; PACKAGING_STUDY.md section 2 states exactly what that record does and does not establish.
+> One of the owner's own applications, pinned as a sub-module. The only project in the set whose Windows freezer was changed from PyInstaller to Nuitka on the strength of antivirus results, and the only one that verifies its Linux onefile archive's contents before publishing. Recorded VirusTotal figures are 0/68 for the installer and 0/65 for the portable ZIP at 0.1.1; PACKAGING_STUDY.md section 6 states exactly what that record does and does not establish.
 
 ## Files and why each one is here
 

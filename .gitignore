@@ -34,28 +34,22 @@
 .mypy_cache/
 .hypothesis/
 
-# --- Personal working copies ---------------------------------------------------
-# TBO is the owner's own application. It used to be a sub-module of this
-# repository; it is now an ordinary independent Git clone checked out here, so
-# that it can be edited and pushed to its own remote without this repository
-# recording a different commit every time.
+# --- The two owner applications ------------------------------------------------
+# TBO and Lucio IVA Calculator are the owner's own applications, and they are
+# pinned as sub-modules like the other six studied trees:
 #
-# Ignored on purpose: its files must not be tracked here, and its Git history
-# lives in PyQt6-Apps/TBO/.git, not in this repository.
+#     my-PyQt6-Apps/TBO/
+#     my-PyQt6-Apps/lucio-iva-calculator/
 #
-#     git -C PyQt6-Apps/TBO status
+# There is deliberately NO ignore rule for them, and adding one would be
+# useless: a sub-module is tracked as a gitlink (mode 160000), and a tracked
+# path is never ignored. What keeps `git status` quiet when those trees have
+# build output or a venv inside them is `ignore = dirty` in .gitmodules, which
+# all eight sub-modules now carry.
 #
-# Anchored to the root so it cannot accidentally match a nested directory of the
-# same name inside an evidence pack.
-#
-# lucio-iva-calculator is the same kind of tree: an independent clone of the
-# owner's own application, read as a case study but never tracked here. It is
-# also pinned as a sub-module *of TBO*, which is a different repository.
-#
-# Every pattern below is anchored. A bare "PyQt6-Apps/" used to sit here and it
-# ignored the whole directory, which would have swallowed the two
-# "<project>-resultados/" evidence folders that live beside the clones. That is
-# the same mistake this file warns about at the top.
-/PyQt6-Apps/TBO/
-/PyQt6-Apps/lucio-iva-calculator/
-/PyQt6-Apps/TBO-GitHub-Actions-Executables/
+# Their studies and evidence packs live next to them, at
+# `my-PyQt6-Apps/<app>-resultados/`, and THOSE are tracked. That is the reason
+# this file has to stay anchored: while they were independent clones a bare
+# `PyQt6-Apps/` pattern was added here, and it silently swallowed everything
+# under the directory — including the two `*-resultados/` folders that must be
+# committed. See AGENTS.md section 5.

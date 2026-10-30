@@ -4,17 +4,17 @@ Extracted by `tools/extract_evidence.py`. These files are **not** relicensed; th
 
 | Field | Value |
 |---|---|
-| Source tree | `PyQt6-Apps/TBO` |
-| Tracked as | independent clone (ignored by this repository) |
+| Source tree | `my-PyQt6-Apps/TBO` |
+| Tracked as | submodule |
 | Upstream | https://github.com/wachin/TBO |
 | Pinned commit | `797011a584ff58a5b078df4cb9b9bc78a73e881c` |
-| Described as | `v2.0.0-11-g797011a` |
+| Described as | `v2.0.0.dev0-2-g797011a` |
 | Licence | GPL (`LICENSE`) |
 | Extracted (UTC) | 2026-10-30 |
 | Files | 25 |
 | Total size | 188,899 bytes |
 
-> Not a case study in the same sense: this is the owner's own application, kept as an independent clone rather than a sub-module. It is the only source of validated .deb evidence and the only project here with a Flatpak manifest and a recorded antivirus measurement. The fix log lives in 03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md; the packaging study is the one in this folder.
+> Not a case study in the same sense: this is the owner's own application, pinned as a sub-module like the rest. It is the only source of validated .deb evidence and the only project here with a Flatpak manifest and a controlled freezer measurement. The fix log lives in 03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md; the packaging study is the one in this folder.
 
 ## Files and why each one is here
 

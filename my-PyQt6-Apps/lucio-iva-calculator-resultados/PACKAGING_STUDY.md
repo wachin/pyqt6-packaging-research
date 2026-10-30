@@ -502,7 +502,7 @@ None. The recursive search finds `dpkg`/`debian` only in `README.md` prose about
 where to build. There is no `debian/` directory, no `control`, no `rules`, and no
 job that produces a `.deb`.
 
-The TBO case study in `PyQt6-Apps/TBO-resultados/` is the only source of
+The TBO case study in `my-PyQt6-Apps/TBO-resultados/` is the only source of
 validated `.deb` evidence in this research.
 
 ## 11. macOS
@@ -781,7 +781,7 @@ Reject or fix:
 
 ## 21. Important Files to Study
 
-In the evidence pack, `PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/`:
+In the evidence pack, `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/`:
 
 | File | Read it for |
 |---|---|

@@ -22,3 +22,11 @@
 	path = napari-packaging
 	url = https://github.com/napari/packaging
 	ignore = dirty
+[submodule "my-PyQt6-Apps/TBO"]
+	path = my-PyQt6-Apps/TBO
+	url = https://github.com/wachin/TBO
+	ignore = dirty
+[submodule "my-PyQt6-Apps/lucio-iva-calculator"]
+	path = my-PyQt6-Apps/lucio-iva-calculator
+	url = https://github.com/wachin/lucio-iva-calculator
+	ignore = dirty

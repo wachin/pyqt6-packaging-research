@@ -606,7 +606,7 @@ Two of those are worth automating because they fail silently: the ZIP layout
 
 - code signing and notarization — see the `pyqt6-windows-installer-signing` and
   `pyqt6-macos-signing-notarization` Skills;
-- Debian packaging — see `PyQt6-Apps/TBO-resultados/`;
+- Debian packaging — see `my-PyQt6-Apps/TBO-resultados/`;
 - AppImage — see `dikte-resultados/`.
 
 ---

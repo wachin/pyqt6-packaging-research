@@ -11,7 +11,7 @@ and installed: TBO. The upstream case studies ship **no `.deb` at all**, so
 everything here comes from a real, working package rather than from reading.
 
 Reference files (pinned to a commit):
-`PyQt6-Apps/TBO-resultados/_evidence/debian/`
+`my-PyQt6-Apps/TBO-resultados/_evidence/debian/`
 
 ## 1. Layout
 
@@ -151,5 +151,5 @@ Check specifically, because these break silently:
 - Model choice: `pyqt6-packaging-decisions`
 - AppImage alternative: `pyqt6-appimage-packaging`
 - Publishing hashes: `pyqt6-release-integrity`
-- Full write-up: `PyQt6-Apps/TBO/DEBIAN-PACKAGING-PYQT6.md` and
-  `PyQt6-Apps/TBO/DEBIAN-PACKAGE-AUDIT.md`
+- Full write-up: `my-PyQt6-Apps/TBO/DEBIAN-PACKAGING-PYQT6.md` and
+  `my-PyQt6-Apps/TBO/DEBIAN-PACKAGE-AUDIT.md`

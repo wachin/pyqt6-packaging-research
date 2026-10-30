@@ -580,7 +580,7 @@ Do not take:
 
 ## 20. Important Files to Study
 
-In `PyQt6-Apps/TBO-resultados/_evidence/`:
+In `my-PyQt6-Apps/TBO-resultados/_evidence/`:
 
 | File | Read it for |
 |---|---|
