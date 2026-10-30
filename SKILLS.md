@@ -10,7 +10,7 @@ this workspace; each is a directory containing a `SKILL.md`.
 | `pyqt6-deb-packaging` | Building or fixing a `.deb`. |
 | `pyqt6-appimage-packaging` | Building or fixing an AppImage. |
 | `pyqt6-macos-signing-notarization` | Building, signing, notarizing or stapling a macOS `.app`. |
-| `pyqt6-windows-installer-signing` | Building a Windows installer, or setting up Authenticode signing. |
+| `pyqt6-windows-installer-signing` | Building a Windows installer (Inno Setup or NSIS), or setting up Authenticode signing. |
 | `pyqt6-release-integrity` | Setting up checksums, lockfiles, provenance and CI hardening. |
 
 ## The rule these skills follow
@@ -40,8 +40,9 @@ are handled by *omission* rather than by confident advice:
   points at the experiment instead of recommending the switch outright.
 
 Conversely, the skills lean hard on what *is* solid: the `.deb` audit procedure,
-the GLIBC baseline rule, inside-out macOS signing, the Inno Setup signing order,
-and the specific CI failures that were actually hit and fixed.
+the GLIBC baseline rule, inside-out macOS signing, the Inno and NSIS installer
+recipes with the signing order, and the specific CI failures that were actually
+hit and fixed.
 
 ## Using them elsewhere
 

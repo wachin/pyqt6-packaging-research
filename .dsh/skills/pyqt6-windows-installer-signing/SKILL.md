@@ -1,18 +1,22 @@
 ---
 name: pyqt6-windows-installer-signing
-description: Produce a Windows build of a PyQt6 application - onedir + Inno Setup installer, PE version metadata, and the correct Authenticode signing order including nested binaries and RFC 3161 timestamping.
-whenToUse: Use when creating or fixing a Windows build or installer for a Python/PyQt6 application, or when setting up Authenticode signing / SmartScreen reputation work.
+description: Produce a Windows build of a PyQt6 application - onedir payload, an Inno Setup or NSIS installer, PE version metadata, and the correct Authenticode signing order including nested binaries and RFC 3161 timestamping.
+whenToUse: Use when creating or fixing a Windows build or installer (Inno Setup or NSIS) for a Python/PyQt6 application, or when setting up Authenticode signing / SmartScreen reputation work.
 ---
 
 # Windows packaging and signing for a PyQt6 application
 
-Observed implementations: dikte and pyzo (Inno Setup installers), napari (the
-only project doing real Windows Authenticode signing). Reference files, pinned
-to commits:
+Observed implementations: dikte and pyzo (Inno Setup installers), Lucio IVA
+Calculator (NSIS installer, per-user, bilingual, with a silent-install test in
+CI), napari (the only project doing real Windows Authenticode signing). Reference
+files, pinned to commits:
 
 - `dikte-resultados/_evidence/packaging/dikte.iss`
 - `dikte-resultados/_evidence/packaging/build-windows.ps1`
 - `pyzo-resultados/_evidence/freeze/installerBuilderScript.iss`
+- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`
+- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/build_windows.ps1`
+- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
 - `napari-packaging-resultados/_evidence/.github/workflows/make_bundle_conda.yml`
 
 ## 1. Bundle: onedir
@@ -94,11 +98,170 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; Flags: unchecked
 Compile with `iscc packaging\MyApp.iss`. Keep the `AppId` GUID stable forever —
 changing it makes upgrades install side by side instead of replacing.
 
-Alternatives: NSIS and MSI/MSIX exist and are used elsewhere (napari's conda
-toolchain produces NSIS installers), but Inno is the one with real precedent for
-a PyQt6 application here.
+If you need a licence page, a components page and per-language UI without writing
+that plumbing yourself, NSIS is the other demonstrated path and it is covered in
+section 4. MSI/MSIX exist but no project here produces one.
 
-## 4. Signing order
+## 4. Installer: NSIS
+
+Demonstrated by Lucio IVA Calculator, whose installer is published and was
+measured: `LucioIVACalculator-0.1.1-nuitka-setup.exe`, 30,666,770 bytes, SHA-256
+`4d8cda49…f55c12`. Its `.nsi` is the reference
+(`my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`).
+
+### Per-user install: three places must agree
+
+```nsi
+RequestExecutionLevel user                                    ; 28: no UAC prompt
+InstallDir "$LOCALAPPDATA\Programs\${APP_DIR}"                ; 29: user-writable
+...
+WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" ...  ; 95-100
+```
+
+Execution level, install directory and registry hive are one decision written
+three times. An installer with `RequestExecutionLevel user` that writes `HKLM`
+is a classic and confusing bug: it half-works, and then the uninstall entry is
+invisible to the user who installed it.
+
+### Installer PE metadata
+
+NSIS has its own directives, separate from whatever the frozen `.exe` carries:
+
+```nsi
+VIFileVersion "${VERSION}"
+VIProductVersion "${VERSION}"        ; four numeric parts, like Nuitka's flags
+VIAddVersionKey "ProductName"      "${APP_NAME}"
+VIAddVersionKey "CompanyName"      "Your Name"
+VIAddVersionKey "LegalCopyright"   "${COPYRIGHT}"
+VIAddVersionKey "FileDescription"  "${DESCRIPTION}"
+VIAddVersionKey "FileVersion"      "${VERSION}"
+VIAddVersionKey "ProductVersion"   "${VERSION}"
+VIAddVersionKey "InternalName"     "${APP_NAME} Installer"
+VIAddVersionKey "OriginalFilename" "${INSTALLER_NAME}"
+```
+
+**Verified on the published artifact**, by parsing the installer's
+`RT_VERSION` resource: `VS_FIXEDFILEINFO` reads `FileVersion=0.1.1.0` and
+`ProductVersion=0.1.1.0`, and all eight string keys above are present, with
+`OriginalFilename = LucioIVACalculator-0.1.1-nuitka-setup.exe`. So these
+directives are not decoration — they are what Explorer's Properties dialog and
+the reputation heuristics read.
+
+The same artifact is **unsigned**: its Authenticode security directory is empty
+(offset 0, size 0). Metadata is not a signature, and section 5 still applies.
+
+### Do not inject the version by replacing literals
+
+Lucio's build driver does this (`build_windows.ps1:61-65`):
+
+```powershell
+# Fragile: silently does nothing if the literal in the .nsi changes.
+$nsiContent.Replace('!define VERSION "0.1.0.0"', "!define VERSION `"$windowsVersion`"")
+```
+
+Three such replacements cover `VERSION`, `INSTALLER_NAME` and the
+`DisplayVersion` registry line. If anyone edits the template, the replacement
+stops matching, the build still succeeds, and the installer ships carrying the
+old version — with a `DisplayVersion` in Add/Remove Programs that disagrees with
+the file metadata. The template can never be correct on its own, because it has
+to keep a stale default for the replacement to match.
+
+Pass the values on the command line instead:
+
+```nsi
+; [TEMPLATE — MUST BE TESTED]
+!ifndef VERSION
+  !define VERSION "0.0.0.0"
+!endif
+!ifndef INSTALLER_NAME
+  !define INSTALLER_NAME "Setup.exe"
+!endif
+```
+
+```powershell
+& makensis "/DVERSION=$windowsVersion" "/DINSTALLER_NAME=MyApp-$version-setup.exe" "$nsiPath"
+if ($LASTEXITCODE -ne 0) { throw "makensis failed with exit code $LASTEXITCODE" }
+```
+
+`makensis /D` defines the symbol before the script is read, so there is no text
+to match and no stale default to keep in sync.
+
+### Fail loudly when the compiler is missing
+
+Lucio warns and continues (`build_windows.ps1:67-75`): a local build with no
+NSIS on `PATH` produces only the portable ZIP and exits 0. In CI it is always
+present (`choco install nsis -y`), but a local release can quietly ship without
+its installer. Make the missing compiler an error.
+
+### The uninstall section mirrors the install section
+
+Every `WriteRegStr`, `CreateShortCut` and `CreateDirectory` needs a matching
+`Delete` / `RmDir`. Lucio's `Section Uninstall` removes the tree, three
+shortcuts, the Start Menu folder and the registry key. Half-done uninstallers are
+common and they are what leaves entries pointing at deleted files.
+
+### Language selection
+
+```nsi
+Function .onInit
+  System::Call "kernel32::GetUserDefaultUILanguage() i .r0"
+  IntOp $1 $0 & 0x3ff          ; strip the sub-language bits
+  IntCmp $1 9 0 +2 +2          ; 9 = English
+    StrCpy $LANGUAGE ${LANG_ENGLISH}
+  IntCmp $1 10 0 +2 +2         ; 10 = Spanish
+    StrCpy $LANGUAGE ${LANG_SPANISH}
+FunctionEnd
+```
+
+The mask is the important part: `GetUserDefaultUILanguage` returns a LANGID
+where the low 10 bits are the primary language. Compare the masked value, not
+the raw one. Note the limitation — only the two languages are handled, so any
+other locale keeps whatever `$LANGUAGE` was left at. That is acceptable for two
+languages and wrong for twelve.
+
+### Compressor
+
+`SetCompressor ZLIB` (line 22) is chosen for compile speed. The 30 MB installer
+would be noticeably smaller with `LZMA`, which is the default in most NSIS
+templates. This is a trade, not a defect, but it is worth an explicit decision.
+
+### Test the installer, not just the compile
+
+This is the part worth copying from Lucio, in CI
+(`.github/workflows/build.yml:150-200`):
+
+```powershell
+$process = Start-Process -FilePath $installer -ArgumentList "/S", "/D=$installDir" -Wait -PassThru
+if ($process.ExitCode -ne 0) { exit $process.ExitCode }
+& "$installDir\LucioIVACalculator\LucioIVACalculator.exe" --smoke-test
+```
+
+`/S` is silent; `/D=` sets the destination, and NSIS requires that value to be
+**the last parameter and unquoted** — the installer takes the rest of the command
+line literally. Lucio's CI passes a runner path with no spaces, so the
+combination with PowerShell's own argument quoting is not exercised there: if
+your destination can contain a space, test it before believing it.
+
+Running the installed executable afterwards is what proves the payload arrived
+intact; a compile-only check proves none of that, and neither does a nonzero-exit
+check on the installer itself.
+
+Test the portable archive as its own case — it is produced by a different code
+path:
+
+```powershell
+Expand-Archive -Path $portableZip -DestinationPath $portableDir
+& "$portableDir\LucioIVACalculator\LucioIVACalculator.exe" --smoke-test
+```
+
+A note on what `--smoke-test` proves: in Lucio it returns **before**
+`QApplication` is constructed (`main.py:2070-2072`), so it verifies that the
+executable starts and the Python runtime loads — not that Qt's platform plugin
+or the shipped resources are present. Put the flag after `QApplication` and load
+one icon and one translation before returning, or the test will pass on a bundle
+that cannot open a window.
+
+## 5. Signing order
 
 Sign **after** building, and sign the installer **after** compiling it. The
 order matters and skipping it produces a partially signed tree that still
@@ -125,7 +288,7 @@ Points that are easy to get wrong:
 - Never hardcode the certificate or its password. Use CI secrets and a temporary
   file that you delete afterwards.
 
-## 5. What signing does and does not do
+## 6. What signing does and does not do
 
 Established by napari's own workflow comments:
 
@@ -138,9 +301,14 @@ Established by napari's own workflow comments:
   signature as better than none.
 
 Windows signing is the **largest shared gap** in the case studies: CARA,
-CustomKnight-Creator, dikte and pyzo ship unsigned Windows artifacts.
+CustomKnight-Creator, dikte, pyzo and Lucio IVA Calculator all ship unsigned
+Windows artifacts. Lucio's is measurable rather than asserted — the published
+installer's Authenticode security directory is empty — and it is the clearest
+example in this research of a project that did everything else right (complete
+metadata, no packing, a per-user installer, a tested silent install) and still
+had to switch freezer to get a clean scan.
 
-## 6. What is and is not verified here
+## 7. What is and is not verified here
 
 **Measured (2026-10, one application):** the same code, version and PE metadata,
 unsigned, UPX disabled in every arm. **Nuitka 0/71. PyInstaller 3/73 in *both*
@@ -156,6 +324,11 @@ SentinelOne. That shape is generic heuristic false positives.
 So for that application the freezer was the differentiator, and 3/73 with the
 majors clean does **not** by itself justify abandoning PyInstaller. It is n = 1.
 
+**Measured on Lucio IVA Calculator's NSIS installer:** the `RT_VERSION` resource
+carries `FileVersion`/`ProductVersion` `0.1.1.0` and the eight string keys listed
+in section 4; the Authenticode directory is empty, so it is unsigned. Those two
+facts are read from the published bytes, not from the project's prose.
+
 **Not verified:**
 
 - Any trend over time, or behaviour for another application. Bundle contents
@@ -163,6 +336,15 @@ majors clean does **not** by itself justify abandoning PyInstaller. It is n = 1.
 - That signing reduces detection counts — but signing is the reputation lever the
   research does support, and none of these arms was signed, so it remains the
   first thing to try.
+- **That the NSIS uninstaller removes everything.** Lucio's `Section Uninstall`
+  looks complete and was read, but no CI job runs an uninstall and checks the
+  result. Verify it by hand on a VM.
+- **The `makensis /D` recipe in section 4.** It is a template, not a copy; it has
+  not been compiled.
+- **Whether `LZMA` works for this payload.** It is the usual choice and it is not
+  used here; no measurement of size or compile time exists for this project.
+- **The `.onInit` language fallback for locales other than English and Spanish.**
+  Untested.
 
 If antivirus behaviour matters for your application, measure it rather than argue
 it: `experiments/pyinstaller-vs-nuitka/` in this repository. Interpret a
@@ -170,12 +352,20 @@ VirusTotal score as a point-in-time signal to investigate, never as a verdict �
 and never respond to a false positive with obfuscation, packing or binary
 mutation. Submit a vendor report instead.
 
-## 7. Checklist
+## 8. Checklist
 
 - [ ] onedir bundle, `upx=False`.
 - [ ] PE version metadata present and consistent with the installer and the tag.
+- [ ] Installer PE metadata present too — Inno writes it from `[Setup]`, NSIS from
+      `VIFileVersion`/`VIAddVersionKey`, and neither inherits the frozen `.exe`'s.
 - [ ] Installer compiles, installs, launches, and uninstalls cleanly on a clean
       Windows VM with no Python or Qt installed.
+- [ ] CI installs silently (`/S` for NSIS, `/SILENT` for Inno) and then runs the
+      installed executable.
+- [ ] The portable archive, if you ship one, is tested separately from the
+      installed copy.
+- [ ] The version is passed to the installer compiler as a parameter
+      (`/DVERSION=`, `iscc /D…`), not by rewriting the script.
 - [ ] Every nested binary signed, then the installer, with SHA-256 and RFC 3161.
 - [ ] Published SHA-256 matches the **signed** bytes.
 - [ ] Source URL published for false-positive reports.

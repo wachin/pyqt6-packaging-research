@@ -1,6 +1,6 @@
 ---
 name: pyqt6-packaging-decisions
-description: Decide how to package a PyQt6/PySide6 desktop app - bundle layout, PyInstaller vs Nuitka, and the Linux package model - from evidence gathered across six real projects. Use before writing any build script.
+description: Decide how to package a PyQt6/PySide6 desktop app - bundle layout, PyInstaller vs Nuitka, and the Linux package model - from evidence gathered across eight real projects. Use before writing any build script.
 whenToUse: Use when starting to package a PyQt6 desktop application, or when asked whether to use PyInstaller or Nuitka, onedir or onefile, or a native vs bundled .deb.
 ---
 
