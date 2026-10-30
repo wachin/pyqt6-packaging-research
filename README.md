@@ -196,6 +196,44 @@ The archive puts the six skill directories at its top level and a `_meta/`
 directory beside them with the licence, the install notes and the verification
 report. `_meta/` is skipped by both harnesses because it has no `SKILL.md`.
 
+#### What to ask for once they are installed
+
+You do not have to name the Skills: each one is loaded on demand, and the agent
+sees their names and descriptions in its catalog, so *"package this app"* is often
+enough. But selection is a judgement call, and a vague request ("make it work on
+Windows") can pick the wrong one or none. This removes the doubt:
+
+```text
+My PyQt6 program is ready and I want to ship it. I need these artifacts:
+
+- AppImage (for Ubuntu, Debian)
+- .deb package (for Ubuntu, Debian - must comply with Debian's packaging policies)
+- Portable package for macOS (PyInstaller)
+- Portable program for Windows 10/11 (Nuitka, so it does not trigger virus alerts
+  on VirusTotal.com)
+- .exe installer using .nsi scripts for Windows 10/11 (Nuitka, same reason)
+
+Use the PyQt6 packaging Skills that are installed. Start with
+pyqt6-packaging-decisions, follow it, and load the Skill for each artifact as you
+reach it. Build everything with GitHub Actions workflows, as the Skills describe,
+and give me the workflow files as part of the result.
+
+Before you start, ask me anything you need about my project's shape: entry point,
+src/ layout or flat, resources, translations, and which Qt modules I import.
+```
+
+Three things worth knowing about how that works:
+
+- **Explicit invocation exists.** In DeepSeek Harness you can force one Skill by
+  typing `/pyqt6-deb-packaging` in the message — a slash followed by the exact
+  name, surrounded by whitespace. In opencode, name the Skill and ask for it.
+- **Installing is not loading.** The agent reads a name and one description, not
+  the whole procedure, until it decides to load it. That is the point — six Skills
+  cost a few hundred tokens until one is needed.
+- **If the agent ignores them**, check that they are visible: the catalog lists six
+  names, and a Skill with broken frontmatter is skipped with a warning rather than
+  an error. An explicit `/name` in the message settles it.
+
 #### opencode: permissions and troubleshooting
 
 Skills are plain instructions but they can run commands, so opencode lets you
