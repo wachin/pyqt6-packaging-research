@@ -61,7 +61,6 @@ META_NAME = "_meta"
 #: the archive itself is written in sorted order.
 META_FILES = [
     "LICENSE",
-    "LICENSING.md",
     "SKILLS.md",
     "SKILLS-VERIFICATION.md",
 ]
@@ -185,7 +184,8 @@ sha256sum -c SHA256SUMS
 
 ## What is in `_meta/`
 
-`LICENSE`, `LICENSING.md`, `SKILLS.md` and `SKILLS-VERIFICATION.md`. A harness
+`LICENSE`, `SKILLS.md` and `SKILLS-VERIFICATION.md`. `LICENSE` opens with a short scope
+notice and then carries the complete GPL-3.0 text. A harness
 looks for a `SKILL.md` inside each top-level directory, so `_meta/` is skipped —
 it is here for the human, not for the agent.
 
@@ -199,10 +199,11 @@ applications on Windows only.
 
 ## Licence
 
-GPL-3.0-or-later for the Skills themselves. They quote and summarise other
-projects' packaging files, and that material keeps its own licence — see
-`_meta/LICENSING.md`. In particular, copying a code snippet from a Skill into
-your project brings your project under the GPL.
+GPL-3.0-or-later for the Skills themselves; see `_meta/LICENSE`, whose opening
+notice explains what that does and does not cover. They quote and summarise other
+projects' packaging files, and that material keeps its own licence. In particular,
+copying a code snippet from a Skill into your project brings your project under
+the GPL.
 """
 
 
@@ -272,7 +273,7 @@ def post_conditions(target: Path, skills: list[Path], version: str) -> None:
             problems.append(f"{skill.name}/SKILL.md missing from the archive")
     if any(n == f"{META_NAME}/SKILL.md" for n in names):
         problems.append("_meta/SKILL.md exists, which would make _meta a skill")
-    for required in ("README.md", "LICENSE", "LICENSING.md", "SKILLS.md",
+    for required in ("README.md", "LICENSE", "SKILLS.md",
                      "SKILLS-VERIFICATION.md"):
         if f"{META_NAME}/{required}" not in names:
             problems.append(f"_meta/{required} missing")
@@ -332,9 +333,10 @@ two applications on Windows only.
 
 ## Licence
 
-GPL-3.0-or-later. The Skills quote and summarise other projects' packaging files,
-and that material keeps its own licence; see `_meta/LICENSING.md`. Copying a code
-snippet from a Skill into your project brings your project under the GPL.
+GPL-3.0-or-later. `_meta/LICENSE` opens with a short scope notice, then the
+complete GPL-3.0 text. The Skills quote and summarise other projects' packaging
+files, and that material keeps its own licence. Copying a code snippet from a
+Skill into your project brings your project under the GPL.
 """
 
 

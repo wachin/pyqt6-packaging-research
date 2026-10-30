@@ -1,3 +1,37 @@
+This repository is licensed under the GNU General Public License, version 3 or
+later (GPL-3.0-or-later). The complete licence text follows this notice,
+unchanged.
+
+That sentence is not the whole picture, because this repository mixes four kinds
+of ownership, and a single line cannot describe them honestly:
+
+  * THIS REPOSITORY'S OWN CONTENT is what the licence below covers: the case
+    studies, the master guide and tutorials, the agent Skills in .dsh/skills/,
+    the tools/ scripts and the experiments/ kit.
+
+  * THE EIGHT SUBMODULES are separate repositories - dikte/, CustomKnight-
+    Creator/, pyzo/, CARA/, napari/, napari-packaging/, my-PyQt6-Apps/TBO/ and
+    my-PyQt6-Apps/lucio-iva-calculator/. Each keeps its own licence and is NOT
+    relicensed here.
+
+  * THE EVIDENCE PACKS under */_evidence/ are verbatim copies of files from
+    those projects, extracted and pinned to a commit. They stay under the
+    upstream licence recorded in each pack's PROVENANCE.md: BSD for pyzo and
+    napari, GPL for the others, and napari/packaging carries NO licence at all.
+
+  * THIS LICENCE TEXT is the Free Software Foundation's and may be copied
+    freely, as the FSF intends.
+
+Read the consequence of copyleft before copying anything out of this repository.
+The Skills contain shell, Python, PowerShell and NSIS code, so copying a snippet
+from one of them into your project brings your project under the GPL. Reading a
+procedure and implementing it yourself does not.
+
+The full reasoning, the per-path table and what to do if the answer is still
+unclear are in the "License and third-party projects" section of README.md.
+
+--------------------------------------------------------------------------------
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 

@@ -237,9 +237,9 @@ on a `skills-v*` tag). Two consequences for anyone editing `.dsh/skills/`:
 
 - the directory name must equal the `name:` in the Skill's frontmatter, because
   the bundle refuses to build otherwise;
-- the bundle carries `LICENSE`, `LICENSING.md`, `SKILLS.md` and
-  `SKILLS-VERIFICATION.md` under `_meta/`, so a rename or a deletion of any of
-  those breaks the release job, not just the docs.
+- the bundle carries `LICENSE`, `SKILLS.md` and `SKILLS-VERIFICATION.md` under
+  `_meta/`, so a rename or a deletion of any of those breaks the release job, not
+  just the docs.
 
 After changing a Skill, run `python3 tools/build_skills_bundle.py --version
 1.0.0` and confirm it still reports "reproducible".
@@ -291,7 +291,7 @@ at all.
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
 | `tools/build_skills_bundle.py` | Builds the installable Skills tarball; deterministic, and it refuses a bundle a harness could not load. |
-| `LICENSE`, `LICENSING.md` | GPL-3.0 for this repository's own content, and what that does **not** cover (submodules, evidence packs, `napari/packaging`). |
+| `LICENSE` | GPL-3.0-or-later for this repository's own content. It opens with a scope notice saying what that does **not** cover (submodules, evidence packs, `napari/packaging`), then the full GPL text. |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit. Its own CI workflow has not been run; the equivalent comparison was measured on TBO instead. |
 | `.dsh/skills/` | Agent Skills derived from the verified findings. |
 

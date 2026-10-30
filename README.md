@@ -171,7 +171,6 @@ pyqt6-packaging-research/
 ├── EVIDENCE_INDEX.md               # index of every evidence pack
 ├── SKILLS.md                       # what the Skills cover, and how to install them
 ├── SKILLS-VERIFICATION.md          # audit of the Skills against the five artifacts
-├── LICENSING.md                    # what is GPL here and what belongs to upstream
 ├── LICENSE                         # GPL-3.0
 ├── AGENTS.md                       # hard rules for AI agents: submodules are not libraries
 ├── .gitmodules
@@ -534,25 +533,28 @@ The investigation should:
 
 ## License and third-party projects
 
-This repository's **own** content — the studies, the guides, the tutorials, the
-Skills, the tools and the experiment kit — is **GPL-3.0-or-later**; see
-`LICENSE`.
+This repository's **own** content is **GPL-3.0-or-later**. `LICENSE` opens with a
+short scope notice and then carries the complete licence text.
 
-That general statement is not the whole picture, and `LICENSING.md` is where the
-exceptions live, because a single licence file cannot describe a repository that
-mixes four kinds of ownership:
+That one sentence cannot describe a repository which mixes four kinds of
+ownership, so the detail lives here:
 
-- the **eight submodules** remain under their own licences and are **not**
-  relicensed here;
-- the **evidence packs** are verbatim upstream files, still under the upstream
-  licence recorded in each pack's `PROVENANCE.md` — BSD for pyzo and napari,
-  GPL for the others, and **no licence at all** for `napari/packaging`;
-- the GPL text in `LICENSE` is the FSF's and may be copied freely.
+| What | Whose it is | Licence |
+|---|---|---|
+| Studies, master guide, tutorials, `SKILLS*.md`, `.dsh/skills/`, `tools/`, `experiments/` | this repository | **GPL-3.0-or-later** |
+| The eight submodules (`dikte/`, `CustomKnight-Creator/`, `pyzo/`, `CARA/`, `napari/`, `napari-packaging/`, `my-PyQt6-Apps/TBO/`, `my-PyQt6-Apps/lucio-iva-calculator/`) | their upstream owners | **their own**, not relicensed here: GPL for dikte, CARA, CustomKnight-Creator, TBO and lucio; BSD for pyzo and napari; **no licence file at all** for `napari/packaging` |
+| The evidence packs under `*/_evidence/` | verbatim upstream files | the licence in that pack's `PROVENANCE.md`, as above |
+| The GPL text in `LICENSE` | the Free Software Foundation | may be copied freely |
 
-Before reusing code, scripts, configuration, icons, or other assets from an
-upstream project, check its license and attribution requirements. Note the
-practical consequence of copyleft here: the Skills contain code, so copying a
-snippet from one into your project brings your project under the GPL.
+**Read this before copying a recipe.** The Skills contain shell, Python,
+PowerShell and NSIS code, and that code is part of the GPL-covered work here. So
+copying a snippet from a Skill into your project brings your project under the
+GPL. Reading a procedure and implementing it yourself does not. If you are
+building something proprietary, that distinction is the one that matters.
+
+If you redistribute an evidence pack, carry its `PROVENANCE.md` and `SHA256SUMS`
+with it, since those are what say where it came from and under what terms. And do
+not reuse anything from `napari/packaging`: it grants no licence.
 
 ## Status
 
