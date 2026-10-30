@@ -53,15 +53,15 @@ The six skill directories sit at its top level, so extraction needs no stripping
 and a `_meta/` directory carries the licence and these notes:
 
 ```bash
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/latest/download/pyqt6-packaging-skills-1.0.0.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
   | tar -xz -C ~/.dsh/skills
 ```
 
 Check the digest first if you prefer:
 
 ```bash
-curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/latest/download/pyqt6-packaging-skills-1.0.0.tar.gz
-curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/latest/download/SHA256SUMS
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/SHA256SUMS
 sha256sum -c SHA256SUMS
 ```
 

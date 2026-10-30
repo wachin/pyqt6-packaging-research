@@ -1,623 +1,310 @@
-# PyQt6 Packaging Research
+# PyQt6 packaging research
 
-Research repository for studying how real-world Python/Qt desktop applications are packaged and distributed on **Windows, Linux, and macOS**.
+How eight real PyQt6 desktop applications get built, packaged, installed and
+released on Windows, Linux and macOS — read from their own build files, pinned to
+commits, and turned into something you can hand to an AI agent.
 
-The goal is not to develop a new application in this repository. Instead, it collects selected open-source projects as **Git submodules** so their build, packaging, release, signing, and CI/CD infrastructure can be studied side by side.
+The research is finished. This README is about **using** it.
 
-## Goals
+## What it answers
 
-The main objective is to create a practical, evidence-based guide for packaging my own **PyQt6 desktop applications**.
+| Artifact | Platform | Tool this research validates |
+|---|---|---|
+| **AppImage** | Ubuntu, Debian, any glibc ≥ your floor | PyInstaller `onedir` in a hand-built AppDir, `appimagetool` pinned and checksummed |
+| **`.deb`** | Ubuntu, Debian, policy-compliant | debhelper + pybuild, depending on the distro's `python3-pyqt6` |
+| **macOS `.zip`** | macOS | PyInstaller `-D` + `BUNDLE`, archived with `ditto` |
+| **Windows portable `.zip`** | Windows 10/11 | **Nuitka `--standalone`** |
+| **Windows `setup.exe`** | Windows 10/11 | the same Nuitka payload, wrapped in **NSIS** (`.nsi`) or Inno Setup |
 
-The research focuses on:
+Windows is Nuitka on purpose — see [the antivirus question](#the-antivirus-question).
 
-### Windows
+---
 
-- PyInstaller
-- Nuitka
-- `onefile` vs `onedir` / standalone builds
-- Windows executables
-- Portable distributions
-- Installers
-- Inno Setup, NSIS, MSI/MSIX, or other installer systems
-- Application metadata and manifests
-- Code signing / Authenticode
-- SmartScreen reputation
-- VirusTotal and antivirus false positives
-- Legitimate techniques for reducing false-positive detections
-- Release checksums and provenance
+## Two ways to use this
 
-A particularly important research question is whether PyInstaller can be configured and used in ways that reduce antivirus false positives. I have previously experienced false positives with PyInstaller-built executables while having better results with Nuitka, so both approaches are studied rather than assuming one is universally better.
+### 1. Point your agent at the folder — no Skills needed
 
-There is **no assumption that zero VirusTotal detections can be guaranteed**. The goal is to identify legitimate professional distribution practices, not antivirus evasion techniques.
-
-### Linux
-
-The research focuses on two different distribution formats:
-
-#### AppImage
-
-- Standalone application bundling
-- AppDir structure
-- AppRun
-- `.desktop` integration
-- Icons
-- Qt plugins
-- PyQt6 libraries
-- Python runtime
-- AppImage creation tools
-- GLIBC compatibility
-- Portability between Linux distributions
-
-#### Debian packages
-
-- `.deb` package structure
-- Debian metadata
-- Dependency management
-- System Python/PyQt6 vs bundled runtimes
-- Installation paths
-- Desktop integration
-- Icons and application metadata
-- Package validation and testing
-
-### macOS
-
-- `.app` bundles
-- PyInstaller and Nuitka on macOS
-- `Info.plist`
-- `.icns` icons
-- Qt frameworks and plugins
-- Python runtime
-- Code signing
-- Hardened Runtime
-- Apple notarization
-- Stapling
-- `.dmg` creation
-- GitHub Actions macOS runners
-
-### Automation
-
-Another major objective is to understand how mature projects automate releases with **GitHub Actions**, ideally reaching a workflow conceptually similar to:
+Everything a person or an agent needs is in one directory,
+[`PYQT6-GENESIS-PACKAGING/`](PYQT6-GENESIS-PACKAGING/). Open your PyQt6 project,
+paste this, and adjust the paths to where this repository sits on your machine:
 
 ```text
-                         Git tag
-                            |
-                +-----------+-----------+
-                |           |           |
-             Windows      Linux       macOS
-                |           |           |
-             Build       AppImage      Build
-                |           |           |
-             Sign          DEB          Sign
-                |                       |
-            Installer                 Notarize
-                |                       |
-                +-----------+-----------+
-                            |
-                     GitHub Release
+My PyQt6 program is now ready, and I would like you to create installers for it,
+specifically:
+
+- AppImage (for Ubuntu, Debian)
+- .deb package (for Ubuntu, Debian — must comply with Debian's packaging policies)
+- Portable package for macOS (created using PyInstaller)
+- Portable program for Windows 10/11 (created using Nuitka, ensuring it does not
+  trigger virus alerts on VirusTotal.com)
+- .exe installer (using .nsi scripts) for Windows 10/11 (created using Nuitka,
+  ensuring it does not trigger virus alerts on VirusTotal.com)
+
+To expedite this process, please refer to the folder located in the project root
+named:
+
+PYQT6-GENESIS-PACKAGING
+
+This folder contains research on how various other PyQt6 projects have implemented
+their installers. It is particularly important to review the following
+subdirectory:
+
+PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps
+
+The developer who conducted this research included the actual programs they
+successfully built using these methods.
 ```
 
-## Projects under study
+Three things make that prompt work, and they are worth knowing so you can steer
+the agent afterwards:
 
-Six upstream projects are included as Git submodules:
+- **Start it inside your project, not here.** This repository is a research
+  archive; an agent working in it will read studies instead of building your app.
+  Copy `PYQT6-GENESIS-PACKAGING/` next to your project, or point at it by absolute
+  path.
+- **Ask it to name the closest analogue.** "Which of these projects is closest to
+  mine, and what did it do?" gets a better build than "implement all five
+  artifacts" — a `.deb` with a `src/` layout and a Qt6 app with a `debian/`
+  directory already present have different starting points.
+- **Tell it your app's real shape**: entry point, `src/` or flat, resources,
+  translations, Qt modules you import beyond QtWidgets.
 
-| Submodule | Purpose in this research |
-| --- | --- |
-| `dikte` | Study a relatively small PyQt6 application with multiplatform distribution. |
-| `CustomKnight-Creator` | Study a smaller project and its executable/packaging approach. |
-| `pyzo` | Study packaging practices from a mature Python/Qt desktop application. |
-| `CARA` | Study another real-world PyQt6 desktop application and its multiplatform builds. |
-| `napari` | Study a large, mature scientific Python/Qt application and its release architecture. |
-| `napari-packaging` | Study napari's dedicated packaging and installer infrastructure. |
+Inside that folder, every project has a `PACKAGING_STUDY.md` (what it does, with
+line citations), a `PYQT6_PACKAGING_TUTORIAL.md` (how to do it), and `_evidence/`
+(the real packaging files copied out of the project). The
+[folder's own README](PYQT6-GENESIS-PACKAGING/README.md) maps which project answers
+which artifact, and it is the page to read before you delegate.
 
-Two more submodules are the owner's own applications, studied for the reasons the
-next table gives:
+### 2. Install the Skills
 
-| Submodule | Purpose in this research |
-| --- | --- |
-| `my-PyQt6-Apps/TBO` | The *validation ground* of this repository: the only source of real, working `.deb`, AppImage and Flatpak evidence, and the only project here with a **controlled** freezer comparison (Nuitka vs PyInstaller). |
-| `my-PyQt6-Apps/lucio-iva-calculator` | The project that switched its Windows freezer to Nuitka on the strength of antivirus results, and the only one that verifies its frozen archive's contents before publishing. |
+Six Skills turn the same research into loadable procedure — one per decision and
+per artifact, each with a "what is NOT verified here" section. They are ordinary
+`SKILL.md` files, so they work in more than one harness.
 
-All eight are pinned the same way: a gitlink in `.gitmodules`, `ignore = dirty` so
-build output inside them does not show as a modification, and an evidence pack
-pinned to the exact commit. The two owner applications are still different in two
-respects — the owner does edit them and push to their own remotes, and their
-studies sit beside them at `my-PyQt6-Apps/<name>-resultados/` rather than at the
-repository root with the six third-party case studies.
+#### DeepSeek Harness
 
-## Repository structure
+A Skill is a directory containing `SKILL.md`, one level below a skill root. Lower
+rank wins when two roots define the same name:
 
-```text
-pyqt6-packaging-research/
-├── 01-GENESIS/                     # origin of the research, Debian/Termux notes
-├── 02-Promt-MAESTRO/               # the master prompt used for second-level analysis
-├── 03-Promt-MAESTRO-resultado/     # consolidated, cross-project results
-│   ├── MASTER_PYQT6_PACKAGING_GUIDE.md
-│   ├── PYQT6_MASTER_PACKAGING_TUTORIAL.md
-│   ├── PACKAGING_EVIDENCE_MATRIX.md
-│   ├── PROMPT-01-FIX-TBO-PACKAGING.md      # prompt to repair TBO's build jobs
-│   ├── PROMPT-02-NUEVO-PROYECTO-PYQT6.md   # prompt to start a new project correctly
-│   ├── PROMPTS-README.md                   # how to use the two prompts
-│   ├── TOP-FINDINGS-DIGEST.md              # one-page digest of the headline findings
-│   └── TBO-SOLUCIONES/             # validated fixes found while packaging TBO
-├── my-PyQt6-Apps/                  # the two owner applications
-│   ├── TBO/                        # submodule
-│   ├── TBO-resultados/             # its study + evidence pack
-│   ├── lucio-iva-calculator/       # submodule
-│   └── lucio-iva-calculator-resultados/   # its study + evidence pack
-├── CARA/                           # submodule
-├── CustomKnight-Creator/           # submodule
-├── dikte/                          # submodule
-├── napari/                         # submodule
-├── napari-packaging/               # submodule
-├── pyzo/                           # submodule
-├── CARA-resultados/                # per-project outputs (one per case study)
-│   ├── PACKAGING_STUDY.md
-│   ├── PYQT6_PACKAGING_TUTORIAL.md
-│   ├── 01_<agent>_report.md        # how the study was produced
-│   └── _evidence/                  # real packaging files, pinned to a commit
-├── CustomKnight-Creator-resultados/
-├── dikte-resultados/
-├── napari-packaging-resultados/
-├── napari-resultados/
-├── pyzo-resultados/
-├── tools/
-│   ├── extract_evidence.py         # regenerates every _evidence/ pack
-│   └── build_skills_bundle.py      # builds the installable Skills tarball
-├── experiments/
-│   └── pyinstaller-vs-nuitka/      # controlled build-tool experiment (kit + CI workflow)
-├── .dsh/skills/                    # agent Skills built from the verified findings
-├── .github/workflows/
-│   └── release-skills.yml          # publishes the bundle when a skills-v* tag is pushed
-├── EVIDENCE_INDEX.md               # index of every evidence pack
-├── SKILLS.md                       # what the Skills cover, and how to install them
-├── SKILLS-VERIFICATION.md          # audit of the Skills against the five artifacts
-├── LICENSE                         # GPL-3.0
-├── AGENTS.md                       # hard rules for AI agents: submodules are not libraries
-├── .gitmodules
-└── README.md
-```
+| Rank | Location | Scope |
+|---|---|---|
+| 100 | `<project>/.dsh/skills/` | this project, committed |
+| 200 | `<project>/.agents/skills/` | this project, shared agents convention |
+| 400 | `~/.dsh/skills/` | every project on this machine |
+| 500 | `~/.agents/skills/` | every project, shared agents convention |
 
-### Case-study outputs
-
-Every case study produces two documents in its `*-resultados/` directory:
-
-- `PACKAGING_STUDY.md` — what the upstream project actually does, with evidence.
-- `PYQT6_PACKAGING_TUTORIAL.md` — the reusable lessons derived from that case.
-
-### Evidence packs
-
-The studies cite real files by path and line number (for example
-`packaging/build-appimage.sh` lines 41-49). Those files live inside submodules
-pinned to a commit, so the citation would break the moment a submodule is
-updated. Each `*-resultados/_evidence/` directory therefore contains a copy of
-the packaging, build, installer and release-CI files that a study relies on,
-**mirroring their original repository layout** so that a citation resolves
-immediately.
-
-Each pack records its own provenance:
-
-```text
-_evidence/
-├── PROVENANCE.md   upstream URL, exact commit, licence, and why each file is here
-├── SHA256SUMS      integrity check for every extracted file
-└── <original/relative/paths...>
-```
-
-`EVIDENCE_INDEX.md` lists every pack, its pinned commit and its licence.
-
-Regenerate all packs with:
+**Install once for all your projects:**
 
 ```bash
-python3 tools/extract_evidence.py          # write
-python3 tools/extract_evidence.py --dry-run  # preview
+mkdir -p ~/.dsh/skills
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+  | tar -xz -C ~/.dsh/skills
 ```
 
-The extracted files are **evidence, not templates**, and they are not
-relicensed. Licences differ sharply across the set — CARA, CustomKnight-Creator,
-dikte, TBO and lucio-iva-calculator are GPL, napari and pyzo are BSD, and
-`napari/packaging` ships no licence file at all. Studying and quoting is one
-thing; copying GPL packaging code into your own application is another.
+Verify the download first if you prefer:
 
-### Second-level analysis
-
-`03-Promt-MAESTRO-resultado/` consolidates the whole set:
-
-| Document | Role |
-| --- | --- |
-| `MASTER_PYQT6_PACKAGING_GUIDE.md` | Cross-project conclusions, contradictions, decision tree, release checklist. |
-| `PYQT6_MASTER_PACKAGING_TUTORIAL.md` | End-to-end tutorial assembled from all case studies. |
-| `PACKAGING_EVIDENCE_MATRIX.md` | Compact evidence table with a HIGH / MEDIUM / LOW / NOT VERIFIED confidence label per claim, plus an explicit list of what could **not** be verified. |
-| `TBO-SOLUCIONES/` | Fix log for a real application: twelve numbered sections covering the ZIP, the resource bug, the Debian package and the freezer measurement. Its evidence pack lives at `my-PyQt6-Apps/TBO-resultados/_evidence/`. |
-
-### Controlled experiment
-
-Reading repositories cannot answer the antivirus question, because no project in
-the case set publishes any detection data. `experiments/pyinstaller-vs-nuitka/`
-is a runnable controlled experiment that can:
-
-```text
-arm A  PyInstaller  onedir      arm C  Nuitka  standalone
-arm B  PyInstaller  onefile     arm D  Nuitka  onefile
+```bash
+base=https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0
+curl -fsSLO "$base/pyqt6-packaging-skills-1.0.0.tar.gz"
+curl -fsSLO "$base/SHA256SUMS"
+sha256sum -c SHA256SUMS
 ```
 
-It holds the application, PyQt6 pin, PE identity metadata, OS image and C
-toolchain constant, disables UPX in every arm, and produces per-arm artifacts,
-SHA-256 hashes, sizes, start-up timings and build logs, plus an opt-in
-VirusTotal submission step.
+**Or track `git pull`**, which keeps them live because the harness follows
+symlinks:
 
-The PyInstaller arms of the kit have been built and launched; the Nuitka arms and
-the CI workflow are written but **not yet executed**. See that directory's
-`README.md` for the exact validation status before trusting any of it.
+```bash
+git clone https://github.com/wachin/pyqt6-packaging-research.git ~/src/pyqt6-research
+mkdir -p ~/.dsh/skills
+ln -sfn ~/src/pyqt6-research/.dsh/skills/* ~/.dsh/skills/
+```
 
-### Agent Skills
+Check that they loaded: the catalog should list all six names —
+`pyqt6-packaging-decisions`, `pyqt6-deb-packaging`, `pyqt6-appimage-packaging`,
+`pyqt6-macos-signing-notarization`, `pyqt6-windows-installer-signing`,
+`pyqt6-release-integrity`. A Skill whose YAML frontmatter is invalid is skipped
+with a warning rather than an error, so if five appear instead of six, look for the
+warning.
 
-`.dsh/skills/` contains six Skills that turn the verified findings into
-procedure: packaging decisions, DEB, AppImage, macOS signing/notarization,
-Windows installer/signing, and release integrity.
+Both the tag (`skills-v1.0.0`) and the version in the filename change with each
+release; if the download 404s, `gh release list` (or the releases page) shows what
+exists now.
 
-There is deliberately **no antivirus Skill**: a Skill is followed confidently, and
-what the evidence supports here is a *reporting* procedure and a set of
-build-hygiene choices, not a recipe that guarantees a clean scan. Two
-measurements exist — TBO's controlled four-arm comparison and Lucio's recorded
-Windows figures — and both are small, Windows-specific and partly self-reported.
-`SKILLS.md` explains the rule and how to install the Skills in another project.
+Then just ask for the work: *"package this app as a .deb"*. The agent loads the
+relevant Skill by name. Start with `pyqt6-packaging-decisions` if you are still
+choosing.
 
-## Why Git submodules?
+#### opencode
 
-Git submodules make it possible to:
+opencode reads the same `SKILL.md` format from six locations, three project-level
+and three global ([docs](https://opencode.ai/docs/skills/)):
 
-- preserve the original upstream repositories;
-- keep their Git history separate;
-- record the exact upstream commit used during an investigation;
-- update individual projects independently;
-- avoid copying third-party source code directly into this repository;
-- compare packaging implementations from several projects in one workspace.
+| Scope | Locations |
+|---|---|
+| Project | `.opencode/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md` |
+| Global | `~/.config/opencode/skills/<name>/SKILL.md`, `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md` |
 
-## Clone this repository
+For a project it walks up from the working directory to the git worktree, so a
+`skills/` directory above your current subdirectory is still found.
 
-Because the projects are submodules, the recommended way to clone this repository is:
+**These six Skills need no conversion.** Checked against opencode's rules: the
+names match `^[a-z0-9]+(-[a-z0-9]+)*$`, all are under 64 characters, each matches
+its directory name, and every `description` is between 184 and 214 characters
+(the limit is 1024). The one field opencode does not use is `whenToUse`; it ignores
+unknown fields rather than failing.
+
+**Install globally — the same archive, a different root:**
+
+```bash
+mkdir -p ~/.agents/skills
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+  | tar -xz -C ~/.agents/skills
+```
+
+**Or per project**, so the whole team gets them with a clone:
+
+```bash
+mkdir -p .opencode/skills
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+  | tar -xz -C .opencode/skills
+```
+
+#### Both harnesses at once
+
+`~/.agents/skills/` is read by **both** DeepSeek Harness (rank 500) and opencode.
+Installing there once covers both:
+
+```bash
+mkdir -p ~/.agents/skills
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+  | tar -xz -C ~/.agents/skills
+```
+
+The archive puts the six skill directories at its top level and a `_meta/`
+directory beside them with the licence, the install notes and the verification
+report. `_meta/` is skipped by both harnesses because it has no `SKILL.md`.
+
+#### opencode: permissions and troubleshooting
+
+Skills are plain instructions but they can run commands, so opencode lets you
+gate them in `opencode.json`:
+
+```json
+{
+  "permission": {
+    "skill": {
+      "*": "allow",
+      "pyqt6-*": "allow",
+      "internal-*": "deny"
+    }
+  }
+}
+```
+
+`allow` loads immediately, `ask` prompts, `deny` hides the Skill entirely.
+Wildcards work, and the same block can be set per agent.
+
+If a Skill does not appear: confirm the filename is `SKILL.md` in all caps, that
+the frontmatter has both `name` and `description`, that the name is unique across
+all six locations, and that no permission rule denies it.
+
+---
+
+## What is inside the repository
+
+| Path | What it is |
+|---|---|
+| `PYQT6-GENESIS-PACKAGING/` | **Start here.** Every study in one folder with English directory names, for pointing a person or an agent at. |
+| `03-Promt-MAESTRO-resultado/` | The consolidated result: `MASTER_PYQT6_PACKAGING_GUIDE.md`, `PYQT6_MASTER_PACKAGING_TUTORIAL.md`, and `PACKAGING_EVIDENCE_MATRIX.md` with a confidence label on every claim. |
+| `01-GENESIS/`, `02-Promt-MAESTRO/` | Provenance: where the research started and the master prompt used for the second-level analysis. Not needed to use the results. |
+| `<project>-resultados/`, `my-PyQt6-Apps/<app>-resultados/` | The canonical evidence packs, what the Skills cite. |
+| `.dsh/skills/` | The six Skills, source of truth for the release bundle. |
+| `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit, with the VirusTotal screenshots. |
+| `tools/` | `extract_evidence.py` (regenerates the packs), `build_skills_bundle.py`, `check_genesis_pack.py`. |
+| `SKILLS.md`, `SKILLS-VERIFICATION.md` | What the Skills cover, and the audit of what they do not. |
+| `AGENTS.md` | Rules for AI agents working *in this repository*. Read it before letting one loose here. |
+| The eight submodules | The real projects, as **exhibits**. |
+
+### Clone it
 
 ```bash
 git clone --recurse-submodules https://github.com/wachin/pyqt6-packaging-research.git
-cd pyqt6-packaging-research
 ```
 
-If the repository was cloned without its submodules:
+The eight submodules are the studied applications themselves — full source trees,
+none of which is a dependency of anything here. If you only want the research,
+`--depth 1` without submodules is enough to read the studies; the evidence packs
+are already inside the repository.
 
-```bash
-git submodule update --init --recursive
-```
+---
 
-Check their current state with:
+## The freezer decision, per platform
 
-```bash
-git submodule status
-```
-
-When you clone with submodules you will get eight complete source trees on disk:
-the six third-party case studies plus the owner's two applications under
-`my-PyQt6-Apps/`. **None of them is a library or a dependency of this
-repository.** They are exhibits, cloned to be read:
-
-- do not import them, and do not add them to any dependency manifest;
-- do not modify them, and do not run their build or release workflows;
-- do not treat their age or state as a defect in this repository.
-
-If you only want the research, `--recurse-submodules` is unnecessary: the two
-documents and the evidence pack of every study are ordinary tracked files, at
-`<project>-resultados/` and `my-PyQt6-Apps/<app>-resultados/`. A plain clone gets
-all of them and none of the source trees.
-
-If you use an AI agent here, `AGENTS.md` states this as a hard rule. To inspect
-what a studied project actually did, read its evidence pack under
-`<project>-resultados/_evidence/` rather than the submodule tree — the pack is
-pinned to the exact commit the studies describe.
-
-## Update the submodules
-
-To fetch newer upstream commits:
-
-```bash
-git submodule update --remote
-```
-
-Then inspect the changes:
-
-```bash
-git status
-git diff --submodule
-```
-
-If the updates are intentional, record the new submodule commits in this repository:
-
-```bash
-git add .
-git commit -m "Update research submodules"
-git push
-```
-
-Updating a submodule can change the code being studied, so research results should ideally record the exact commit or version analyzed.
-
-> **Warning.** Studies cite files by path and line number at a pinned commit. After
-> `git submodule update --remote`, those citations point at different code until the
-> affected evidence packs are regenerated:
->
-> ```bash
-> python3 tools/extract_evidence.py
-> ```
->
-> Regenerate the packs in the same change as the submodule bump, and review the
-> diff. Never update a submodule without regenerating its evidence.
-
-## Research methodology
-
-Each project should be analyzed independently using the same investigation criteria.
-
-The analysis should inspect, when available:
-
-```text
-README.md
-CONTRIBUTING.md
-pyproject.toml
-setup.py
-setup.cfg
-requirements*.txt
-
-.github/workflows/
-
-*.spec
-
-scripts/
-build/
-packaging/
-installer/
-
-Debian packaging files
-AppImage configuration
-Windows installer configuration
-macOS packaging scripts
-```
-
-Important technologies and terms to search for include:
-
-```text
-PyQt6
-PySide6
-QtPy
-
-PyInstaller
-Nuitka
-cx_Freeze
-py2app
-
-AppImage
-AppDir
-appimagetool
-linuxdeploy
-
-dpkg
-debhelper
-
-Inno Setup
-NSIS
-WiX
-MSI
-MSIX
-
-codesign
-signtool
-Authenticode
-notarytool
-notarization
-
-GitHub Actions
-GitHub Releases
-```
-
-The investigation should trace the complete path from source code to the final downloadable artifact rather than merely identifying which packaging tool is installed.
-
-## Research documents
-
-Each case study has produced both documents:
-
-```text
-PACKAGING_STUDY.md
-PYQT6_PACKAGING_TUTORIAL.md
-```
-
-### `PACKAGING_STUDY.md`
-
-Describes what the specific upstream project actually does.
-
-It distinguishes between:
-
-- verified implementation;
-- project-specific techniques;
-- legacy infrastructure;
-- reusable ideas;
-- assumptions;
-- things that could not be verified.
-
-Important conclusions should reference the actual source files, build scripts, configuration, and GitHub Actions workflows that support them.
-
-### `PYQT6_PACKAGING_TUTORIAL.md`
-
-This document should transform useful findings from the project into practical lessons for packaging other PyQt6 applications.
-
-It should cover, where evidence is available:
-
-```text
-Windows
-├── PyInstaller
-├── Nuitka
-├── portable builds
-├── installers
-├── code signing
-└── antivirus / VirusTotal considerations
-
-Linux
-├── AppImage
-└── DEB
-
-macOS
-├── .app
-├── signing
-├── notarization
-└── DMG
-
-Automation
-└── GitHub Actions
-```
-
-## Final objective
-
-The case studies have been compared to produce the consolidated guide:
-
-```text
-03-Promt-MAESTRO-resultado/MASTER_PYQT6_PACKAGING_GUIDE.md
-03-Promt-MAESTRO-resultado/PYQT6_MASTER_PACKAGING_TUTORIAL.md
-```
-
-The guide does not simply copy one project's build system.
-
-Instead, it compares multiple real-world implementations and identifies practices that are:
-
-- highly recommended;
-- useful;
-- project-specific;
-- legacy;
-- not recommended;
-- or in need of further research.
-
-The desired end result is a reusable packaging strategy for open-source PyQt6 desktop applications:
-
-```text
-                         PyQt6 project
-                               |
-             +-----------------+-----------------+
-             |                 |                 |
-          Windows            Linux             macOS
-             |                 |                 |
-     PyInstaller/Nuitka   standalone build  PyInstaller/Nuitka
-             |                 |                 |
-        executable       +-----+-----+          .app
-             |           |           |            |
-          signing     AppImage      DEB        signing
-             |                                  |
-         installer                            notarization
-             |                                  |
-     installer signing                          DMG
-             |                 |                 |
-             +-----------------+-----------------+
-                               |
-                         GitHub Actions
-                               |
-                         GitHub Release
-```
-
-## Research principles
-
-This repository is intended for legitimate open-source software packaging research.
-
-The investigation should:
-
-- prefer primary sources and actual repository evidence;
-- distinguish verified facts from assumptions;
-- avoid blindly copying project-specific build systems;
-- compare PyInstaller and Nuitka objectively;
-- treat antivirus false positives as a software distribution and reputation problem, not as something to bypass through evasion;
-- never expose credentials, signing certificates, private keys, or CI secrets;
-- document secret variable names only when necessary to understand a workflow;
-- prefer reproducible and transparent release processes;
-- consider code signing, checksums, provenance, and public source code as part of professional software distribution.
-
-## License and third-party projects
-
-This repository's **own** content is **GPL-3.0-or-later**. `LICENSE` carries the
-complete GPL-3.0 text, followed by a scope notice that says what it does not
-cover. The notice sits at the end rather than the top for a reason worth knowing:
-GitHub classifies the repository from the *start* of that file, so any prose above
-the licence text makes the project report as "Other" instead of GPL-3.0.
-
-That one sentence cannot describe a repository which mixes four kinds of
-ownership, so the detail lives here:
-
-| What | Whose it is | Licence |
+| Platform | Use | Why |
 |---|---|---|
-| Studies, master guide, tutorials, `SKILLS*.md`, `.dsh/skills/`, `tools/`, `experiments/` | this repository | **GPL-3.0-or-later** |
-| The eight submodules (`dikte/`, `CustomKnight-Creator/`, `pyzo/`, `CARA/`, `napari/`, `napari-packaging/`, `my-PyQt6-Apps/TBO/`, `my-PyQt6-Apps/lucio-iva-calculator/`) | their upstream owners | **their own**, not relicensed here: GPL for dikte, CARA, CustomKnight-Creator, TBO and lucio; BSD for pyzo and napari; **no licence file at all** for `napari/packaging` |
-| The evidence packs under `*/_evidence/` | verbatim upstream files | the licence in that pack's `PROVENANCE.md`, as above |
-| The GPL text in `LICENSE` | the Free Software Foundation | may be copied freely |
+| Windows | **Nuitka `--standalone`** | The only measurements that exist point that way, and it costs nothing extra for a directory-shaped release. Never `--onefile`. |
+| Linux | PyInstaller `onedir` | Both owner applications use it there and their artifacts scan clean. Build on the *oldest* distro you support, or the binary will not run on older glibc. |
+| macOS | PyInstaller `-D` + `BUNDLE` | The documented path, and what every project here uses. Build per architecture. |
 
-**Read this before copying a recipe.** The Skills contain shell, Python,
-PowerShell and NSIS code, and that code is part of the GPL-covered work here. So
-copying a snippet from a Skill into your project brings your project under the
-GPL. Reading a procedure and implementing it yourself does not. If you are
-building something proprietary, that distinction is the one that matters.
+## The antivirus question
 
-If you redistribute an evidence pack, carry its `PROVENANCE.md` and `SHA256SUMS`
-with it, since those are what say where it came from and under what terms. And do
-not reuse anything from `napari/packaging`: it grants no licence.
+This is the reason many people land here, so here is the honest state of it.
+
+Two measurements exist, both Windows-only:
+
+| Build | VirusTotal |
+|---|---|
+| Nuitka standalone (TBO, 2026-10) | **0 / 71** |
+| PyInstaller onedir (TBO) | **3 / 73** |
+| PyInstaller onefile (TBO) | **3 / 73** |
+| PyInstaller onefile, bootloader rebuilt from source (TBO) | **2 / 70** |
+| Nuitka NSIS installer / portable ZIP (Lucio, 2026-06, self-reported) | **0 / 68** / **0 / 65** |
+
+Read it as: **two applications, one platform, one of them self-reported.** It is a
+consistent direction, not a law. The four arms also settle two things that sound
+plausible and are wrong — `onedir` is *not* a remedy (both PyInstaller layouts
+scored identically), and rebuilding the bootloader is *not* a remedy either
+(3/73 became 2/70). What remains is the embedded CPython runtime and PyInstaller's
+archive format.
+
+So: prefer Nuitka on Windows. Do not promise anyone a clean scan. Do not generalise
+to your app without measuring — `experiments/pyinstaller-vs-nuitka/` is the kit.
+And never answer a false positive with obfuscation, packing or binary mutation:
+report it to the vendor. Details and the per-engine lists are in
+`03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md` §B.1.
+
+## For AI agents working in this repository
+
+Read [`AGENTS.md`](AGENTS.md) first. The short version: **the eight studied projects
+are exhibits, not dependencies** — never import them, never add them to a manifest,
+never modify or commit inside them, never update them. Their citations are pinned to
+a commit, and moving the pin invalidates the research.
+
+If you change a study or a Skill, two checks must stay green:
+
+```bash
+python3 tools/check_genesis_pack.py         # the reader-facing copy is in sync
+python3 tools/build_skills_bundle.py --version 1.0.0   # Skills still bundle
+```
+
+## Licence
+
+**GPL-3.0-or-later** for this repository's own content — studies, guides, Skills,
+tools. `LICENSE` carries the full text followed by a scope notice explaining what it
+does **not** cover: the eight submodules keep their own licences, and the
+`_evidence/` files stay under their upstream licences (BSD for pyzo and napari,
+GPL for the others, and none at all for `napari/packaging`).
+
+Practical consequence, worth reading before copying a recipe: the tutorials and
+Skills contain code, so copying a snippet into your project brings your project
+under the GPL. Reading a procedure and implementing it yourself does not.
 
 ## Status
 
-The **descriptive phase is complete**: six upstream case studies plus two studies
-of the owner's own applications, each with a `PACKAGING_STUDY.md` and a
-`PYQT6_PACKAGING_TUTORIAL.md`, a confidence-labelled evidence matrix, and a
-consolidated master guide plus master tutorial. Every study is backed by an
-`_evidence/` pack pinned to an exact commit.
+The descriptive work is complete: eight studies, a consolidated guide, a
+confidence-labelled evidence matrix. The validation phase has two measurements and
+no third; anything about antivirus behaviour beyond the table above is unproven.
 
-The **validation phase is no longer empty**, and the first real measurement
-changed one of the headline conclusions.
-
-**Measured in 2026-10 (TBO):** the same application, version and PE metadata,
-unsigned, UPX disabled, built four ways. **Nuitka 0/71. PyInstaller 3/73 in
-*both* layouts** — flagged by a handful of engines whose detections are generic or
-behavioural, while every major engine reports clean. That confirms the direction
-of the long-standing claim and refutes the assumption that `onedir` avoids
-detection. A fourth arm with a PyInstaller bootloader compiled from source scored
-**2/70**, which refutes the bootloader hypothesis too. It is **n = 1**, so it is a
-lead and not a rule. Full record: `PACKAGING_EVIDENCE_MATRIX.md` §B.1,
-`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md` §11, and the
-screenshots in `experiments/pyinstaller-vs-nuitka/evidence/`.
-
-**Reported by the project in 2026-06 (Lucio IVA Calculator):** `0/68` for the
-NSIS installer and `0/65` for the portable ZIP, after moving its Windows build
-from PyInstaller to Nuitka for that reason. The project did not preserve the
-scan artifacts, but the files themselves are still in its `v0.1.1` release, so
-the study recovers their SHA-256 and the claim can be re-queried. This is a
-second, independent sign in the same direction — and still not a property of the
-freezer. Full record:
-`my-PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6.
-
-Still unverified:
-
-- **Antivirus behaviour beyond these two applications, and any trend over time.**
-  Two measurements, both Windows-only, one of them self-reported. Most of the
-  upstream case studies still publish no detection data at all, and the central
-  finding must be reproduced before it is generalised.
-- **Nuitka at scale.** No upstream case study uses it. Both of the owner's
-  applications use it on Windows and PyInstaller on Linux/macOS, which is a
-  plausible reading of the evidence but not proof of it.
-- **`.deb` in upstream projects.** None of the six ships one, and none even has a
-  `debian/` directory. The only working `.deb` evidence is TBO's.
-- **Exact Qt plugin and translation inventories** inside any frozen artifact.
-- **A notarized, stapled `.dmg`** — no case study demonstrates the flow.
-- **Reproducible builds** — no project claims them, and none was achieved here.
-  Both of the owner's published releases were assembled partly by hand.
-
-Next steps, in order:
-
-1. **Repeat the measurement across releases.** One build pair does not separate a
-   property of the tool from a coincidence of that build, and the two data points
-   available were produced months apart by a single developer. The generic kit is
-   `experiments/pyinstaller-vs-nuitka/`; the per-artifact record to copy is
-   `docs/virustotal/` in the TBO clone.
-2. Publish a release whose assets are the ones CI produced, so the "reproducible
-   from the repository" claim becomes true.
-3. Replace the `[TEMPLATE — MUST BE TESTED]` blocks in the tutorials with
-   instructions that have actually been executed.
-4. Extend the Skills in `.dsh/skills/` once (1) and (3) produce verified
-   material. In particular, an antivirus Skill should only exist after the
-   measurements cover more than one application and are independently
-   reproducible.
+Known gaps are listed in `03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md`
+section E, and the Skills' own in `SKILLS-VERIFICATION.md` — the largest being that
+no Skill has yet been executed end to end on a brand-new application.

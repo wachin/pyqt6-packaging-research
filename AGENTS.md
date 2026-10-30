@@ -282,16 +282,17 @@ at all.
 
 | Path | Contents |
 |---|---|
-| `README.md` | What the research is, how the repository is organised, current status. |
+| `README.md` | What the research is, how to use it two ways (point an agent at `PYQT6-GENESIS-PACKAGING/`, or install the Skills in DeepSeek Harness or opencode), and the current limits. |
 | `SKILLS.md` | The six Skills, what they cover, and what they deliberately refuse to cover. |
 | `SKILLS-VERIFICATION.md` | The audit of those Skills against the five common release artifacts, what it fixed, and what is still not verified. |
 | `EVIDENCE_INDEX.md` | Every evidence pack with its pinned commit and licence. |
 | `<project>-resultados/` | Per-case-study `PACKAGING_STUDY.md`, `PYQT6_PACKAGING_TUTORIAL.md` and `_evidence/`. |
 | `my-PyQt6-Apps/<app>-resultados/` | The same two documents and an `_evidence/` pack for the two owner applications, placed beside their submodules. |
+| `PYQT6-GENESIS-PACKAGING/` | The **reader-facing copy** of every study, in one folder with English directory names, written to be pointed at by a person or an agent. It is derivative: edit the canonical pack, then bring the copy back in line. `tools/check_genesis_pack.py` enforces that, including the two permitted path rewrites. |
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
 | `tools/build_skills_bundle.py` | Builds the installable Skills tarball; deterministic, and it refuses a bundle a harness could not load. |
-| `LICENSE` | GPL-3.0-or-later for this repository's own content. It opens with a scope notice saying what that does **not** cover (submodules, evidence packs, `napari/packaging`), then the full GPL text. |
+| `LICENSE` | GPL-3.0-or-later for this repository's own content: the full GPL text, then a scope notice saying what that does **not** cover (submodules, evidence packs, `napari/packaging`). The notice is at the *end* because GitHub classifies a licence from the start of the file, and any prose above the text makes it report "Other". |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit. Its own CI workflow has not been run; the equivalent comparison was measured on TBO instead. |
 | `.dsh/skills/` | Agent Skills derived from the verified findings. |
 
@@ -347,6 +348,8 @@ A change in this repository is complete when:
       regenerated.)
 - [ ] No evidence file was edited by hand; packs were regenerated if needed.
 - [ ] `sha256sum -c SHA256SUMS` passes in every `_evidence/` directory touched.
+- [ ] `python3 tools/check_genesis_pack.py` passes, so the reader-facing copy still
+      matches the canonical packs.
 - [ ] Any new claim is labelled with its confidence, and unverified material is
       marked as such rather than asserted.
 - [ ] Any new Skill or procedure states what is not verified.

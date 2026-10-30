@@ -502,7 +502,7 @@ None. The recursive search finds `dpkg`/`debian` only in `README.md` prose about
 where to build. There is no `debian/` directory, no `control`, no `rules`, and no
 job that produces a `.deb`.
 
-The TBO case study in `my-PyQt6-Apps/TBO-resultados/` is the only source of
+The TBO case study in `my-PyQt6-Apps/TBO-results/` is the only source of
 validated `.deb` evidence in this research.
 
 ## 11. macOS
@@ -545,7 +545,7 @@ Rosetta 2, which works but is not a universal binary.
 None, as in section 8 for Windows. For the full treatment of what a correct
 inside-out signing order, hardened runtime, `notarytool` submission and stapling
 look like, see
-`pyzo-resultados/PACKAGING_STUDY.md` and the `pyqt6-macos-signing-notarization`
+`pyzo-results/PACKAGING_STUDY.md` and the `pyqt6-macos-signing-notarization`
 Skill; this project contributes nothing to that subject and should not be cited
 for it.
 
@@ -781,7 +781,7 @@ Reject or fix:
 
 ## 21. Important Files to Study
 
-In the evidence pack, `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/`:
+In the evidence pack, `wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/`:
 
 | File | Read it for |
 |---|---|
