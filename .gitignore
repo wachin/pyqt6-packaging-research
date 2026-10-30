@@ -47,7 +47,15 @@
 #
 # Anchored to the root so it cannot accidentally match a nested directory of the
 # same name inside an evidence pack.
+#
+# lucio-iva-calculator is the same kind of tree: an independent clone of the
+# owner's own application, read as a case study but never tracked here. It is
+# also pinned as a sub-module *of TBO*, which is a different repository.
+#
+# Every pattern below is anchored. A bare "PyQt6-Apps/" used to sit here and it
+# ignored the whole directory, which would have swallowed the two
+# "<project>-resultados/" evidence folders that live beside the clones. That is
+# the same mistake this file warns about at the top.
 /PyQt6-Apps/TBO/
-PyQt6-Apps/
-
-PyQt6-Apps/TBO-GitHub-Actions-Executables/
+/PyQt6-Apps/lucio-iva-calculator/
+/PyQt6-Apps/TBO-GitHub-Actions-Executables/

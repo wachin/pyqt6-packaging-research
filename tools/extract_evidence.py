@@ -23,9 +23,10 @@ SHA-256 per file, in ``_evidence/PROVENANCE.md`` plus ``_evidence/SHA256SUMS``. 
 file copied without its commit is worthless as evidence.
 
 Nothing here is relicensed. The extracted files remain under their upstream
-licence -- note that CARA, CustomKnight-Creator, dikte and TBO are GPL, while
-napari and pyzo are BSD, and napari/packaging carries no licence file. Reusing
-GPL code in your own application has licensing consequences.
+licence -- note that CARA, CustomKnight-Creator, dikte, TBO and
+lucio-iva-calculator are GPL, while napari and pyzo are BSD, and napari/packaging
+carries no licence file. Reusing GPL code in your own application has licensing
+consequences.
 
 Usage
 -----
@@ -197,11 +198,37 @@ PROJECTS: list[dict] = [
         ],
     },
     {
+        "key": "lucio-iva-calculator",
+        "submodule": "PyQt6-Apps/lucio-iva-calculator",
+        "results": "PyQt6-Apps/lucio-iva-calculator-resultados",
+        "label": "Lucio IVA Calculator - own PyQt6 app (Nuitka on Windows, PyInstaller elsewhere)",
+        "note": "Independent clone of the owner's own application. The only project in the set whose Windows freezer was changed from PyInstaller to Nuitka on the strength of antivirus results, and the only one that verifies its Linux onefile archive's contents before publishing. Recorded VirusTotal figures are 0/68 for the installer and 0/65 for the portable ZIP at 0.1.1; PACKAGING_STUDY.md section 2 states exactly what that record does and does not establish.",
+        "files": [
+            (".github/workflows/build.yml", "Six-stage pipeline: build, then download the artifact and run it (--smoke-test) on every platform. The Windows leg also installs the NSIS installer silently and runs both the installed and the portable executable. Release is gated on v* tags and generates SHA256SUMS.txt."),
+            ("build/build_windows.ps1", "Nuitka standalone driver plus the NSIS invocation. The version is injected into the .nsi by three exact-literal String.Replace calls."),
+            ("build/LucioIVACalculator.nsi", "Per-user NSIS installer: RequestExecutionLevel user, $LOCALAPPDATA install root, HKCU uninstall keys, bilingual UI, and MUI branding bitmaps."),
+            ("build/build_linux.sh", "PyInstaller -F -w onefile. The only build in the set that greps `pyi-archive_viewer -l` for required resources and fails the build if one is missing."),
+            ("build/build_macos.sh", "PyInstaller -D .app bundle, icon built from SVG through iconutil, packaged with `ditto -c -k --sequesterRsrc`. No signing, no notarization."),
+            ("build/LucioIVACalculator.desktop", "Linux desktop entry whose Icon= key names a theme icon that the shipped archive does not contain under that name."),
+            ("build/requirements-windows.txt", "Windows build dependencies: Nuitka and its helpers, all with >= ranges rather than pins."),
+            ("build/requirements-linux.txt", "Linux build dependencies: PyInstaller, unpinned."),
+            ("build/requirements-macos.txt", "macOS build dependencies: PyQt6 pinned to 6.5.3, behind the >=6.7 used on the other two platforms, with no reason recorded anywhere in the tree."),
+            ("requirements.txt", "Runtime dependency for running from source."),
+            ("scripts/compile_translations.ps1", "lrelease driver called by the Windows build."),
+            ("scripts/create_macos_icon.py", "Rasterises the SVG into the .iconset that iconutil turns into the .icns."),
+            ("docs/nuitka-windows-build.md", "The project's own Nuitka reference. Its VirusTotal section is the origin of the 0/68 and 0/65 figures cited above."),
+            ("docs/github_release_checklist.md", "Manual release checklist, written in Spanish. Its expected asset list no longer matches what the release job uploads."),
+            ("windows-exe-fixes.md", "Short statement of the PyInstaller to Nuitka move and of the practices kept alongside it."),
+            ("VERSION", "Single source of the version string for every artifact and for the installer substitution."),
+            ("main.py", "Cite (b): --smoke-test returns before QApplication is constructed, which bounds what the CI smoke tests actually prove."),
+        ],
+    },
+    {
         "key": "TBO",
         "submodule": "PyQt6-Apps/TBO",
-        "results": "03-Promt-MAESTRO-resultado/TBO-SOLUCIONES",
+        "results": "PyQt6-Apps/TBO-resultados",
         "label": "TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux)",
-        "note": "Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder.",
+        "note": "Not a case study in the same sense: this is the owner's own application, kept as an independent clone rather than a sub-module. It is the only source of validated .deb evidence and the only project here with a Flatpak manifest and a recorded antivirus measurement. The fix log lives in 03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md; the packaging study is the one in this folder.",
         "files": [
             ("packaging/build_appimage.sh", "AppImage build script."),
             ("packaging/build_windows_nuitka.ps1", "Windows build (Nuitka) driver - the shipping Windows build."),
@@ -462,10 +489,10 @@ def main() -> int:
 
         handle.write("\n## Licence warning\n\n")
         handle.write(
-            "The extracted files keep their upstream licence. **CARA, CustomKnight-Creator, dikte "
-            "and TBO are GPL**; napari and pyzo are BSD; `napari/packaging` has **no licence file**. "
-            "Studying and quoting is one thing; copying GPL packaging code into your own "
-            "application is another. Check before reuse.\n"
+            "The extracted files keep their upstream licence. **CARA, CustomKnight-Creator, dikte, "
+            "TBO and lucio-iva-calculator are GPL**; napari and pyzo are BSD; `napari/packaging` has "
+            "**no licence file**. Studying and quoting is one thing; copying GPL packaging code into "
+            "your own application is another. Check before reuse.\n"
         )
 
         handle.write("\n## Totals\n\n")

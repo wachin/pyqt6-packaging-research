@@ -11,7 +11,7 @@ and installed: TBO. The upstream case studies ship **no `.deb` at all**, so
 everything here comes from a real, working package rather than from reading.
 
 Reference files (pinned to a commit):
-`03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/_evidence/debian/`
+`PyQt6-Apps/TBO-resultados/_evidence/debian/`
 
 ## 1. Layout
 

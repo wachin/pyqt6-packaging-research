@@ -98,7 +98,7 @@ Another major objective is to understand how mature projects automate releases w
 
 ## Projects under study
 
-The following upstream projects are included as Git submodules:
+Six upstream projects are included as Git submodules:
 
 | Submodule | Purpose in this research |
 | --- | --- |
@@ -108,9 +108,21 @@ The following upstream projects are included as Git submodules:
 | `CARA` | Study another real-world PyQt6 desktop application and its multiplatform builds. |
 | `napari` | Study a large, mature scientific Python/Qt application and its release architecture. |
 | `napari-packaging` | Study napari's dedicated packaging and installer infrastructure. |
-| `PyQt6-Apps/TBO` | Own PyQt6 application. Not a case study: it is the *validation ground* for this repository, and the only source of real, working `.deb` and AppImage evidence. **Not a submodule** — an independent clone that this repository ignores. |
 
-The six studied projects remain independent upstream repositories, recorded here through Git submodules. `PyQt6-Apps/TBO` is treated differently: it is the owner's own application, kept as an ordinary clone so it can be edited and pushed to its own remote without this repository pinning a commit.
+Two more are studied as **independent clones** of the owner's own applications,
+because both can be edited and pushed to their own remotes without this
+repository pinning a commit:
+
+| Clone | Purpose in this research |
+| --- | --- |
+| `PyQt6-Apps/TBO` | The *validation ground* of this repository: the only source of real, working `.deb`, AppImage and Flatpak evidence, and the only project here with a **measured** freezer comparison (Nuitka vs PyInstaller). |
+| `PyQt6-Apps/lucio-iva-calculator` | The project that switched its Windows freezer to Nuitka on the strength of antivirus results, and the only one that verifies its frozen archive's contents before publishing. |
+
+The six submodules remain independent upstream repositories, recorded here
+through Git submodules. The two clones under `PyQt6-Apps/` are treated
+differently: they are ordinary checkouts that this repository ignores, so they
+can be edited and pushed to their own remotes. Their studies and evidence packs
+live beside them, at `PyQt6-Apps/<name>-resultados/`.
 
 ## Repository structure
 
@@ -129,6 +141,9 @@ pyqt6-packaging-research/
 │   └── TBO-SOLUCIONES/             # validated fixes found while packaging TBO
 ├── PyQt6-Apps/
 │   ├── TBO/                        # independent clone, NOT a submodule (git-ignored)
+│   ├── TBO-resultados/             # its study + evidence pack
+│   ├── lucio-iva-calculator/       # independent clone (git-ignored)
+│   ├── lucio-iva-calculator-resultados/   # its study + evidence pack
 │   └── TBO-GitHub-Actions-Executables/   # build outputs (git-ignored)
 ├── CARA/                           # submodule
 ├── CustomKnight-Creator/           # submodule
@@ -195,20 +210,20 @@ python3 tools/extract_evidence.py --dry-run  # preview
 
 The extracted files are **evidence, not templates**, and they are not
 relicensed. Licences differ sharply across the set — CARA, CustomKnight-Creator,
-dikte and TBO are GPL, napari and pyzo are BSD, and `napari/packaging` ships no
-licence file at all. Studying and quoting is one thing; copying GPL packaging
-code into your own application is another.
+dikte, TBO and lucio-iva-calculator are GPL, napari and pyzo are BSD, and
+`napari/packaging` ships no licence file at all. Studying and quoting is one
+thing; copying GPL packaging code into your own application is another.
 
 ### Second-level analysis
 
-`03-Promt-MAESTRO-resultado/` consolidates the six case studies:
+`03-Promt-MAESTRO-resultado/` consolidates the whole set:
 
 | Document | Role |
 | --- | --- |
 | `MASTER_PYQT6_PACKAGING_GUIDE.md` | Cross-project conclusions, contradictions, decision tree, release checklist. |
 | `PYQT6_MASTER_PACKAGING_TUTORIAL.md` | End-to-end tutorial assembled from all case studies. |
 | `PACKAGING_EVIDENCE_MATRIX.md` | Compact evidence table with a HIGH / MEDIUM / LOW / NOT VERIFIED confidence label per claim, plus an explicit list of what could **not** be verified. |
-| `TBO-SOLUCIONES/` | Fixes validated on a real application, with `_evidence/` for its packaging files. |
+| `TBO-SOLUCIONES/` | Fix log for a real application: twelve numbered sections covering the ZIP, the resource bug, the Debian package and the freezer measurement. Its evidence pack lives at `PyQt6-Apps/TBO-resultados/_evidence/`. |
 
 ### Controlled experiment
 
@@ -236,10 +251,12 @@ the CI workflow are written but **not yet executed**. See that directory's
 procedure: packaging decisions, DEB, AppImage, macOS signing/notarization,
 Windows installer/signing, and release integrity.
 
-There is deliberately **no antivirus Skill**: there is no verified evidence to
-put in one, and a Skill that guesses is worse than no Skill, because an agent
-follows it confidently. `SKILLS.md` explains the rule and how to install the
-Skills in another project.
+There is deliberately **no antivirus Skill**: a Skill is followed confidently, and
+what the evidence supports here is a *reporting* procedure and a set of
+build-hygiene choices, not a recipe that guarantees a clean scan. Two
+measurements exist — TBO's controlled four-arm comparison and Lucio's recorded
+Windows figures — and both are small, Windows-specific and partly self-reported.
+`SKILLS.md` explains the rule and how to install the Skills in another project.
 
 ## Why Git submodules?
 
@@ -281,9 +298,11 @@ repository.** They are exhibits, cloned to be read:
 - do not modify them, and do not run their build or release workflows;
 - do not treat their age or state as a defect in this repository.
 
-`PyQt6-Apps/TBO` is not among them: it is not a submodule, so a fork does not
-fetch it. It is a separate clone of the owner's own application, ignored by this
-repository through `.gitignore`.
+The two applications under `PyQt6-Apps/` are not among them: neither is a
+submodule, so a fork does not fetch them. They are separate clones of the
+owner's own applications, ignored by this repository through `.gitignore`. Their
+studies and evidence packs under `PyQt6-Apps/*-resultados/` **are** tracked, so
+you can read the research without cloning them.
 
 If you use an AI agent here, `AGENTS.md` states this as a hard rule. To inspect
 what a studied project actually did, read its evidence pack under
@@ -518,12 +537,13 @@ Before reusing code, scripts, configuration, icons, or other assets from an upst
 
 ## Status
 
-The **descriptive phase is complete**: six case studies, six tutorials, a
-confidence-labelled evidence matrix, and a consolidated master guide plus master
-tutorial. Each case study is backed by an `_evidence/` pack pinned to an exact
-commit.
+The **descriptive phase is complete**: six upstream case studies plus two studies
+of the owner's own applications, each with a `PACKAGING_STUDY.md` and a
+`PYQT6_PACKAGING_TUTORIAL.md`, a confidence-labelled evidence matrix, and a
+consolidated master guide plus master tutorial. Every study is backed by an
+`_evidence/` pack pinned to an exact commit.
 
-The **validation phase is no longer empty**, and the first real measurement has
+The **validation phase is no longer empty**, and the first real measurement
 changed one of the headline conclusions.
 
 **Measured in 2026-10 (TBO):** the same application, version and PE metadata,
@@ -531,34 +551,49 @@ unsigned, UPX disabled, built three ways. **Nuitka 0/71. PyInstaller 3/73 in
 *both* layouts** — flagged by a handful of engines whose detections are generic or
 behavioural, while every major engine reports clean. That confirms the direction
 of the long-standing claim and refutes the assumption that `onedir` avoids
-detection. It is **n = 1**, so it is a lead and not a rule. Full record:
-`PACKAGING_EVIDENCE_MATRIX.md` §B.1,
+detection. A fourth arm with a PyInstaller bootloader compiled from source scored
+**2/70**, which refutes the bootloader hypothesis too. It is **n = 1**, so it is a
+lead and not a rule. Full record: `PACKAGING_EVIDENCE_MATRIX.md` §B.1,
 `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md` §11, and the
 screenshots in `experiments/pyinstaller-vs-nuitka/evidence/`.
 
+**Reported by the project in 2026-06 (Lucio IVA Calculator):** `0/68` for the
+NSIS installer and `0/65` for the portable ZIP, after moving its Windows build
+from PyInstaller to Nuitka for that reason. The project did not preserve the
+scan artifacts, but the files themselves are still in its `v0.1.1` release, so
+the study recovers their SHA-256 and the claim can be re-queried. This is a
+second, independent sign in the same direction — and still not a property of the
+freezer. Full record:
+`PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6.
+
 Still unverified:
 
-- **Antivirus behaviour beyond one application, and any trend over time.** The
-  counts are known for one release; no case-study project publishes detection data
-  at all, and the result must be reproduced before it is generalised.
-- **Nuitka at scale.** None of the five case studies uses it. There is now one
-  measurement on TBO, and nothing more.
-- **`.deb` in upstream projects.** None of the five ships one, and no project
-  even has a `debian/` directory. The only working `.deb` evidence is TBO's.
+- **Antivirus behaviour beyond these two applications, and any trend over time.**
+  Two measurements, both Windows-only, one of them self-reported. Most of the
+  upstream case studies still publish no detection data at all, and the central
+  finding must be reproduced before it is generalised.
+- **Nuitka at scale.** No upstream case study uses it. Both of the owner's
+  applications use it on Windows and PyInstaller on Linux/macOS, which is a
+  plausible reading of the evidence but not proof of it.
+- **`.deb` in upstream projects.** None of the six ships one, and none even has a
+  `debian/` directory. The only working `.deb` evidence is TBO's.
 - **Exact Qt plugin and translation inventories** inside any frozen artifact.
 - **A notarized, stapled `.dmg`** — no case study demonstrates the flow.
 - **Reproducible builds** — no project claims them, and none was achieved here.
+  Both of the owner's published releases were assembled partly by hand.
 
 Next steps, in order:
 
-1. **Capture the detection detail and repeat.** Record the detection count, the
-   engine names and the categories for each artifact, and repeat across several
-   releases — one build pair does not separate a property of the tool from a
-   coincidence of that build. The generic kit for this is
-   `experiments/pyinstaller-vs-nuitka/`.
-2. Finish the TBO `.deb` and AppImage cycle end to end.
+1. **Repeat the measurement across releases.** One build pair does not separate a
+   property of the tool from a coincidence of that build, and the two data points
+   available were produced months apart by a single developer. The generic kit is
+   `experiments/pyinstaller-vs-nuitka/`; the per-artifact record to copy is
+   `docs/virustotal/` in the TBO clone.
+2. Publish a release whose assets are the ones CI produced, so the "reproducible
+   from the repository" claim becomes true.
 3. Replace the `[TEMPLATE — MUST BE TESTED]` blocks in the tutorials with
    instructions that have actually been executed.
 4. Extend the Skills in `.dsh/skills/` once (1) and (3) produce verified
-   material. In particular, an antivirus Skill should only exist after real
-   measurements exist.
+   material. In particular, an antivirus Skill should only exist after the
+   measurements cover more than one application and are independently
+   reproducible.

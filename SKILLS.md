@@ -23,16 +23,21 @@ is worse than having no Skill at all. Every Skill here therefore carries a
 "What is NOT verified here" section, and the two largest gaps in the research
 are handled by *omission* rather than by confident advice:
 
-- **There is still no antivirus / VirusTotal Skill.** The case studies measured
-  nothing about detections, and although a first measurement now exists (TBO,
-  2026-10: both PyInstaller arms flagged, the Nuitka arm not), **it is n = 1 with
-  no detection counts**. That is a lead, not a procedure — a Skill built on it
-  would teach an agent to generalise from a single sample. The two packaging
-  Skills state the measurement precisely as evidence and say what it does not
-  support. Earn the Skill by repeating the measurement, not by having one result.
-- **Nuitka is not presented as a solution.** No case study uses it, and the
-  single measurement is not enough to change that. The decisions Skill says so
-  explicitly and points at the experiment instead.
+- **There is still no antivirus / VirusTotal Skill.** Of the six upstream case
+  studies, none measured anything about detections. Two measurements exist, both
+  on the owner's own applications: TBO (2026-10, Nuitka 0/71 against PyInstaller
+  3/73 in both layouts, plus a rebuilt-bootloader arm at 2/70) and Lucio IVA
+  Calculator (2026-06, reported by its maintainer as 0/68 installer and 0/65
+  portable ZIP). Both are Windows-only, one is self-reported, and the totals come
+  from two applications written by one person. That is a lead, not a procedure —
+  a Skill built on it would teach an agent to generalise from a very small
+  sample. The two packaging Skills state the measurements precisely as evidence
+  and say what they do not support. Earn the Skill by repeating the measurement
+  on more applications, not by accumulating two results.
+- **Nuitka is not presented as a solution.** No upstream case study uses it; both
+  of the owner's applications use it on Windows and PyInstaller on Linux and
+  macOS. The decisions Skill states that pattern with its confidence label and
+  points at the experiment instead of recommending the switch outright.
 
 Conversely, the skills lean hard on what *is* solid: the `.deb` audit procedure,
 the GLIBC baseline rule, inside-out macOS signing, the Inno Setup signing order,

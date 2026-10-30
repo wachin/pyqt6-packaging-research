@@ -127,7 +127,7 @@ Also: if you download a helper at build time, **pin it and verify its SHA-256**
   grouping.
 - Ship an AppStream metainfo file (`<id>.appdata.xml`) if you want to appear in
   software centres. TBO has one; see
-  `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/_evidence/packaging/org.tbo.TBO.appdata.xml`.
+  `PyQt6-Apps/TBO-resultados/_evidence/packaging/org.tbo.TBO.appdata.xml`.
 
 ## 7. Verify before publishing
 

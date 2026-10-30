@@ -18,7 +18,8 @@ python3 tools/extract_evidence.py
 | CustomKnight-Creator - Hollow Knight mod tool | `CustomKnight-Creator` | `158ec2f259cb` | GPL | `CustomKnight-Creator-resultados/_evidence/` | 3 | The negative example: onefile on all platforms, ubuntu-latest GLIBC, no signing, no release automation. |
 | napari - scientific image viewer | `napari` | `908b3ed80ccb` | BSD | `napari-resultados/_evidence/` | 14 | Freezing rejected in favour of conda constructor; delegates all packaging to napari/packaging. |
 | napari/packaging - dedicated packaging + installer infrastructure | `napari-packaging` | `5befa97fdd90` | NO LICENCE FILE FOUND | `napari-packaging-resultados/_evidence/` | 12 | The most auditable installer pipeline in the set: conda constructor + NSIS/pkg, SHA-pinned actions, artifact smoke test. NO LICENCE FILE - evidence only, do not reuse. |
-| TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux) | `PyQt6-Apps/TBO` *(independent clone)* | `6e9f490f41f8` | GPL | `03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/_evidence/` | 25 | Not a case study: this is the owner's own application, kept as an independent clone rather than a sub-module, and the only source of validated .deb evidence, plus a Flatpak manifest. Findings recorded in SOLUCIONES-TBO.md and DEBIAN-PACKAGE-AUDIT.md in this same folder. |
+| Lucio IVA Calculator - own PyQt6 app (Nuitka on Windows, PyInstaller elsewhere) | `PyQt6-Apps/lucio-iva-calculator` *(independent clone)* | `4db15fa99622` | GPL | `PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/` | 17 | Independent clone of the owner's own application. The only project in the set whose Windows freezer was changed from PyInstaller to Nuitka on the strength of antivirus results, and the only one that verifies its Linux onefile archive's contents before publishing. Recorded VirusTotal figures are 0/68 for the installer and 0/65 for the portable ZIP at 0.1.1; PACKAGING_STUDY.md section 2 states exactly what that record does and does not establish. |
+| TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux) | `PyQt6-Apps/TBO` *(independent clone)* | `797011a584ff` | GPL | `PyQt6-Apps/TBO-resultados/_evidence/` | 25 | Not a case study in the same sense: this is the owner's own application, kept as an independent clone rather than a sub-module. It is the only source of validated .deb evidence and the only project here with a Flatpak manifest and a recorded antivirus measurement. The fix log lives in 03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md; the packaging study is the one in this folder. |
 
 ## How to read an evidence pack
 
@@ -35,11 +36,11 @@ Line numbers quoted in the studies refer to the file at the pinned commit record
 
 ## Licence warning
 
-The extracted files keep their upstream licence. **CARA, CustomKnight-Creator, dikte and TBO are GPL**; napari and pyzo are BSD; `napari/packaging` has **no licence file**. Studying and quoting is one thing; copying GPL packaging code into your own application is another. Check before reuse.
+The extracted files keep their upstream licence. **CARA, CustomKnight-Creator, dikte, TBO and lucio-iva-calculator are GPL**; napari and pyzo are BSD; `napari/packaging` has **no licence file**. Studying and quoting is one thing; copying GPL packaging code into your own application is another. Check before reuse.
 
 ## Totals
 
-- Projects: 7
-- Files: 103
-- Total size: 748,816 bytes
-- Generated: 2026-10-14
+- Projects: 8
+- Files: 120
+- Total size: 876,785 bytes
+- Generated: 2026-10-30
