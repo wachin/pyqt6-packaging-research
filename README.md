@@ -1,5 +1,16 @@
 # PyQt6 packaging research
 
+![Cover: how eight real desktop applications package themselves on Windows, Linux and macOS, and the five artifacts a GitHub Actions workflow produces](assets/pyqt6-packaging-research-cover.svg)
+
+[![License](https://img.shields.io/github/license/wachin/pyqt6-packaging-research?color=blue)](LICENSE)
+[![Skills release](https://img.shields.io/github/v/release/wachin/pyqt6-packaging-research?sort=semver&color=0ea5e9)](https://github.com/wachin/pyqt6-packaging-research/releases)
+[![Skills release workflow](https://img.shields.io/github/actions/workflow/status/wachin/pyqt6-packaging-research/release-skills.yml?label=skills%20release)](https://github.com/wachin/pyqt6-packaging-research/actions/workflows/release-skills.yml)
+![Projects studied](https://img.shields.io/badge/projects%20studied-8-informational)
+![Artifacts](https://img.shields.io/badge/artifacts-5-informational)
+![Agent Skills](https://img.shields.io/badge/agent%20skills-6-informational)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![PyQt6](https://img.shields.io/badge/PyQt6-6.4%2B-41cd52)
+
 How eight real PyQt6 desktop applications get built, packaged, installed and
 released on Windows, Linux and macOS — read from their own build files, pinned to
 commits, and turned into something you can hand to an AI agent.
@@ -271,6 +282,7 @@ all six locations, and that no permission rule denies it.
 | `.dsh/skills/` | The six Skills, source of truth for the release bundle. |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit, with the VirusTotal screenshots. |
 | `tools/` | `extract_evidence.py` (regenerates the packs), `build_skills_bundle.py`, `check_genesis_pack.py`. |
+| `assets/` | The cover above, as SVG (what the README uses) and as a 2400×760 PNG for anywhere that will not render SVG. |
 | `SKILLS.md`, `SKILLS-VERIFICATION.md` | What the Skills cover, and the audit of what they do not. |
 | `AGENTS.md` | Rules for AI agents working *in this repository*. Read it before letting one loose here. |
 | The eight submodules | The real projects, as **exhibits**. |

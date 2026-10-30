@@ -26,7 +26,7 @@
   <g font-family="Inter, 'Segoe UI', system-ui, -apple-system, 'DejaVu Sans', Helvetica, Arial, sans-serif">
     <text x="64" y="84" font-size="12.5" letter-spacing="2.6" fill="#6ea8fe" font-weight="600">RESEARCH &#183; PACKAGING &#183; 2026</text>
 
-    <text x="62" y="147" font-size="45" font-weight="700" fill="#f2f7fd">PyQt6 Packaging<tspan fill="#38bdf8">&#160;Research</tspan></text>
+    <text x="62" y="147" font-size="45" font-weight="700" fill="#f2f7fd">PyQt6 Packaging<tspan fill="#38bdf8" dx="7">&#160;Research</tspan></text>
 
     <text x="64" y="189" font-size="16.5" fill="#a3b4c8">How eight real desktop applications package themselves on Windows,</text>
     <text x="64" y="213" font-size="16.5" fill="#a3b4c8">Linux and macOS &#8212; every claim pinned to a commit.</text>
