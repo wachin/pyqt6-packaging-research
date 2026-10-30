@@ -1,0 +1,108 @@
+# Publish the six PyQt6 packaging Skills as a versioned, installable bundle.
+#
+# The Skills are the reusable output of this research, so they get a release of
+# their own: one tarball that drops straight into a harness's skill root, plus a
+# SHA256SUMS to check it with. The repository itself stays the single source of
+# truth — the Skills cite evidence packs that live here, which is why they are not
+# split into a separate repository.
+#
+# Trigger: push a tag named skills-v<version>.
+#
+#     git tag skills-v1.0.0
+#     git push origin skills-v1.0.0
+#
+# Nothing runs on ordinary pushes: this workflow only fires on the tag (or by
+# hand, with an explicit version).
+
+name: Release Skills bundle
+
+on:
+  push:
+    tags:
+      - 'skills-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Bundle version, without the skills-v prefix (e.g. 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write   # the only job needs to create a release
+
+concurrency:
+  group: skills-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Derive the version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#skills-v}"
+          fi
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "not a semantic version: $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Building bundle version $version"
+
+      - name: Build the bundle
+        env:
+          # Reproducible-builds convention: the archive's timestamps come from
+          # here, so the same tree yields the same digest on any machine.
+          SOURCE_DATE_EPOCH: '0'
+        run: python3 tools/build_skills_bundle.py --version "${{ steps.version.outputs.version }}"
+
+      - name: Verify the checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum -c SHA256SUMS
+          echo "---"
+          cat SHA256SUMS
+
+      - name: Check the archive installs what a harness can find
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          tar -xzf dist/pyqt6-packaging-skills-*.tar.gz -C "$tmp"
+          found=0
+          for dir in "$tmp"/*/; do
+            if [ -f "$dir/SKILL.md" ]; then
+              found=$((found + 1))
+              grep -q '^name: ' "$dir/SKILL.md" || { echo "no name in $dir" >&2; exit 1; }
+              grep -q '^description: ' "$dir/SKILL.md" || { echo "no description in $dir" >&2; exit 1; }
+            fi
+          done
+          echo "skills discoverable in the bundle: $found"
+          test "$found" -eq 6
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="skills-v${VERSION}"
+          gh release create "$tag" \
+            --repo "${{ github.repository }}" \
+            --title "PyQt6 packaging Skills ${VERSION}" \
+            --notes-file dist/RELEASE-NOTES.md \
+            --verify-tag \
+            "dist/pyqt6-packaging-skills-${VERSION}.tar.gz" dist/SHA256SUMS

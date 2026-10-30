@@ -46,19 +46,71 @@ hit and fixed.
 
 ## Using them elsewhere
 
-Copy a skill directory into any of these, in order of precedence:
+### From the release bundle (recommended)
+
+Each version is published as one archive that drops into a harness skill root.
+The six skill directories sit at its top level, so extraction needs no stripping,
+and a `_meta/` directory carries the licence and these notes:
+
+```bash
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/latest/download/pyqt6-packaging-skills-1.0.0.tar.gz \
+  | tar -xz -C ~/.dsh/skills
+```
+
+Check the digest first if you prefer:
+
+```bash
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/latest/download/pyqt6-packaging-skills-1.0.0.tar.gz
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/latest/download/SHA256SUMS
+sha256sum -c SHA256SUMS
+```
+
+Build it yourself, or bump the version:
+
+```bash
+python3 tools/build_skills_bundle.py --version 1.0.0   # writes dist/
+```
+
+The build is deterministic — the same tree produces the same digest — so the
+`SHA256SUMS` in a release is a real identity and not a formality.
+
+### From a clone, if you want `git pull` to update them
+
+The harness follows symlinks, so pointing at a checkout keeps the skills live:
+
+```bash
+git clone https://github.com/wachin/pyqt6-packaging-research.git ~/src/pyqt6-research
+mkdir -p ~/.dsh/skills
+ln -sfn ~/src/pyqt6-research/.dsh/skills/* ~/.dsh/skills/
+```
+
+This is also the only form in which the evidence citations resolve, because they
+are relative to that checkout.
+
+### Scope and precedence
+
+A skill can live in any of these. The lower rank wins when two define the same
+name, and the harness scans one level deep for a directory containing `SKILL.md`:
 
 ```text
-<your-project>/.dsh/skills/<name>/SKILL.md     # project scope (committed)
-<your-project>/.agents/skills/<name>/SKILL.md  # project scope, agents convention
-~/.dsh/skills/<name>/SKILL.md                  # user scope
+<your-project>/.dsh/skills/<name>/SKILL.md      # rank 100, per project, committed
+<your-project>/.agents/skills/<name>/SKILL.md   # rank 200, per project, agents convention
+~/.dsh/skills/<name>/SKILL.md                   # rank 400, user scope
+~/.agents/skills/<name>/SKILL.md                # rank 500, user scope, agents convention
 ```
+
+Copy into a project only when you want to pin a version or adapt a Skill for that
+program; otherwise the user scope is enough and works everywhere.
 
 **Caveat when copying:** the Skill bodies cite evidence with paths relative to
 *this* repository root, for example
-`dikte-resultados/_evidence/packaging/build-appimage.sh`. Those references only
-resolve here. When you copy a Skill into another project, either drop the
-evidence pointers or copy the relevant `_evidence/` directory alongside it.
+`dikte-resultados/_evidence/packaging/build-appimage.sh` or
+`my-PyQt6-Apps/TBO-resultados/_evidence/debian/`. Those references only resolve
+in this repository. A bundle install leaves them dangling — the procedures
+themselves do not depend on them, but you lose the ability to audit a claim
+without going back to this repository. That is the cost of distributing the
+Skills without their evidence, and it is deliberate: the alternative is
+duplicating ~880 KB of evidence and keeping two copies in sync.
 
 ## Keeping them honest
 

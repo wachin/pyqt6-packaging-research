@@ -231,6 +231,19 @@ repeated failure — worse than having no Skill at all. See `SKILLS.md`.
 
 If you add or extend a Skill, include a "what is NOT verified here" section.
 
+The Skills are also published as an installable bundle
+(`tools/build_skills_bundle.py`, released by `.github/workflows/release-skills.yml`
+on a `skills-v*` tag). Two consequences for anyone editing `.dsh/skills/`:
+
+- the directory name must equal the `name:` in the Skill's frontmatter, because
+  the bundle refuses to build otherwise;
+- the bundle carries `LICENSE`, `LICENSING.md`, `SKILLS.md` and
+  `SKILLS-VERIFICATION.md` under `_meta/`, so a rename or a deletion of any of
+  those breaks the release job, not just the docs.
+
+After changing a Skill, run `python3 tools/build_skills_bundle.py --version
+1.0.0` and confirm it still reports "reproducible".
+
 ### This is not antivirus evasion research
 
 Treat false positives as a software distribution and reputation problem.
@@ -277,6 +290,8 @@ at all.
 | `my-PyQt6-Apps/<app>-resultados/` | The same two documents and an `_evidence/` pack for the two owner applications, placed beside their submodules. |
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
+| `tools/build_skills_bundle.py` | Builds the installable Skills tarball; deterministic, and it refuses a bundle a harness could not load. |
+| `LICENSE`, `LICENSING.md` | GPL-3.0 for this repository's own content, and what that does **not** cover (submodules, evidence packs, `napari/packaging`). |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit. Its own CI workflow has not been run; the equivalent comparison was measured on TBO instead. |
 | `.dsh/skills/` | Agent Skills derived from the verified findings. |
 

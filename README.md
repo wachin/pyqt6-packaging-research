@@ -161,12 +161,18 @@ pyqt6-packaging-research/
 ├── napari-resultados/
 ├── pyzo-resultados/
 ├── tools/
-│   └── extract_evidence.py         # regenerates every _evidence/ pack
+│   ├── extract_evidence.py         # regenerates every _evidence/ pack
+│   └── build_skills_bundle.py      # builds the installable Skills tarball
 ├── experiments/
 │   └── pyinstaller-vs-nuitka/      # controlled build-tool experiment (kit + CI workflow)
 ├── .dsh/skills/                    # agent Skills built from the verified findings
+├── .github/workflows/
+│   └── release-skills.yml          # publishes the bundle when a skills-v* tag is pushed
 ├── EVIDENCE_INDEX.md               # index of every evidence pack
-├── SKILLS.md                       # what the Skills cover and what they refuse to
+├── SKILLS.md                       # what the Skills cover, and how to install them
+├── SKILLS-VERIFICATION.md          # audit of the Skills against the five artifacts
+├── LICENSING.md                    # what is GPL here and what belongs to upstream
+├── LICENSE                         # GPL-3.0
 ├── AGENTS.md                       # hard rules for AI agents: submodules are not libraries
 ├── .gitmodules
 └── README.md
@@ -528,11 +534,25 @@ The investigation should:
 
 ## License and third-party projects
 
-The source code contained in each submodule belongs to its respective upstream project and remains subject to that project's own license.
+This repository's **own** content — the studies, the guides, the tutorials, the
+Skills, the tools and the experiment kit — is **GPL-3.0-or-later**; see
+`LICENSE`.
 
-This repository does not relicense the submodules.
+That general statement is not the whole picture, and `LICENSING.md` is where the
+exceptions live, because a single licence file cannot describe a repository that
+mixes four kinds of ownership:
 
-Before reusing code, scripts, configuration, icons, or other assets from an upstream project, check its license and attribution requirements.
+- the **eight submodules** remain under their own licences and are **not**
+  relicensed here;
+- the **evidence packs** are verbatim upstream files, still under the upstream
+  licence recorded in each pack's `PROVENANCE.md` — BSD for pyzo and napari,
+  GPL for the others, and **no licence at all** for `napari/packaging`;
+- the GPL text in `LICENSE` is the FSF's and may be copied freely.
+
+Before reusing code, scripts, configuration, icons, or other assets from an
+upstream project, check its license and attribution requirements. Note the
+practical consequence of copyleft here: the Skills contain code, so copying a
+snippet from one into your project brings your project under the GPL.
 
 ## Status
 
@@ -546,7 +566,7 @@ The **validation phase is no longer empty**, and the first real measurement
 changed one of the headline conclusions.
 
 **Measured in 2026-10 (TBO):** the same application, version and PE metadata,
-unsigned, UPX disabled, built three ways. **Nuitka 0/71. PyInstaller 3/73 in
+unsigned, UPX disabled, built four ways. **Nuitka 0/71. PyInstaller 3/73 in
 *both* layouts** — flagged by a handful of engines whose detections are generic or
 behavioural, while every major engine reports clean. That confirms the direction
 of the long-standing claim and refutes the assumption that `onedir` avoids
