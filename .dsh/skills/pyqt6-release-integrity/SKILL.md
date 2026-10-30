@@ -15,6 +15,12 @@ reproducible builds**.
 Nothing here is exotic. It is a short list, and it is the difference between an
 artifact someone can trust and one they cannot.
 
+**Where this runs:** all of it is GitHub Actions configuration, so this Skill is
+what turns the workflow in `pyqt6-packaging-decisions` §6 from something that
+produces files into something whose files can be verified. The one rule that
+cannot be applied after the fact: pin before the first release, because a tag does
+not let you change what it pointed at.
+
 ## 1. Lock your dependencies
 
 Without a lockfile, "the same source" produces different bytes on different

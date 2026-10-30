@@ -6,7 +6,7 @@ this workspace; each is a directory containing a `SKILL.md`.
 
 | Skill | Use it when |
 |---|---|
-| `pyqt6-packaging-decisions` | Starting to package a PyQt6 app. Settles onedir vs onefile, PyInstaller vs Nuitka, and the Linux package model. |
+| `pyqt6-packaging-decisions` | Starting to package a PyQt6 app. Settles onedir vs onefile, PyInstaller vs Nuitka, the Linux package model, and the shape of the GitHub Actions workflow. |
 | `pyqt6-deb-packaging` | Building or fixing a `.deb`. |
 | `pyqt6-appimage-packaging` | Building or fixing an AppImage. |
 | `pyqt6-macos-signing-notarization` | Building, signing, notarizing or stapling a macOS `.app`. |
@@ -53,14 +53,14 @@ The six skill directories sit at its top level, so extraction needs no stripping
 and a `_meta/` directory carries the licence and these notes:
 
 ```bash
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.0/pyqt6-packaging-skills-1.1.0.tar.gz \
   | tar -xz -C ~/.dsh/skills
 ```
 
 Check the digest first if you prefer:
 
 ```bash
-curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.0/pyqt6-packaging-skills-1.1.0.tar.gz
 curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/SHA256SUMS
 sha256sum -c SHA256SUMS
 ```

@@ -13,6 +13,12 @@ everything here comes from a real, working package rather than from reading.
 Reference files (pinned to a commit):
 `my-PyQt6-Apps/TBO-resultados/_evidence/debian/`
 
+**Where this runs:** in GitHub Actions, as a job on `ubuntu-latest`. The whole
+procedure assumes a Debian-family machine at build time, and the workflow is how
+both owner applications actually produce and publish their `.deb`. Workflow shape
+and the runner table: `pyqt6-packaging-decisions` §6. The real job:
+`my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml` (`build-deb`).
+
 ## 1. Layout
 
 ```text

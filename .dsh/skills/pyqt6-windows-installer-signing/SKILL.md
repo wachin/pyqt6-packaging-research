@@ -19,6 +19,13 @@ files, pinned to commits:
 - `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
 - `napari-packaging-resultados/_evidence/.github/workflows/make_bundle_conda.yml`
 
+**Where this runs:** in GitHub Actions, as jobs on `windows-2025`. Nothing in this
+Skill should be done on a Linux or macOS machine — Nuitka, MSVC and the installer
+compiler all need Windows, and cross-building them is not a thing that works.
+Workflow shape and the build/test split: `pyqt6-packaging-decisions` §6. The real
+jobs: `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
+(`build_windows`, `test_windows`).
+
 ## 1. Bundle: onedir
 
 Ship `onedir`, not `onefile`. All three mature frozen projects do, and onefile

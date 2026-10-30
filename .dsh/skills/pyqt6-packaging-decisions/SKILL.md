@@ -1,7 +1,7 @@
 ---
 name: pyqt6-packaging-decisions
-description: Decide how to package a PyQt6/PySide6 desktop app - bundle layout, PyInstaller vs Nuitka, and the Linux package model - from evidence gathered across eight real projects. Use before writing any build script.
-whenToUse: Use when starting to package a PyQt6 desktop application, or when asked whether to use PyInstaller or Nuitka, onedir or onefile, or a native vs bundled .deb.
+description: Decide how to package a PyQt6/PySide6 desktop app - bundle layout, PyInstaller vs Nuitka, the Linux package model, and the GitHub Actions workflow that builds and publishes it - from evidence gathered across eight real projects. Use before writing any build script.
+whenToUse: Use when starting to package a PyQt6 desktop application, when asked whether to use PyInstaller or Nuitka, onedir or onefile, or a native vs bundled .deb, or when structuring the GitHub Actions workflow that produces the artifacts and the release.
 ---
 
 # Packaging decisions for a PyQt6 application
@@ -174,6 +174,104 @@ mutate a binary.
 - Skip UPX everywhere, consistently.
 - Set application identity metadata (name, version, publisher, description) from
   the start; part of reputation is being a consistent, identifiable thing.
+
+## 6. Build it in GitHub Actions
+
+**Every procedure in this set of Skills runs in CI, not on your laptop.** Both of
+the owner's applications ship that way: one workflow, one job per artifact,
+artifacts uploaded, then a release job that attaches them. Building locally is for
+debugging a step that failed in CI, not for producing the release.
+
+Two shapes are observed, and both work:
+
+| Shape | Where | What it is |
+|---|---|---|
+| One job per artifact | TBO | `build-deb`, `build-appimage`, `build-windows`, `build-macos`, `build-wheel` — five jobs, no matrix, each with the runner it needs |
+| Build and test pairs, then a release job | Lucio | `build_windows` → `test_windows` on the same runner, the same for Linux and macOS, a `unit_tests` matrix, and a final `release` job |
+
+The runners, which are part of the recipe rather than an afterthought:
+
+| Job | `runs-on` | Why that one |
+|---|---|---|
+| `.deb` | `ubuntu-latest` | debhelper needs a Debian-family runner at build time |
+| AppImage | `ubuntu-22.04` | This is the glibc floor, not a preference: `ubuntu-latest` produces a binary that older distros refuse to run |
+| Windows (portable and installer) | `windows-2025` | Nuitka, MSVC and the installer compiler all need Windows |
+| macOS | `macos-15-intel` | The Intel slice. An arm64 runner produces a different binary, so decide which one you publish |
+| Release | `ubuntu-latest` | It only downloads artifacts and calls `gh release create` |
+
+The skeleton every one of them follows:
+
+```yaml
+name: Build
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write        # only what the release job needs
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: '3.12' }
+      - run: sudo apt-get update && sudo apt-get install -y debhelper dh-python pybuild-plugin-pyproject
+      - run: dpkg-buildpackage -us -uc -b
+      - uses: actions/upload-artifact@v5
+        with: { name: deb, path: '*.deb' }
+
+  build-appimage:
+    runs-on: ubuntu-22.04      # the glibc floor
+    # ...
+
+  build-windows:
+    runs-on: windows-2025
+    # Nuitka --standalone, then makensis
+    # ...
+
+  build-macos:
+    runs-on: macos-15-intel
+    # PyInstaller -D, then ditto -c -k --sequesterRsrc
+    # ...
+
+  release:
+    needs: [build-deb, build-appimage, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v7
+      - run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" ./*/*
+        env: { GH_TOKEN: "${{ github.token }}" }
+```
+
+What decides whether that works, learned from the failures:
+
+- **`permissions: contents: write` on the release job only.** Workflow-wide write
+  permissions on a job that does not need them is how a compromised step gets your
+  repository.
+- **Do not rebuild between build and test.** Pass the artifact with
+  `upload-artifact` / `download-artifact`. A job that rebuilds tests something
+  subtly different from what you ship.
+- **The release job must fail when an expected artifact is missing.** Otherwise you
+  publish a release with three of your five files and nobody notices until a user
+  does.
+- **Never build the Windows or macOS artifact on Linux.** Cross-compiling Nuitka or
+  producing a `.app` with PyInstaller from a Linux runner is not a thing that works;
+  it is a thing that fails late.
+- **A matrix is not required.** TBO uses one job per artifact on purpose: a matrix
+  over operating systems runs the same steps on all of them, which is exactly wrong
+  when each artifact needs a different freezer and a different installer compiler.
+
+Read the real thing rather than the sketch above:
+
+- `my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml`
+- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
+  (the one with build/test pairs and the release job)
+
+Pinning, provenance and artifact checksums are `pyqt6-release-integrity`; this
+section is only about the shape of the workflow.
 
 ## Where to go next
 

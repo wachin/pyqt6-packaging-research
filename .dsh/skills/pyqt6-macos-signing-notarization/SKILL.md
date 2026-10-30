@@ -14,6 +14,13 @@ auditable). Reference files, pinned to commits:
 - `pyzo-resultados/_evidence/.github/workflows/cd.yml`
 - `napari-packaging-resultados/_evidence/.github/workflows/make_bundle_conda.yml`
 
+**Where this runs:** in GitHub Actions, as a job on `macos-15-intel` (the Intel
+slice; an arm64 runner builds a different binary). Notarization in particular only
+works on a runner, because it needs `notarytool` plus a certificate in a secret —
+that is §5. Workflow shape: `pyqt6-packaging-decisions` §6. The real jobs:
+`my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml`
+(`build-macos`) and Lucio's `build_macos` / `test_macos`.
+
 ## 1. Build the `.app`
 
 PyInstaller with a `BUNDLE` stage is the observed norm (CARA, dikte, pyzo):

@@ -16,6 +16,11 @@ The research is finished. This README is about **using** it.
 | **Windows portable `.zip`** | Windows 10/11 | **Nuitka `--standalone`** |
 | **Windows `setup.exe`** | Windows 10/11 | the same Nuitka payload, wrapped in **NSIS** (`.nsi`) or Inno Setup |
 
+All five are produced by a **GitHub Actions workflow**, not by hand: one job per
+artifact, each on the runner its toolchain needs, then a release job that attaches
+the results. That is how both of the owner's applications ship, and it is the shape
+the Skills and the studies describe.
+
 Windows is Nuitka on purpose — see [the antivirus question](#the-antivirus-question).
 
 ---
@@ -39,6 +44,9 @@ specifically:
   trigger virus alerts on VirusTotal.com)
 - .exe installer (using .nsi scripts) for Windows 10/11 (created using Nuitka,
   ensuring it does not trigger virus alerts on VirusTotal.com)
+
+Build them with GitHub Actions, the way the research does it: the artifacts should
+be produced by a workflow in CI and attached to a release, not built on my machine.
 
 To expedite this process, please refer to the folder located in the project root
 named:
@@ -68,6 +76,10 @@ the agent afterwards:
   directory already present have different starting points.
 - **Tell it your app's real shape**: entry point, `src/` or flat, resources,
   translations, Qt modules you import beyond QtWidgets.
+- **Also say "build it in GitHub Actions".** It is not a style preference: the
+  Windows and macOS artifacts can only be produced on their own operating systems,
+  so a workflow with one job per artifact is how both applications in this research
+  actually ship.
 
 Inside that folder, every project has a `PACKAGING_STUDY.md` (what it does, with
 line citations), a `PYQT6_PACKAGING_TUTORIAL.md` (how to do it), and `_evidence/`
@@ -97,15 +109,15 @@ rank wins when two roots define the same name:
 
 ```bash
 mkdir -p ~/.dsh/skills
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.0/pyqt6-packaging-skills-1.1.0.tar.gz \
   | tar -xz -C ~/.dsh/skills
 ```
 
 Verify the download first if you prefer:
 
 ```bash
-base=https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0
-curl -fsSLO "$base/pyqt6-packaging-skills-1.0.0.tar.gz"
+base=https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.0
+curl -fsSLO "$base/pyqt6-packaging-skills-1.1.0.tar.gz"
 curl -fsSLO "$base/SHA256SUMS"
 sha256sum -c SHA256SUMS
 ```
@@ -126,7 +138,7 @@ Check that they loaded: the catalog should list all six names —
 with a warning rather than an error, so if five appear instead of six, look for the
 warning.
 
-Both the tag (`skills-v1.0.0`) and the version in the filename change with each
+Both the tag (`skills-v1.1.0`) and the version in the filename change with each
 release; if the download 404s, `gh release list` (or the releases page) shows what
 exists now.
 
@@ -157,7 +169,7 @@ unknown fields rather than failing.
 
 ```bash
 mkdir -p ~/.agents/skills
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.0/pyqt6-packaging-skills-1.1.0.tar.gz \
   | tar -xz -C ~/.agents/skills
 ```
 
@@ -165,7 +177,7 @@ curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/
 
 ```bash
 mkdir -p .opencode/skills
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.0/pyqt6-packaging-skills-1.1.0.tar.gz \
   | tar -xz -C .opencode/skills
 ```
 
@@ -176,7 +188,7 @@ Installing there once covers both:
 
 ```bash
 mkdir -p ~/.agents/skills
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.0.0/pyqt6-packaging-skills-1.0.0.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.0/pyqt6-packaging-skills-1.1.0.tar.gz \
   | tar -xz -C ~/.agents/skills
 ```
 

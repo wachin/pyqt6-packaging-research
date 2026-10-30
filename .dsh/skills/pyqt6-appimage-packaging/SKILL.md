@@ -10,6 +10,13 @@ Reference implementation (pinned to a commit):
 `dikte-resultados/_evidence/packaging/build-appimage.sh` — the only AppImage
 actually observed in this research. Read it alongside this skill.
 
+**Where this runs:** in GitHub Actions, as a job on `ubuntu-22.04` — the glibc
+floor below is the reason for that runner, not a preference. Workflow shape:
+`pyqt6-packaging-decisions` §6. The real job:
+`my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml`
+(`build-appimage`), or `dikte-resultados/_evidence/packaging/build-appimage.sh`
+for the script it calls.
+
 ## 1. AppDir layout
 
 ```text
