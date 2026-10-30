@@ -35,6 +35,127 @@ coll = COLLECT(exe, a.binaries, a.datas, name='MyApp', upx=False)
 project here measures any benefit. Disabling it is free; leave it disabled
 consistently across every build you compare.
 
+### If you freeze with Nuitka instead
+
+**Use Nuitka on Windows.** Both of the owner's applications do, and the only
+measurements that exist point that way (`pyqt6-packaging-decisions` §4). The
+observed invocation, from TBO and Lucio:
+
+```powershell
+& python -m nuitka `
+  --standalone `
+  --assume-yes-for-downloads `
+  --remove-output `
+  --msvc=latest `
+  --enable-plugin=pyqt6 `
+  --windows-console-mode=disable `
+  --windows-icon-from-ico="assets\app-icon.ico" `
+  --company-name="Your Name" `
+  --product-name="MyApp" `
+  --file-description="MyApp" `
+  --file-version="$windowsVersion" `
+  --product-version="$windowsVersion" `
+  --copyright="Copyright (c) 2026 Your Name" `
+  --include-package=myapp `
+  --include-data-dir="assets=assets" `
+  --include-data-dir="translations=translations" `
+  --output-filename="MyApp.exe" `
+  --output-dir="build\tmp\nuitka\output" `
+  "main.py"
+```
+
+Points that decide whether this works:
+
+- **`--standalone`, never `--onefile`.** The installer or the ZIP owns the
+  directory; nothing should unpack itself into `%TEMP%` at launch.
+- **`--enable-plugin=pyqt6` is not optional.** Without it the build succeeds and
+  the program dies at start with *"could not find or load the Qt platform plugin
+  windows"*.
+- **`--include-data-dir=SOURCE=DEST`**: `DEST` is relative to the program
+  directory at runtime and must match what your code resolves. A wrong `DEST`
+  builds green and ships without assets — the single most common freezing bug in
+  this whole research.
+- **Four-part numeric versions only.** `1.2.3.dev0` aborts with `FATAL: Invalid
+  version number`; sanitize to `1.2.3.0`.
+- **Nuitka needs `ordered-set` and `zstandard`.** Put them in the pinned Windows
+  requirements file or a bare runner fails.
+- **Do not hardcode the output directory name.** Nuitka's `.dist` folder name
+  changes between versions; locate the executable by pattern:
+
+  ```powershell
+  $builtExe = Get-ChildItem -Path $nuitkaOutputDir -Recurse -Filter "MyApp.exe" |
+      Where-Object { $_.FullName -like "*.dist\MyApp.exe" } |
+      Select-Object -First 1
+  if (-not $builtExe) { throw "Nuitka output executable was not found." }
+  ```
+
+### Portable ZIP: one folder, forward slashes, verified shape
+
+The portable artifact is a ZIP of that onedir payload. Three rules, all of which
+have been broken and had to be fixed in this research:
+
+**1. Exactly one top-level folder, named after the archive, with the licence
+inside it.**
+
+```text
+BAD                          GOOD
+MyApp/                       MyApp-1.2.3-Windows-x64-portable/
+COPYING                        COPYING
+MyApp.exe                      MyApp.exe
+_internal/                     _internal/
+```
+
+An archive that unpacks a folder *and* a loose licence file reads as a
+half-built download, and a folder called `MyApp` tells a user with three versions
+on disk nothing.
+
+**2. Forward-slash entry separators, or the tree collapses off Windows.**
+`APPNOTE.TXT` §4.4.17.1 requires `/`. `Compress-Archive` and
+`ZipFile::CreateFromDirectory` write `\` from Windows PowerShell 5.1, the
+failure is invisible on Windows, and on Linux or macOS `unzip` treats `\` as an
+ordinary character — 277 of 278 entries unpacked as files literally named
+`MyApp\python312.dll` in the release that shipped this bug. Do not try to fix it
+with a .NET API: the behaviour is behind an AppContext switch that depends on
+what the *host* targets.
+
+Build the archive somewhere you can test it, and re-read what you wrote:
+
+```python
+# [TEMPLATE — MUST BE TESTED]
+def arcname(path, root, prefix=""):
+    parts = path.relative_to(root).parts
+    if any("\\" in p for p in parts):
+        raise ValueError(f"literal backslash in a path component: {parts}")
+    name = "/".join(parts)
+    return f"{prefix}/{name}" if prefix else name
+
+with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as z:
+    for p in sorted(root.rglob("*")):
+        if p.is_file():
+            z.write(p, arcname(p, root, prefix))
+
+with zipfile.ZipFile(target) as z:            # post-condition, not bookkeeping
+    names = z.namelist()
+assert not [n for n in names if "\\" in n]
+assert {n.split("/")[0] for n in names} == {prefix}
+assert f"{prefix}/MyApp.exe" in names and f"{prefix}/COPYING" in names
+```
+
+The assertions are the point. A packaging step that only checks "the file was
+created" will publish a nested or flat archive happily; one that reads the
+archive back cannot. TBO's helper takes `--prefix` and `--require FILE` for
+exactly this and refuses to ship otherwise — copy the idea even if you do not
+copy the script.
+
+**3. Stage the payload with a contents copy.** In PowerShell,
+`Copy-Item $dir $dest -Recurse` with an existing `$dest` copies the *folder
+into* it, producing `dest\MyApp\<files>` and, once zipped, a nested `MyApp/MyApp/`.
+`Copy-Item "$dir\*" $dest -Recurse` copies the contents and is almost always what
+you meant.
+
+**Test the portable copy, not just the installer.** It is produced by a different
+code path; extract it and run the executable (see section 4).
+
 ## 2. PE version metadata, from the first build
 
 Set application identity in `version_info.txt` and mirror the same values in any

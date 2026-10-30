@@ -53,7 +53,32 @@ Notes that matter:
 - Prefer the distro's `python3-pyqt6` in `Depends` (Model A). If you bundle a
   runtime instead (Model B), you cannot use `Architecture: all` and you must
   disclose the duplication.
-- `Recommends:` is the right place for optional external binaries.
+- **Debian splits PyQt6 into one package per Qt module.** `python3-pyqt6` alone
+  gives you QtCore, QtGui, QtWidgets, QtNetwork and QtPrintSupport; anything
+  beyond that needs the matching package, or the app installs fine and crashes on
+  import:
+
+  ```text
+  Depends: ..., python3-pyqt6, python3-pyqt6.qtsvg
+  Recommends: python3-pyqt6.qtpdf
+  ```
+
+  Verified on Debian 13 (trixie) by listing what each package ships:
+
+  | Package | Ships |
+  |---|---|
+  | `python3-pyqt6` | QtCore, QtGui, QtWidgets, QtNetwork, **QtPrintSupport** |
+  | `python3-pyqt6.qtsvg` | QtSvg, QtSvgWidgets |
+  | `python3-pyqt6.qtpdf` | QtPdf, QtPdfWidgets |
+
+  TBO's `debian/control` is the verified example of getting this right: it
+  depends on `python3-pyqt6` **and** `python3-pyqt6.qtsvg` — the app draws its
+  icons through QtSvg — and recommends `python3-pyqt6.qtpdf`. Check every
+  `from PyQt6 import …` in your code against this list. A missing module package
+  is invisible to `dpkg -i`, which succeeds, and obvious to the first user who
+  opens the app.
+- `Recommends:` is the right place for optional external binaries and for Qt
+  modules only some features need.
 
 ## 3. `debian/rules` — and the failure everybody hits
 

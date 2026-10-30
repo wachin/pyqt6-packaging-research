@@ -271,6 +271,7 @@ at all.
 |---|---|
 | `README.md` | What the research is, how the repository is organised, current status. |
 | `SKILLS.md` | The six Skills, what they cover, and what they deliberately refuse to cover. |
+| `SKILLS-VERIFICATION.md` | The audit of those Skills against the five common release artifacts, what it fixed, and what is still not verified. |
 | `EVIDENCE_INDEX.md` | Every evidence pack with its pinned commit and licence. |
 | `<project>-resultados/` | Per-case-study `PACKAGING_STUDY.md`, `PYQT6_PACKAGING_TUTORIAL.md` and `_evidence/`. |
 | `my-PyQt6-Apps/<app>-resultados/` | The same two documents and an `_evidence/` pack for the two owner applications, placed beside their submodules. |

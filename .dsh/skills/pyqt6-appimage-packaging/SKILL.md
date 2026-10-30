@@ -52,7 +52,6 @@ mkdir -p "$APPDIR/usr/bin" \
 
 # The frozen payload (PyInstaller onedir is the observed choice).
 cp -r dist/MyApp/. "$APPDIR/usr/bin/"
-
 install -m 0644 myapp.desktop "$APPDIR/myapp.desktop"
 install -m 0644 myapp.desktop "$APPDIR/usr/share/applications/myapp.desktop"
 install -m 0644 myapp.png     "$APPDIR/myapp.png"
@@ -62,20 +61,32 @@ install -m 0755 AppRun        "$APPDIR/AppRun"
 ARCH=x86_64 ./appimagetool "$APPDIR" MyApp-x86_64.AppImage
 ```
 
+Any standalone tree works as that payload — a Nuitka `--standalone` output drops
+in exactly like the PyInstaller one; the AppDir does not care which freezer
+produced it. PyInstaller is simply the one with observed precedent here.
+
 ### Pin and verify appimagetool
 
-The observed implementation downloads the `continuous` asset at build time with
-no version pin and no checksum. Do not copy that flaw. Pin a release and verify
-the digest:
+Some of the observed implementations download the `continuous` asset at build
+time with no version pin and no checksum. Do not copy that: `continuous` is a
+rolling asset, and TBO was broken by exactly that when it was republished on
+2026-10-04 and the digest it had recorded stopped matching. Pin a **versioned**
+release and verify the digest.
+
+Verified working values, from TBO's `packaging/build_appimage.sh`:
 
 ```sh
-APPIMAGETOOL_VERSION=13
-APPIMAGETOOL_SHA256=<digest>
+APPIMAGETOOL_VERSION="1.9.1"
+APPIMAGETOOL_SHA256="ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0"
 curl -fsSL -o appimagetool \
   "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-x86_64.AppImage"
 echo "${APPIMAGETOOL_SHA256}  appimagetool" | sha256sum -c -
 chmod +x appimagetool
 ```
+
+Check the digest against the release you actually download before trusting that
+line — it is a fact about one release, not a constant. If it mismatches, stop and
+find out why rather than updating the number to make CI green.
 
 `linuxdeploy` with `linuxdeploy-plugin-qt` is the commonly recommended
 alternative because it collects Qt plugins automatically. It is **not observed

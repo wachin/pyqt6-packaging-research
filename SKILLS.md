@@ -62,6 +62,13 @@ evidence pointers or copy the relevant `_evidence/` directory alongside it.
 
 ## Keeping them honest
 
+`SKILLS-VERIFICATION.md` is the audit of what these Skills actually cover: a
+matrix of the five common release artifacts (AppImage, `.deb`, macOS `.zip`,
+Windows portable `.zip`, Windows installer) against the Skill and section that
+produces each, the defects that audit found and fixed, and the list of what is
+still not verified. Read it before trusting a Skill for a new project, and re-run
+it whenever an evidence pack is regenerated at a new commit.
+
 These skills are only as good as the research behind them, and the research has
 a known gap list (`03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md`,
 section E, and the Status section of the root `README.md`).

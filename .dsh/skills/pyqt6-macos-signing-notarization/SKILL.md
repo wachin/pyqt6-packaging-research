@@ -39,6 +39,53 @@ Rule: **build on the oldest macOS you intend to support**, and build separately
 per architecture (arm64 and x86_64) rather than relying on a universal2 build
 you have not tested. The result must run on a machine with no Python and no Qt.
 
+### Package it as a portable `.zip`
+
+The artifact users download is a ZIP containing the `.app`. Archive it with
+`ditto`, which both owner applications do:
+
+```bash
+mkdir -p build/macos-package
+cp -R dist/MyApp.app build/macos-package/
+cp COPYING build/macos-package/          # optional; see below
+
+ditto -c -k --sequesterRsrc build/macos-package build/MyApp-1.2.3-macOS-arm64.zip
+```
+
+- **`ditto`, not `zip -r`.** `zip` drops extended attributes and resource forks;
+  `ditto --sequesterRsrc` is the archiver macOS expects and is what preserves a
+  bundle's metadata.
+- **Do not wrap the ZIP in another ZIP.** In this research one project's released
+  `tbo-macos.zip` contained exactly one entry: an inner
+  `TBO-2.0.0.dev0-macOS-x64.zip`. It works, and it makes every user unzip twice.
+- **Keep `MyApp.app` at the archive root** — that is the macOS convention, and a
+  wrapper folder is unusual here. If you also ship the licence beside it, the
+  user gets two items; putting `COPYING` inside `MyApp.app/Contents/Resources/`
+  gives them exactly one.
+- **Match the artifact name to the architecture.** `-arm64` and `-x64` in the
+  filename, because they are different binaries and a user cannot tell otherwise.
+
+### If you are shipping it unsigned
+
+Signing and notarizing needs a paid Apple Developer account. Without one you can
+still ship, but be explicit about the consequence instead of letting users hit a
+wall:
+
+- An unsigned or unnotarized `.app` is **blocked by Gatekeeper** on first launch:
+  *"MyApp is damaged and can't be opened"* or *"cannot be opened because the
+  developer cannot be verified"*.
+- The documented workarounds are **right-click → Open** (once), or on the command
+  line `xattr -d com.apple.quarantine /Applications/MyApp.app`. Tell users this in
+  the download page, not in a GitHub issue thread afterwards.
+- **Ad-hoc signing (`codesign --sign -`) is not a release signature.** It does
+  not remove the warning; it only satisfies the kernel's code-signature
+  requirement on Apple silicon. Do not present it as signing.
+- Say so in the release notes: "unsigned; right-click → Open on first launch".
+
+The signing path in section 2 onwards is still worth following eventually:
+Gatekeeper warnings cost real users, and they are the reason to buy the account
+one day. They are not a reason to block a first release.
+
 ## 2. Sign **inside-out**
 
 Sign nested code from the innermost component outwards, then the bundle last.
