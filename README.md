@@ -533,8 +533,11 @@ The investigation should:
 
 ## License and third-party projects
 
-This repository's **own** content is **GPL-3.0-or-later**. `LICENSE` opens with a
-short scope notice and then carries the complete licence text.
+This repository's **own** content is **GPL-3.0-or-later**. `LICENSE` carries the
+complete GPL-3.0 text, followed by a scope notice that says what it does not
+cover. The notice sits at the end rather than the top for a reason worth knowing:
+GitHub classifies the repository from the *start* of that file, so any prose above
+the licence text makes the project report as "Other" instead of GPL-3.0.
 
 That one sentence cannot describe a repository which mixes four kinds of
 ownership, so the detail lives here:
