@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Lucio IVA Calculator
+Comment=VAT calculator built with PyQt6
+Exec=LucioIVACalculator
+TryExec=LucioIVACalculator
+Icon=LucioIVACalculator
+Categories=Office;Finance;Utility;
+Terminal=false
+StartupWMClass=LucioIVACalculator

@@ -1,0 +1,324 @@
+name: Build Lucio IVA Calculator
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unit_tests:
+    name: Unit Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Python setup
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install system Qt deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y libegl1 libxcb-cursor0
+
+      - name: Install pip modules
+        run: pip install -r build/requirements-linux.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
+
+  build_linux:
+    name: Linux Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get version number
+        run: echo "APP_VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Python setup
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install system Qt deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y libegl1 libxcb-cursor0 qt6-tools-dev-tools
+
+      - name: Install pip modules
+        run: pip install -r build/requirements-linux.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Build
+        run: bash build/build_linux.sh
+
+      - name: Store Linux build artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: lucio-iva-linux
+          path: |
+            build/dist/LucioIVACalculator
+            build/output/LucioIVACalculator-${{ env.APP_VERSION }}-linux.tar.gz
+          retention-days: 7
+
+  test_linux:
+    needs: build_linux
+    name: Linux Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install runtime Qt deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y libegl1 libxcb-cursor0
+
+      - name: Get Linux artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: lucio-iva-linux
+          path: lucio-iva-linux
+
+      - name: Locate Linux binary
+        run: |
+          linux_binary="$(find lucio-iva-linux -type f -name LucioIVACalculator | head -n 1)"
+          if [[ -z "$linux_binary" ]]; then
+            echo "Linux binary not found inside downloaded artifact." >&2
+            find lucio-iva-linux -maxdepth 4 -type f -print >&2 || true
+            exit 1
+          fi
+          echo "LINUX_BINARY=$linux_binary" >> $GITHUB_ENV
+
+      - name: Test Linux binary
+        run: |
+          chmod 770 "$LINUX_BINARY"
+          "$LINUX_BINARY" --smoke-test
+
+  build_windows:
+    name: Windows Build
+    runs-on: windows-2025
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get version number
+        run: echo "APP_VERSION=$(Get-Content VERSION)" >> $env:GITHUB_ENV
+
+      - name: Python setup
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Install Qt translation tools
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.7.3"
+          host: "windows"
+          target: "desktop"
+          arch: "win64_msvc2019_64"
+          cache: true
+
+      - name: Install pip modules
+        run: pip install -r build/requirements-windows.txt
+
+      - name: Build
+        run: .\build\build_windows.ps1
+
+      - name: Store Windows artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: lucio-iva-windows
+          path: |
+            build/output/LucioIVACalculator-${{ env.APP_VERSION }}-setup.exe
+            build/output/LucioIVACalculator-${{ env.APP_VERSION }}-Windows-x64-portable.zip
+          retention-days: 7
+
+  test_windows:
+    needs: build_windows
+    name: Windows Smoke Test
+    runs-on: windows-2025
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get version number
+        run: echo "APP_VERSION=$(Get-Content VERSION)" >> $env:GITHUB_ENV
+
+      - name: Get Windows artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: lucio-iva-windows
+          path: lucio-iva-windows
+
+      - name: Install Windows app
+        shell: powershell
+        run: |
+          $installer = Resolve-Path ".\lucio-iva-windows\LucioIVACalculator-${env:APP_VERSION}-setup.exe"
+          $installDir = Join-Path $env:GITHUB_WORKSPACE "installed"
+          if (Test-Path $installDir) {
+            Remove-Item $installDir -Recurse -Force
+          }
+          $process = Start-Process -FilePath $installer -ArgumentList "/S", "/D=$installDir" -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            exit $process.ExitCode
+          }
+
+      - name: Test Windows exe
+        shell: powershell
+        run: |
+          & "$env:GITHUB_WORKSPACE\installed\LucioIVACalculator\LucioIVACalculator.exe" --smoke-test
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Test Windows portable exe
+        shell: powershell
+        run: |
+          $portableZip = Resolve-Path ".\lucio-iva-windows\LucioIVACalculator-${env:APP_VERSION}-Windows-x64-portable.zip"
+          $portableDir = Join-Path $env:GITHUB_WORKSPACE "portable"
+          if (Test-Path $portableDir) {
+            Remove-Item $portableDir -Recurse -Force
+          }
+          Expand-Archive -Path $portableZip -DestinationPath $portableDir
+          & "$portableDir\LucioIVACalculator\LucioIVACalculator.exe" --smoke-test
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+  build_macos:
+    name: macOS Build
+    runs-on: macos-15-intel
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get version number
+        run: echo "APP_VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Python setup
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+
+      - name: Install Qt translation tools
+        run: |
+          brew install qt
+          echo "$(brew --prefix qt)/bin" >> "$GITHUB_PATH"
+
+      - name: Install pip modules
+        run: pip install -r build/requirements-macos.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Build
+        run: bash build/build_macos.sh
+
+      - name: Store macOS app
+        uses: actions/upload-artifact@v6
+        with:
+          name: lucio-iva-macos
+          path: build/output/LucioIVACalculator-${{ env.APP_VERSION }}-macOS-x64.zip
+          retention-days: 7
+
+  test_macos:
+    needs: build_macos
+    name: macOS Smoke Test
+    runs-on: macos-15-intel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get version number
+        run: echo "APP_VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Get macOS app
+        uses: actions/download-artifact@v7
+        with:
+          name: lucio-iva-macos
+          path: lucio-iva-macos
+
+      - name: Test macOS app
+        run: |
+          unzip -q "lucio-iva-macos/LucioIVACalculator-${APP_VERSION}-macOS-x64.zip" -d macos_app
+          "macos_app/LucioIVACalculator.app/Contents/MacOS/LucioIVACalculator" --smoke-test
+
+  release:
+    needs: [test_windows, test_linux, test_macos]
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Get version number
+        run: echo "APP_VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')" >> $GITHUB_ENV
+
+      - name: Get Windows artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: lucio-iva-windows
+          path: lucio-iva-windows
+
+      - name: Get Linux artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: lucio-iva-linux
+          path: lucio-iva-linux
+
+      - name: Locate Linux release archive
+        id: locate_linux_archive
+        run: |
+          linux_archive="$(find lucio-iva-linux -type f -name "LucioIVACalculator-${APP_VERSION}-linux.tar.gz" | head -n 1)"
+          if [[ -z "$linux_archive" ]]; then
+            echo "Linux release archive not found inside downloaded artifact." >&2
+            find lucio-iva-linux -maxdepth 4 -type f -print >&2 || true
+            exit 1
+          fi
+          echo "path=$linux_archive" >> $GITHUB_OUTPUT
+
+      - name: Get macOS app
+        uses: actions/download-artifact@v7
+        with:
+          name: lucio-iva-macos
+          path: lucio-iva-macos
+
+      - name: Generate SHA256 checksums
+        run: |
+          sha256sum \
+            "lucio-iva-windows/LucioIVACalculator-${APP_VERSION}-setup.exe" \
+            "lucio-iva-windows/LucioIVACalculator-${APP_VERSION}-Windows-x64-portable.zip" \
+            "${{ steps.locate_linux_archive.outputs.path }}" \
+            "lucio-iva-macos/LucioIVACalculator-${APP_VERSION}-macOS-x64.zip" \
+            > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Lucio IVA Calculator ${{ env.APP_VERSION }}"
+          draft: false
+          prerelease: false
+          files: |
+            lucio-iva-windows/LucioIVACalculator-${{ env.APP_VERSION }}-setup.exe
+            lucio-iva-windows/LucioIVACalculator-${{ env.APP_VERSION }}-Windows-x64-portable.zip
+            ${{ steps.locate_linux_archive.outputs.path }}
+            lucio-iva-macos/LucioIVACalculator-${{ env.APP_VERSION }}-macOS-x64.zip
+            SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

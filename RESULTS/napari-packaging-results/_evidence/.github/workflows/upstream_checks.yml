@@ -1,0 +1,56 @@
+name: Upstream checks
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * *"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  # Concurrency group that uses the workflow name and PR number if available
+  # or commit SHA as a fallback. If a new build is triggered under that
+  # concurrency group while a previous build is running it will be canceled.
+  # Repeated pushes to a PR will cancel all previous builds, while multiple
+  # merges to main will not cancel.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  check_pyproject_toml_changes:
+    permissions:
+      contents: read
+      issues: write
+    name: Report pyproject.toml changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: napari/napari
+          fetch-depth: 0
+
+      - name: Did pyproject.toml change since yesterday
+        run: |
+          changes="$(git diff $(git log -1 --before=@{last.day} --format=%H) pyproject.toml)"
+          echo "$changes"
+          if [[ -n "$changes" ]]; then
+            echo 'PYPROJECT_TOML_CHANGES<<EOF${{ github.run_id }}' >> $GITHUB_ENV
+            echo "$changes" >> $GITHUB_ENV
+            echo 'EOF${{ github.run_id }}' >> $GITHUB_ENV
+            echo "PYPROJECT_TOML_TODAY=$(date -I)" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout packaging code
+        if: env.PYPROJECT_TOML_CHANGES && github.event_name == 'schedule'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: napari/packaging
+
+      - name: Create issue
+        if: env.PYPROJECT_TOML_CHANGES && github.event_name == 'schedule'
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/PYPROJECT_TOML_UPDATED_TEMPLATE.md
+          update_existing: true

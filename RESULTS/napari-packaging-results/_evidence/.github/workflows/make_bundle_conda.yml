@@ -1,0 +1,727 @@
+name: Conda
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'build_installers.py'
+      - 'conda-recipe/*'
+      - '.github/workflows/make_bundle_conda.yml'  # this file
+      - 'environments/ci_installers_environment.yml'
+      - 'environments/ci_packages_environment.yml'
+  workflow_call:
+    inputs:
+      event_name:
+        description: "The original github.event_name object in the caller workflow"
+        required: true
+        type: string
+      installer_platforms:
+        description: "Comma-separated string of conda-style platforms to build installers for. Defaults to all platforms available."
+        required: false
+        type: string
+        default: "linux-64,win-64,osx-64,osx-arm64"
+    secrets:
+      ANACONDA_TOKEN:
+        description: "The token used to upload conda packages to anaconda.org/napari"
+      APPLE_APPLICATION_CERTIFICATE_BASE64:
+        description: "Application certificate issued by Apple, base64-encoded. Used to sign executables inside the PKG, and required for notarization."
+      APPLE_INSTALLER_CERTIFICATE_BASE64:
+        description: "Installer certificate issued by Apple, base64-encoded. Used to sign the PKG."
+      APPLE_APPLICATION_CERTIFICATE_PASSWORD:
+        description: "Password that protects the Application certificate."
+      APPLE_INSTALLER_CERTIFICATE_PASSWORD:
+        description: "Password that protects the Installer certificate."
+      APPLE_NOTARIZATION_ISSUER_ID:
+        description: "Issuer ID for the App Store Connect API key used to submit notarization requests."
+      APPLE_NOTARIZATION_KEY_ID:
+        description: "Key ID for the App Store Connect API key used to submit notarization requests."
+      APPLE_NOTARIZATION_AUTHKEY_BASE64:
+        description: "App Store Connect API key (.p8 file), base64-encoded. Used to authenticate notarization requests."
+      TEMP_KEYCHAIN_PASSWORD:
+        description: "A password to temporarily create a keychain that stores the certificates (any value can do as long as it is a secret)"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "`napari/napari` will be checked out using this commit hash or git reference."
+        required: false
+
+concurrency:
+  # Concurrency group that uses the workflow name and PR number if available
+  # or commit SHA as a fallback. If a new build is triggered under that
+  # concurrency group, while a previous build is running, the previous build will be canceled.
+  # Repeated pushes to a PR will cancel all previous builds, while multiple
+  # merges to main will not cancel.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+# The Python version chosen below will determine which
+# Python version the installers will bundle. The general
+# principle is to follow the SPEC-0 recommendation:
+# https://scientific-python.org/specs/spec-0000/
+# a specific Python could be defined for a platform in the `prepare_matrix` job
+# but should only be used in exceptional cases
+env:
+  INSTALLER_PYTHON_VERSION: "3.13"
+
+jobs:
+  packages:
+    name: Create packages
+    runs-on: ubuntu-latest
+    if: startsWith(github.repository, 'napari')
+    env:
+      conda_bld_suffix: /napari-feedstock/build_artifacts/
+      conda_build_config: linux_64_  # filename without extension under feedstock's .ci_support/
+    outputs:
+      artifact-id: ${{ steps.artifact-id.outputs.name }}
+
+    steps:
+      - name: Checkout packaging code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          repository: napari/packaging
+          path: napari-packaging
+          # when debugging a non-main ref from an upstream PR
+          # e.g. uses: org/repo/workflow.yml@some-ref
+          # make sure to add that same reference here:
+          # ref: some-ref
+
+      - name: Checkout napari source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          repository: napari/napari
+          path: napari-source
+          # if we are not on workflow_dispatch, then inputs is not defined -> use '' in that case
+          ref: ${{ github.event_name != 'workflow_dispatch' && '' || github.event.inputs.ref }}
+
+      - name: Checkout conda-forge feedstock
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          repository: conda-forge/napari-feedstock
+          path: napari-feedstock
+
+      - name: install micromamba
+        uses: mamba-org/setup-micromamba@ce51e99f4bb8a82ab7158c4dc59ef4634c59c4f9 # v3.1.0
+        with:
+          environment-file: napari-packaging/environments/ci_packages_environment.yml
+
+      - name: Prevent issues with multiple tags
+        # the problem is that scm versioning is used `git describe`
+        # and when we have multiple tags on the same commit, it select most recent one
+        # https://git-scm.com/docs/git-describe#_search_strategy
+        # but it looks like, whe checking out a tag ref in "Checkout napari source"
+        # the checked out tag is first created and then the others are created.
+        # So it looks like setutools_scm picks the "wrong" tag.
+        # The tag that is older by our feeling, but newer because of actions/checkout strategy
+        shell: bash -el {0}
+        if: github.event.inputs.ref || github.ref_type == 'tag'
+        working-directory: napari-source
+        run: |
+          set -x
+          ref=$(git log -1 --format='%H')
+          last_tag=$(git -c 'versionsort.suffix=rc' tag -l --points-at "$ref" --sort version:refname | tail -1)
+          for tag in $(git -c 'versionsort.suffix=rc' tag -l --points-at "$ref" --sort version:refname); do
+            if [[ $tag != $last_tag ]]; then
+              git tag --delete $tag
+            fi
+          done
+
+      - name: install napari
+        shell: bash -el {0}
+        working-directory: napari-source
+        env:
+          CONSTRUCTOR_USE_LOCAL: 1
+        run: |
+          set -x
+          pip install -e . --no-deps
+          echo "NAPARI_VERSION=$(python ../napari-packaging/build_installers.py --version)" >> $GITHUB_ENV
+          echo "NAPARI_ARCH=$(python ../napari-packaging/build_installers.py --arch)" >> $GITHUB_ENV
+
+      - name: Build sdist
+        working-directory: napari-source
+        run: |
+          python -m pip install build
+          python -m build --sdist .
+
+      - name: Patch and rerender feedstock
+        shell: bash -el {0}
+        working-directory: napari-feedstock
+        run: |
+          set -euxo pipefail
+          # rm recipe from conda-forge's feedstock and replace with our napari/packaging version
+          rm -rf recipe/
+          cp -r ../napari-packaging/conda-recipe recipe
+
+          if [[ -z "${NAPARI_VERSION}" ]]; then
+            echo "Could not estimate napari version in previous step. Debug."
+            exit 1
+          fi
+
+          mapfile -t SDIST_FILES < <(find "${GITHUB_WORKSPACE}/napari-source/dist" -maxdepth 1 -type f -name 'napari-*.tar.gz' | sort)
+          if (( ${#SDIST_FILES[@]} == 0 )); then
+            echo "No napari sdist found under ${GITHUB_WORKSPACE}/napari-source/dist"
+            ls -R "${GITHUB_WORKSPACE}/napari-source" || true
+            exit 1
+          fi
+          SDIST_FILE="${SDIST_FILES[${#SDIST_FILES[@]}-1]}"
+          SDIST_BASENAME="$(basename "${SDIST_FILE}")"
+          SDIST_TARGET="/home/conda/feedstock_root/napari-source/dist/${SDIST_BASENAME}"
+
+          sed -i -e "s|^  version: \".*\"|  version: \"${NAPARI_VERSION}\"|" \
+                 -e "s|^  build_number: [0-9]+|  build_number: 0|" \
+                 -e "s|^  sdist_path: .*|  sdist_path: ${SDIST_TARGET}|" \
+                 recipe/recipe.yaml
+          # make sure the recipe.yaml points to the local source, in case we break
+          # this when updating from upstream
+          git diff
+          grep -e "sdist_path: /home/conda" recipe/recipe.yaml
+
+          conda-smithy rerender
+          git diff
+          mv ${GITHUB_WORKSPACE}/napari-source .
+          echo "DOCKER_IMAGE=$(shyaml -y get-value docker_image.0 < .ci_support/${conda_build_config}.yaml)" >> $GITHUB_ENV
+
+      - name: Run build scripts
+        shell: bash -el {0}
+        working-directory: napari-feedstock
+        env:
+          DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+          CONFIG: ${{ env.conda_build_config }}
+          CI: github_actions
+          CONDA_BLD_PATH: "${{ github.workspace }}${{ env.conda_bld_suffix }}"
+        run: |
+          ./.scripts/run_docker_build.sh
+
+      - name: Export artifact identifier
+        id: artifact-id
+        run: |
+          name=pkgs-napari-${{ env.NAPARI_VERSION }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+          echo "name=${name}" >> $GITHUB_OUTPUT
+
+      - name: Upload packages as artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.artifact-id.outputs.name }}
+          path: |
+            ${{ github.workspace }}${{ env.conda_bld_suffix }}noarch/*.tar.bz2
+            ${{ github.workspace }}${{ env.conda_bld_suffix }}noarch/*.conda
+
+      - name: Check token availability
+        run: |
+          if [[ -n "${{ secrets.ANACONDA_TOKEN }}" ]]; then
+            echo "ANACONDA_TOKEN_AVAILABLE=1" >> $GITHUB_ENV
+          fi
+
+      - name: Upload to anaconda.org
+        shell: bash -el {0}
+        # Only upload to anaconda.org/napari if it's a nightly (version with *dev* suffix)
+        # or a tag event (either RC or final). Nightlies and RCs go to the nightly channel.
+        if: env.ANACONDA_TOKEN_AVAILABLE && (inputs.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/v'))
+        run: |
+          label_args=""
+          if [[ $NAPARI_VERSION == *rc* || $NAPARI_VERSION == *dev* ]]; then
+            label_args="-l nightly"
+          fi
+          set -x
+          noarch_dir="${GITHUB_WORKSPACE}${conda_bld_suffix}noarch"
+          packages="$(find "$noarch_dir" -maxdepth 1 -type f \( -name '*.conda' -o -name '*.tar.bz2' \))"
+          anaconda \
+            -t ${{ secrets.ANACONDA_TOKEN }} \
+            upload \
+            --skip-existing \
+            -u napari \
+            $label_args \
+            $packages
+
+  prepare_matrix:
+    # See this SO answer for details on conditional matrices
+    # https://stackoverflow.com/a/65434401/3407590
+    name: Prepare matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.INSTALLER_PYTHON_VERSION }}
+      - name: Prepare matrix
+        id: set-matrix
+        shell: python
+        run: |
+          import os
+          import json
+
+          elements = [
+            {
+              "os": "ubuntu-24.04",
+              "python-version": ${{ env.INSTALLER_PYTHON_VERSION }},
+              "target-platform": "linux-64",
+            },
+            {
+              "os": "macos-15-intel",
+              "python-version": ${{ env.INSTALLER_PYTHON_VERSION }},
+              "target-platform": "osx-64",
+            },
+            {
+              "os": "macos-15",
+              "python-version": ${{ env.INSTALLER_PYTHON_VERSION }},
+              "target-platform": "osx-arm64",
+            },
+            {
+              "os": "windows-2025",
+              "python-version": ${{ env.INSTALLER_PYTHON_VERSION }},
+              "target-platform": "win-64",
+            },
+          ]
+          platforms_str = "${{ inputs.installer_platforms || 'linux-64,win-64,osx-64,osx-arm64' }}"
+          platforms = {p.strip() for p in platforms_str.split(",")}
+
+          matrix = {"include": []}
+          for element in elements:
+            if element["target-platform"] in platforms:
+              matrix["include"].append(element)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"matrix={json.dumps(matrix)}\n")
+
+  installers:
+    permissions:
+      contents: write
+    name: Bundle ${{ matrix.target-platform }}
+    runs-on: ${{ matrix.os }}
+    needs: [packages, prepare_matrix]
+    if: startsWith(github.repository, 'napari')
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare_matrix.outputs.matrix) }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      DISPLAY: ":99.0"
+      CONDA_BLD_PATH: ${{ github.workspace }}/conda-bld
+      CONDA_NUMBER_CHANNEL_NOTICES: 0
+      CONSTRUCTOR_PYTHON_VERSION: "${{ matrix.python-version }}"
+
+    outputs:
+      licenses-artifact: ${{ steps.licenses.outputs.licenses_artifact }}
+      lockfile-artifact: ${{ steps.pkgs-list.outputs.lockfile_artifact }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          repository: napari/packaging
+          path: napari-packaging
+
+      - name: Checkout napari/napari
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          repository: napari/napari
+          path: napari-source
+          ref: ${{ github.event_name != 'workflow_dispatch' && '' || github.event.inputs.ref }}
+
+      - name: install micromamba
+        uses: mamba-org/setup-micromamba@ce51e99f4bb8a82ab7158c4dc59ef4634c59c4f9 # v3.1.0
+        with:
+          environment-file: napari-packaging/environments/ci_installers_environment.yml
+
+      - name: Conda info
+        shell: bash -el {0}
+        run: |
+          set -x
+          conda info -a
+          conda config --show-sources
+          mkdir -p ${CONDA_BLD_PATH}/noarch
+
+      - name: Prevent issues with multiple tags
+        shell: bash -el {0}
+        if: github.event.inputs.ref || github.ref_type == 'tag'
+        working-directory: napari-source
+        run: |
+          set -x
+          ref=$(git log -1 --format='%H')
+          last_tag=$(git -c 'versionsort.suffix=rc' tag -l --points-at "$ref" --sort version:refname | tail -1)
+          for tag in $(git -c 'versionsort.suffix=rc' tag -l --points-at "$ref" --sort version:refname); do
+            if [[ $tag != $last_tag ]]; then
+              git tag --delete $tag
+            fi
+          done
+
+      - name: Install napari
+        shell: bash -el {0}
+        working-directory: napari-source
+        run: |
+          python -m pip install -e . --no-deps
+
+      - name: Download local build artifacts (napari)
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.packages.outputs.artifact-id }}
+          path: ${{ env.CONDA_BLD_PATH }}/noarch
+
+      - name: Index local packages (if any)
+        shell: bash -el {0}
+        working-directory: napari-packaging
+        run: |
+          pkgs=$(shopt -s nullglob dotglob; echo "${CONDA_BLD_PATH}/noarch/*.tar.bz2" "${CONDA_BLD_PATH}/noarch/*.conda")
+          if (( ${#pkgs} )); then
+            conda index "${CONDA_BLD_PATH}"
+            conda search -c local --override-channels
+            echo CONSTRUCTOR_USE_LOCAL=1 >> $GITHUB_ENV
+          else
+            echo "No local packages found, assuming latest release"
+          fi
+
+      - name: get tag / arch-suffix / extension / artifact-name / conda-standalone
+        shell: bash -el {0}
+        working-directory: napari-packaging
+        run: |
+          VER=$(python build_installers.py --version --location=../napari-source)
+          echo "version=${VER}" >> $GITHUB_ENV
+          echo "Napari version: ${VER}"
+          INST_VER=$(python build_installers.py --installer-version)
+          echo "installer_version=${INST_VER}" >> $GITHUB_ENV
+          echo "Installer version: ${INST_VER}"
+          ARCH_SUFFIX=$(python build_installers.py --arch)
+          echo "arch-suffix=${ARCH_SUFFIX}" >> $GITHUB_ENV
+          echo "Machine: ${ARCH_SUFFIX}"
+          EXTENSION=$(python build_installers.py --ext)
+          echo "extension=${EXTENSION}" >> $GITHUB_ENV
+          echo "Extension: ${EXTENSION}"
+          ARTIFACT_NAME=$(python build_installers.py --artifact-name)
+          echo "artifact-name=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          echo "Expected artifact name: ${ARTIFACT_NAME}"
+
+      - name: Check secrets availability
+        shell: bash
+        run: |
+          if [ -n '${{ secrets.APPLE_APPLICATION_CERTIFICATE_BASE64 }}' ] && \
+             [ -n '${{ secrets.APPLE_APPLICATION_CERTIFICATE_PASSWORD }}' ] && \
+             [ -n '${{ secrets.APPLE_INSTALLER_CERTIFICATE_BASE64 }}' ]   && \
+             [ -n '${{ secrets.APPLE_INSTALLER_CERTIFICATE_PASSWORD }}' ] && \
+             [ -n '${{ secrets.APPLE_NOTARIZATION_ISSUER_ID }}' ] && \
+             [ -n '${{ secrets.APPLE_NOTARIZATION_KEY_ID }}' ] && \
+             [ -n '${{ secrets.APPLE_NOTARIZATION_AUTHKEY_BASE64 }}' ] && \
+             [ -n '${{ secrets.TEMP_KEYCHAIN_PASSWORD }}' ]; then
+              echo "SIGNING_SECRETS_AVAILABLE=1" >> $GITHUB_ENV
+          fi
+
+      # instructions taken from
+      # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development#add-a-step-to-your-workflow
+      - name: Load signing certificate (MacOS)
+        shell: bash -el {0}
+        # We only sign pushes to main, nightlies, RCs and final releases
+        if: >
+          runner.os == 'macOS'
+          && env.SIGNING_SECRETS_AVAILABLE
+          && (inputs.event_name == 'schedule' || inputs.event_name == 'push' || (github.repository == 'napari/packaging' && github.event_name == 'pull_request'))
+        run: |
+          # create variables
+          INSTALLER_CERTIFICATE_PATH="$RUNNER_TEMP/installer_developer_cert.p12"
+          APPLICATION_CERTIFICATE_PATH="$RUNNER_TEMP/application_developer_cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/installer-signing.keychain-db"
+
+          # import certificate and provisioning profile from secrets
+          echo -n "${{ secrets.APPLE_INSTALLER_CERTIFICATE_BASE64 }}" | /usr/bin/base64 --decode > $INSTALLER_CERTIFICATE_PATH
+          echo -n "${{ secrets.APPLE_APPLICATION_CERTIFICATE_BASE64 }}" | /usr/bin/base64 --decode > $APPLICATION_CERTIFICATE_PATH
+
+          # create temporary keychain
+          security create-keychain -p "${{ secrets.TEMP_KEYCHAIN_PASSWORD }}" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "${{ secrets.TEMP_KEYCHAIN_PASSWORD }}" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $INSTALLER_CERTIFICATE_PATH -P ${{ secrets.APPLE_INSTALLER_CERTIFICATE_PASSWORD }} -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security import $APPLICATION_CERTIFICATE_PATH -P ${{ secrets.APPLE_APPLICATION_CERTIFICATE_PASSWORD }} -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # export identity name
+          signing_identity=$(security find-identity $KEYCHAIN_PATH | grep -m 1 -o '"Developer ID Installer.*"' | tr -d '"')
+          notarization_identity=$(security find-identity $KEYCHAIN_PATH | grep -m 1 -o '"Developer ID Application.*"' | tr -d '"')
+
+          echo "CONSTRUCTOR_SIGNING_IDENTITY=${signing_identity}" >> $GITHUB_ENV
+          echo "CONSTRUCTOR_NOTARIZATION_IDENTITY=${notarization_identity}" >> $GITHUB_ENV
+
+          # The conda environment might contain a totally different codesign
+          # which would clobber the Apple's codesign (the one we need)
+          _codesign=$(which codesign)
+          if [[ $_codesign =~ ${CONDA_PREFIX}.* ]]; then
+            mv "${_codesign}" "${_codesign}.in_conda_env"
+          fi
+
+      - name: Check signtool (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          test -f "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64/signtool.exe"
+          echo "CONSTRUCTOR_SIGNTOOL_PATH=C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64/signtool.exe" >> $GITHUB_ENV
+
+      - name: Load signing certificate (Windows)
+        # We only sign pushes to main, nightlies, RCs and final releases
+        if: >
+          runner.os == 'Windows'
+          && env.SIGNING_SECRETS_AVAILABLE
+          && (inputs.event_name == 'schedule' || inputs.event_name == 'push' || (github.repository == 'napari/packaging' && github.event_name == 'pull_request'))
+        # We are signing with Apple's certificate to provide _something_
+        # This is not trusted by Windows so the warnings are still there, but curious users
+        # will be able to check it's actually us if necessary
+        run: |
+          Set-Content -Path "${{ runner.temp }}/certificate.b64.txt" -Value '${{ secrets.APPLE_APPLICATION_CERTIFICATE_BASE64 }}'
+          certutil -decode "${{ runner.temp }}/certificate.b64.txt" "${{ runner.temp }}/certificate.pfx"
+
+          echo "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}/certificate.pfx" >> $Env:GITHUB_ENV
+          echo "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=${{ secrets.APPLE_APPLICATION_CERTIFICATE_PASSWORD }}" >> $Env:GITHUB_ENV
+
+      # TODO: Consider a refactor here; maybe an org action we can reuse or at least a script
+      - name: Make Bundle (Linux)
+        if: runner.os == 'Linux'
+        shell: bash -el {0}
+        working-directory: napari-packaging
+        run: |
+          echo "::group::Install apt dependencies"
+          sudo apt-get update
+          sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
+            libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+            libxcb-xinerama0 libxcb-xfixes0 libxcb-shape0 libqt5gui5
+          echo "::endgroup::"
+          xvfb-run --auto-servernum python build_installers.py --location=../napari-source
+
+      - name: Make Bundle (MacOS/Windows)
+        shell: bash -el {0}
+        if: runner.os != 'Linux'
+        working-directory: napari-packaging
+        run: python build_installers.py --location=../napari-source
+
+      - name: Collect licenses
+        id: licenses
+        shell: bash -el {0}
+        working-directory: napari-packaging
+        run: |
+          licenses_zip_path=$(python build_installers.py --licenses)
+          echo "LICENSES_ARTIFACT_PATH=$licenses_zip_path" >> $GITHUB_ENV
+          echo "LICENSES_ARTIFACT_NAME=$(basename ${licenses_zip_path})" >> $GITHUB_ENV
+          echo "licenses_artifact=${licenses_zip_path}" >> $GITHUB_OUTPUT
+
+      - name: Upload License Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: ${{ env.LICENSES_ARTIFACT_PATH }}
+          name: ${{ env.LICENSES_ARTIFACT_NAME }}
+
+      - name: Collect lockfiles
+        id: pkgs-list
+        shell: bash -el {0}
+        working-directory: napari-packaging
+        run: |
+          lockfile_path=$(python build_installers.py --lockfile)
+          echo "LOCKFILE_ARTIFACT_PATH=$lockfile_path" >> $GITHUB_ENV
+          echo "lockfile_artifact=${lockfile_path}" >> $GITHUB_OUTPUT
+
+      - name: Upload lockfile artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        # NOTE: These lockfiles will only provide functional installations if the
+        # napari packages in the 'packages' job above has been uploaded to anaconda.org/napari
+        # and this only happens in scheduled jobs @ main and tagged releases.
+        with:
+          path: ${{ env.LOCKFILE_ARTIFACT_PATH }}
+          name: napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.lockfile.txt
+
+      - name: Notarize & staple PKG Installer (macOS)
+        # We only sign pushes to main, nightlies, RCs and final releases
+        if: >
+          runner.os == 'macOS'
+          && env.SIGNING_SECRETS_AVAILABLE
+          && (inputs.event_name == 'schedule' || inputs.event_name == 'push' || (github.repository == 'napari/packaging' && github.event_name == 'pull_request'))
+        env:
+          INSTALLER_PATH: ${{ github.workspace }}/napari-packaging/_work/napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }}
+          # See https://keith.github.io/xcode-man-pages/notarytool.1.html for auth options
+          # These values can be obtained via https://appstoreconnect.apple.com, under
+          # Users and Access > Integrations > App Store Connect API.
+          APPLE_NOTARIZATION_ISSUER_ID: ${{ secrets.APPLE_NOTARIZATION_ISSUER_ID }}
+          APPLE_NOTARIZATION_KEY_ID: ${{ secrets.APPLE_NOTARIZATION_KEY_ID }}
+          # base64-encoded contents of the generated .p8 file
+          APPLE_NOTARIZATION_AUTHKEY_BASE64: ${{ secrets.APPLE_NOTARIZATION_AUTHKEY_BASE64 }}
+        run: |
+          set -euxo pipefail
+
+          # Decode the .p8 authkey from base64 to a temp file
+          APPLE_NOTARIZATION_AUTHKEY_PATH="$RUNNER_TEMP/notarization_authkey.p8"
+          echo -n "$APPLE_NOTARIZATION_AUTHKEY_BASE64" | /usr/bin/base64 --decode > "$APPLE_NOTARIZATION_AUTHKEY_PATH"
+
+          # Check signatures. If this fails, there's no point.
+          pkgutil --check-signature "$INSTALLER_PATH"
+
+          # Submit for notarization to Apple servers
+          json_output_file="$RUNNER_TEMP/$(basename "$INSTALLER_PATH").notarization.json"
+          set +e
+          xcrun notarytool submit "$INSTALLER_PATH" \
+            --key "$APPLE_NOTARIZATION_AUTHKEY_PATH" \
+            --key-id "$APPLE_NOTARIZATION_KEY_ID" \
+            --issuer "$APPLE_NOTARIZATION_ISSUER_ID" \
+            --output-format json \
+            --wait \
+            --timeout 30m \
+            | tee "$json_output_file"
+          notary_exit_code=$?
+          set -e
+          if [[ $notary_exit_code != 0 ]]; then
+            submission_id=$(jq -r '.id' "$json_output_file")
+            xcrun notarytool log "$submission_id" \
+              --key "$APPLE_NOTARIZATION_AUTHKEY_PATH" \
+              --key-id "$APPLE_NOTARIZATION_KEY_ID" \
+              --issuer "$APPLE_NOTARIZATION_ISSUER_ID"
+            exit $notary_exit_code
+          fi
+
+          # Staple
+          xcrun stapler staple --verbose "$INSTALLER_PATH"
+
+          # Check notarization status
+          spctl --assess -vv --type install "$INSTALLER_PATH" 2>&1 | tee /dev/stderr | grep accepted
+
+      - name: Azure login (Windows)
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        if: runner.os == 'Windows' && inputs.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.WINDOWS_SIGNING_AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.WINDOWS_SIGNING_AZURE_CLIENT_SECRET_VALUE }}",
+              "subscriptionId": "${{ secrets.WINDOWS_SIGNING_AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.WINDOWS_SIGNING_AZURE_TENANT_ID }}"
+            }
+
+      # NOTE: Azure Code Signing has a monthly quota. Every time a given file
+      # is signed, it counts as a signature. These certificates are shared with
+      # other NumFOCUS projects, so we only sign final releases. We don't want to
+      # sign on regular PRs CI or upon merges to main. Only releases!
+      - name: Sign files with Artifact Signing (Windows)
+        uses: azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
+        if: runner.os == 'Windows' && inputs.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          endpoint: ${{ secrets.WINDOWS_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.WINDOWS_SIGNING_ACCOUNT_NAME }}
+          certificate-profile-name: ${{ secrets.WINDOWS_SIGNING_PROFILE_NAME }}
+          files-folder: ${{ github.workspace }}/napari-packaging/_work/
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Verify signatures (Windows)
+        if: runner.os == 'Windows' && inputs.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          $exitCode = 0
+          foreach ($executable in (Get-ChildItem "${{ github.workspace }}/napari-packaging/_work/*.exe")) {
+            Write-Host "******************************************"
+            Write-Host $executable.Name
+            Write-Host "******************************************"
+            $sig = Get-AuthenticodeSignature -FilePath $executable.FullName
+            $sig | Format-List * | Out-String | Write-Host
+            if ($sig.Status -ne 'Valid') {
+              Write-Error "CRITICAL: Signature verification failed for $($executable.Name)!"
+              $exitCode = 1
+            }
+          }
+          exit $exitCode
+
+      - name: Generate SHA256 files (Windows)
+        if: runner.os == 'Windows' && inputs.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          foreach ($executable in (Get-ChildItem "${{ github.workspace }}/napari-packaging/_work/*.exe")) {
+            $hashObject = Get-FileHash $executable.FullName
+            $hashObject.Hash | Out-File -FilePath "$($executable.FullName).sha256"
+            Write-Host "SHA256($($executable.Name)): $($hashObject.Hash)"
+          }
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        # CI artifact uploads only on manual and scheduled runs
+        # if: inputs.event_name == 'workflow_dispatch' || github.event_name == 'workflow_dispatch' || inputs.event_name == 'schedule'
+        with:
+          name: napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }}
+          path: ${{ github.workspace }}/napari-packaging/_work/napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }}
+          retention-days: 7
+
+      - name: Get Release
+        if: inputs.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        id: get_release
+        uses: bruceadams/get-release@74c3d60f5a28f358ccf241a00c9021ea16f0569f # v1.3.2
+
+      - name: Upload Release Asset (Installer)
+        if: inputs.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/napari-packaging/_work/napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }}
+          asset_name: napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }}
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Lockfile)
+        if: inputs.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ${{ env.LOCKFILE_ARTIFACT_PATH }}
+          asset_name: napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.lockfile.txt
+          asset_content_type: application/octet-stream
+
+      - name: Test installation (Linux)
+        if: runner.os == 'Linux'
+        working-directory: napari-packaging/_work
+        env:
+          MENUINST_DEBUG: 1
+        run: |
+          bash napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }} -bfp "${{ runner.temp }}/napari-${{ env.version }}"
+          . "${{ runner.temp }}/napari-${{ env.version }}/etc/profile.d/conda.sh"
+          conda activate "${{ runner.temp }}/napari-${{ env.version }}/envs/napari-${{ env.version }}"
+          conda info
+          conda config --show-sources
+          conda config --show
+          conda list -p "${{ runner.temp }}/napari-${{ env.version }}"
+          conda list -p "${{ runner.temp }}/napari-${{ env.version }}/envs/napari-${{ env.version }}"
+          xvfb-run --auto-servernum napari --info
+          # Test shortcut
+          python -c "import pathlib as p; assert list(p.Path('~/.local/share/applications/').expanduser().glob('napari*.desktop'))"
+
+      - name: Test installation (macOS)
+        if: runner.os == 'macOS'
+        working-directory: napari-packaging/_work
+        env:
+          MENUINST_DEBUG: 1
+        run: |
+          set -x
+          installer -pkg napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }} -target CurrentUserHomeDirectory -dumplog
+          . "/Users/runner/Library/napari-${{ env.version }}/etc/profile.d/conda.sh"
+          conda activate "/Users/runner/Library/napari-${{ env.version }}/envs/napari-${{ env.version }}"
+          conda info
+          conda config --show-sources
+          conda config --show
+          conda list -p "/Users/runner/Library/napari-${{ env.version }}"
+          conda list -p "/Users/runner/Library/napari-${{ env.version }}/envs/napari-${{ env.version }}"
+          napari --info
+          # Test shortcut
+          python -c "import pathlib as p; assert list(p.Path('~/Applications').expanduser().glob('napari*.app'))"
+
+      - name: Test installation (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd /C call {0}
+        working-directory: napari-packaging/_work
+        env:
+          MENUINST_DEBUG: 1
+        run: |
+          cmd.exe /c start /wait napari-${{ env.version }}-${{ runner.os }}-${{ env.arch-suffix }}.${{ env.extension }} /S /D=${{ runner.temp }}\napari-${{ env.version }}
+          CALL ${{ runner.temp }}\napari-${{ env.version }}\Scripts\activate ${{ runner.temp }}\napari-${{ env.version }}\envs\napari-${{ env.version }}
+          CALL conda info
+          CALL conda config --show-sources
+          CALL conda config --show
+          CALL conda list -p ${{ runner.temp }}\napari-${{ env.version }}
+          CALL conda list -p ${{ runner.temp }}\napari-${{ env.version }}\envs\napari-${{ env.version }}
+          napari --info
+          :: Test shortcut
+          python -c "import pathlib as p; assert list(p.Path('%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs').glob('napari*\\napari*.lnk'))"

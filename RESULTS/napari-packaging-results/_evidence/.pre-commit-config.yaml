@@ -1,0 +1,20 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-docstring-first
+        exclude: ^constructor-manager-ui/src/constructor_manager_ui/style/images.py
+      - id: end-of-file-fixer
+        exclude: ^constructor-manager-ui/src/constructor_manager_ui/style/images.py
+      - id: trailing-whitespace
+        exclude: ^constructor-manager-ui/src/constructor_manager_ui/style/images.py
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.3
+    hooks:
+      # lint & attempt to correct failures (e.g. pyupgrade)
+      - id: ruff
+        args: [--fix]
+        exclude: ^constructor-manager-ui/src/constructor_manager_ui/style/images.py
+      # compatible replacement for black
+      - id: ruff-format
+        exclude: ^constructor-manager-ui/src/constructor_manager_ui/style/images.py

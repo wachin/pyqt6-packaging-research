@@ -1,0 +1,287 @@
+# GH Actions script to build the Pyzo binaries.
+
+name: CD
+
+on:
+  workflow_dispatch:
+  push:
+    tags: [ 'v*' ]
+    branches: [ cd, bump, freeze ]
+
+jobs:
+
+  # The default Windows build serving the majority of users.
+  # Not needed because already installed: choco install innosetup --version=5.6.1
+  win64:
+    name: Build Windows 64
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          pip install -U pyside6 pyinstaller
+          pip install -r freeze/frozen_libs.txt
+    - name: Freeze
+      run: python freeze/pyzo_freeze.py
+    - name: Package
+      run: python freeze/pyzo_package.py
+    - name: Test frozen
+      run: |
+        python freeze/pyzo_test_frozen.py
+        python tests/check_log.py
+    - name: Upload distributions
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          freeze/dist/*.zip
+          freeze/dist/*.exe
+          freeze/dist/*.msi
+        name: dist-artifact-win64
+
+  # A 32bit windows build for people on old machines.
+  # Win32 is on the brink of deprecation, so we tune down on Py and Qt versions.
+  win32:
+    name: Build Windows 32
+    runs-on: windows-latest
+    env:
+        PYZO_QT_API: PyQt5
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        architecture: x86
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          pip install -U ${{ env.PYZO_QT_API }} pyinstaller
+          pip install -r freeze/frozen_libs.txt
+    - name: Freeze
+      run: python freeze/pyzo_freeze.py
+    - name: Package
+      run: python freeze/pyzo_package.py
+    - name: Test frozen
+      run: |
+        python freeze/pyzo_test_frozen.py
+        python tests/check_log.py
+    - name: Upload distributions
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          freeze/dist/*.zip
+        name: dist-artifact-win32
+
+  # A MacOS build for x86_64 (aka amd64). Via Rosetta this should work on all modern Macs.
+  # Use macos-15-intel to select x86_64
+  macos_x86_64:
+    name: Build MacOS x86_64
+    runs-on: macos-15-intel
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          pip install -U pyside6 pyinstaller
+          pip install -r freeze/frozen_libs.txt
+    - name: Freeze
+      run: python freeze/pyzo_freeze.py
+    - name: Codesign app bundle
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+      run: |
+        echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        # We finally codesign our app bundle, specifying the Hardened runtime option
+        /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --all-architectures --timestamp --deep --options runtime freeze/dist/pyzo.app -v
+    - name: "Notarize app bundle"
+      env:
+        PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+        PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+        PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+      run: |
+        echo "Create keychain profile"
+        xcrun notarytool store-credentials "notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+        echo "Creating temp notarization archive"
+        ditto -c -k --keepParent "freeze/dist/pyzo.app" "notarization.zip"
+        echo "Notarize app"
+        xcrun notarytool submit "notarization.zip" --keychain-profile "notarytool-profile" --wait
+        # Debug
+        # xcrun notarytool log c44df8eb-3087-4a3c-a5f4-9b72caceb083 --keychain-profile "notarytool-profile"
+        # Finally, we need to "attach the staple" allow our app to be validated without internet connection.
+        echo "Attach staple"
+        xcrun stapler staple "freeze/dist/pyzo.app"
+    - name: Package
+      # need sudo to avoid hdiutil: create failed - Resource busy, see https://github.com/actions/runner-images/issues/7522
+      run: sudo python freeze/pyzo_package.py
+    - name: Test frozen
+      shell: bash
+      run: |
+        python freeze/pyzo_test_frozen.py
+        python tests/check_log.py
+    - name: Upload distributions
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          freeze/dist/*.zip
+          freeze/dist/*.dmg
+        name: dist-artifact-macos_x86_64
+
+  # A MacOS build for Apple Silicon (aka arm64 or aarch64).
+  # The macos-14 and up use arm64
+  macos_arm64:
+    name: Build MacOS arm64 (Apple Silicon)
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          pip install -U pyside6 pyinstaller
+          pip install -r freeze/frozen_libs.txt
+    - name: Freeze
+      run: python freeze/pyzo_freeze.py
+    - name: Codesign app bundle
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+      run: |
+        echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        # We finally codesign our app bundle, specifying the Hardened runtime option
+        /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --all-architectures --timestamp --deep --options runtime freeze/dist/pyzo.app -v
+    - name: "Notarize app bundle"
+      env:
+        PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+        PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+        PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+      run: |
+        echo "Create keychain profile"
+        xcrun notarytool store-credentials "notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+        echo "Creating temp notarization archive"
+        ditto -c -k --keepParent "freeze/dist/pyzo.app" "notarization.zip"
+        echo "Notarize app"
+        xcrun notarytool submit "notarization.zip" --keychain-profile "notarytool-profile" --wait
+        # Debug
+        # xcrun notarytool log c44df8eb-3087-4a3c-a5f4-9b72caceb083 --keychain-profile "notarytool-profile"
+        # Finally, we need to "attach the staple" allow our app to be validated without internet connection.
+        echo "Attach staple"
+        xcrun stapler staple "freeze/dist/pyzo.app"
+    - name: Package
+      run: python freeze/pyzo_package.py
+    - name: Test frozen
+      shell: bash
+      run: |
+        python freeze/pyzo_test_frozen.py
+        python tests/check_log.py
+    - name: Upload distributions
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          freeze/dist/*.zip
+          freeze/dist/*.dmg
+        name: dist-artifact-macos_arm64
+
+  # For Linux we make a build on a somewhat older ubuntu. Most Linux users prefer (or are fine with)
+  # running Pyzo from source anyway.
+  linux_amd64:
+    name: Build Linux amd64
+    runs-on: ubuntu-22.04
+    env:
+      PYZO_QT_API: PyQt5
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          pip install -U ${{ env.PYZO_QT_API }} pyinstaller
+          pip install -r freeze/frozen_libs.txt
+          sudo apt install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
+            libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+            libxcb-xinerama0 libxcb-xfixes0 libxcb-shape0 libxcb-cursor0
+    - name: Freeze
+      run: python freeze/pyzo_freeze.py
+    - name: Package
+      run: python freeze/pyzo_package.py
+    - name: Test frozen
+      run: |
+        xvfb-run --auto-servernum python freeze/pyzo_test_frozen.py
+        python tests/check_log.py
+    - name: Upload distributions
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          freeze/dist/*.tar.gz
+        name: dist-artifact-linux_amd64
+
+
+  publish:
+    name: Publish binaries to Github
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [ win64, win32, macos_x86_64, macos_arm64, linux_amd64 ]
+    if: success() && startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    - name: Download assets
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        pattern: dist-artifact-*
+        merge-multiple: true
+    - name: Get version from git ref
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+    - name: Create GH release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAG_NAME: ${{ steps.get_version.outputs.VERSION }}
+        RELEASE_NAME: Release ${{ steps.get_version.outputs.VERSION }}
+      run: |
+        RELEASE_NOTES=$'Autogenerated binaries.\nSee [the release notes](https://github.com/pyzo/pyzo/blob/main/RELEASE_NOTES.md) for details.'
+        gh release create "$TAG_NAME" \
+            --repo="$GITHUB_REPOSITORY" \
+            --title="$RELEASE_NAME" \
+            --notes="$RELEASE_NOTES" \
+            --verify-tag
+    - name: Upload release assets
+      uses: AButler/upload-release-assets@v3.0
+      with:
+        release-tag: ${{ steps.get_version.outputs.VERSION }}
+        files: 'dist/*.zip;dist/*.tar.gz;dist/*.dmg;dist/*.exe;dist/*.msi'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,182 @@
+name: Build executables
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install build tool
+        run: python3 -m pip install build
+      - name: Build wheel and sdist
+        run: python3 -m build
+      - uses: actions/upload-artifact@v5
+        with:
+          name: wheel-sdist
+          path: dist/*
+
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install Debian build dependencies (system packages)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential debhelper dh-python \
+            pybuild-plugin-pyproject python3-setuptools python3-build python3-installer \
+            python3-pil
+      - name: Install Python build tooling into the active interpreter
+        run: python3 -m pip install build setuptools wheel Pillow
+      - name: Build .deb
+        run: |
+          dpkg-buildpackage -b -uc -us
+          # dpkg-buildpackage writes the .deb/.buildinfo/.changes to the PARENT
+          # directory of the source tree; move them into the workspace so the
+          # upload-artifact step can find them.
+          mv ../tbo_*.deb ../tbo_*.buildinfo ../tbo_*.changes ./
+      - uses: actions/upload-artifact@v5
+        with:
+          name: debian
+          path: |
+            tbo_*.deb
+            tbo_*.buildinfo
+            tbo_*.changes
+
+  # build-flatpak is DISABLED: the Docker image ghcr.io/flathub/flathub-infra:latest
+  # is no longer publicly accessible. Re-enable only when a working image is identified.
+  # See https://github.com/wachin/TBO/issues (flatpak not important for this project).
+  # build-flatpak:
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/flathub/flathub-infra:latest
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Build Flatpak
+  #       run: |
+  #         cd packaging
+  #         flatpak-builder build-dir org.tbo.TBO.json --force-clean
+  #     - name: Export bundle
+  #       run: |
+  #         flatpak build-export export-repo packaging/build-dir
+  #         flatpak build-bundle export-repo org.tbo.TBO.flatpak org.tbo.TBO
+  #     - uses: actions/upload-artifact@v5
+  #       with:
+  #         name: flatpak
+  #         path: org.tbo.TBO.flatpak
+
+  build-appimage:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r packaging/requirements-linux.txt
+      - name: Install system dependencies for Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 \
+            libxcb-cursor0 libdbus-1-3
+      - name: Build AppImage
+        run: |
+          bash packaging/build_appimage.sh
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v5
+        with:
+          name: tbo-linux-appimage
+          path: build/output/TBO-*-x86_64.AppImage
+
+  build-windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r packaging/requirements-windows.txt
+
+      - name: Build standalone executable with Nuitka
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File packaging/build_windows_nuitka.ps1
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v5
+        with:
+          name: tbo-windows
+          path: |
+            build/output/TBO-*-Windows-x64-portable.zip
+            build/dist/TBO/TBO.exe
+
+  # The two Windows PyInstaller arms were REMOVED after being measured. Do not
+  # reinstate them without reading the result first.
+  #
+  # Same commit, same version, same PE metadata, unsigned, UPX disabled:
+  #
+  #   Nuitka standalone                        0 / 71
+  #   PyInstaller onedir                       3 / 73   Bkav Pro, Zillya, SecureAge
+  #   PyInstaller onefile                      3 / 73   Bkav Pro, Zillya, SecureAge
+  #   PyInstaller onefile, rebuilt bootloader  2 / 70   Bkav Pro, SecureAge
+  #
+  # Rebuilding the bootloader from source did remove one detection (Zillya), so
+  # the shared pre-compiled stub is not irrelevant - but Bkav Pro and SecureAge
+  # flagged it anyway. The bootloader is therefore not the cause, and there is
+  # nothing left to change on the build side.
+  #
+  # Note that the *onedir* arm was flagged too, and onedir does not self-extract.
+  # The common factor across every PyInstaller build is the embedded CPython
+  # runtime and PyInstaller's archive format, not the extraction step.
+  #
+  # PyInstaller is still used below for the AppImage and macOS builds. Those are
+  # unaffected: the detections above are Windows engine heuristics.
+  #
+  # The scripts remain in packaging/ (build_windows_pyinstaller.ps1,
+  # requirements-windows-pyinstaller.txt) and can still be run locally. Full
+  # record and screenshots:
+  #   pyqt6-packaging-research/03-Promt-MAESTRO-resultado/
+  #     TBO-SOLUCIONES/SOLUCIONES-TBO.md section 11
+  #   pyqt6-packaging-research/experiments/pyinstaller-vs-nuitka/evidence/
+
+
+  build-macos:
+    runs-on: macos-15-intel
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r packaging/requirements-macos.txt
+
+      - name: Build macOS app with PyInstaller
+        run: |
+          bash packaging/build_macos.sh
+
+      - name: Upload macOS app
+        uses: actions/upload-artifact@v5
+        with:
+          name: tbo-macos
+          path: build/output/TBO-*-macOS-x64.zip
