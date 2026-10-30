@@ -36,6 +36,12 @@ Install (see SKILLS.md for the alternatives)::
 
 Exit codes: 0 on success, 1 on any refusal. A refusal never leaves a partial
 archive behind.
+
+One consequence worth knowing before comparing digests: ``_meta/README.md`` records
+the source commit, so the digest identifies *this commit's bundle*. Build after
+committing and it matches what CI published for the same commit, byte for byte;
+build from an uncommitted tree and it records the previous commit instead, which
+changes the digest for a reason that is not a bug.
 """
 
 from __future__ import annotations
