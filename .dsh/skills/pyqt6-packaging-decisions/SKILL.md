@@ -183,9 +183,9 @@ For the common five-artifact release, this is the route:
 |---|---|---|
 | AppImage (Ubuntu, Debian, any glibc ≥ your floor) | PyInstaller onedir + hand-built AppDir + pinned appimagetool | `pyqt6-appimage-packaging` |
 | `.deb` (Ubuntu, Debian) | debhelper + pybuild, native `python3-pyqt6` | `pyqt6-deb-packaging` |
-| macOS portable `.zip` containing the `.app` | PyInstaller `-D` + `ditto -c -k --sequesterRsrc` | `pyqt6-macos-signing-notarization` §1 and §8 |
-| Windows portable `.zip`, unsigned | **Nuitka `--standalone`** + `make_portable_zip.py`-style archive | `pyqt6-windows-installer-signing` §1 and §4 |
-| Windows `setup.exe` (NSIS or Inno) | same Nuitka payload + `makensis` / `iscc` | `pyqt6-windows-installer-signing` §3 and §4 |
+| macOS portable `.zip` containing the `.app` | PyInstaller `-D` + `ditto -c -k --sequesterRsrc` | `pyqt6-macos-signing-notarization` §1 (bundle, zip, unsigned path) |
+| Windows portable `.zip`, unsigned | **Nuitka `--standalone`** + `make_portable_zip.py`-style archive | `pyqt6-windows-installer-signing` §1 (Nuitka recipe and archive rules) |
+| Windows `setup.exe` (NSIS or Inno) | same Nuitka payload + `makensis` / `iscc` | `pyqt6-windows-installer-signing` §1 for the payload, §3 or §4 for the installer |
 | Checksums, pinning, provenance, artifact tests | — | `pyqt6-release-integrity` |
 
 Two notes that apply to all five:
