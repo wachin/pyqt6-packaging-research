@@ -93,16 +93,33 @@ jobs:
           echo "skills discoverable in the bundle: $found"
           test "$found" -eq 6
 
-      - name: Create the release
+      - name: Create or repair the release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           tag="skills-v${VERSION}"
-          gh release create "$tag" \
-            --repo "${{ github.repository }}" \
-            --title "PyQt6 packaging Skills ${VERSION}" \
-            --notes-file dist/RELEASE-NOTES.md \
-            --verify-tag \
-            "dist/pyqt6-packaging-skills-${VERSION}.tar.gz" dist/SHA256SUMS
+          repo="${{ github.repository }}"
+          assets=("dist/pyqt6-packaging-skills-${VERSION}.tar.gz" dist/SHA256SUMS)
+
+          # A release for this tag may already exist: created by hand before the
+          # tag was pushed, or left half-finished by an earlier run that died
+          # after creating it. Failing here would leave those assets in place and
+          # call the run red, which is how 1.1.1 shipped a bundle built from the
+          # previous commit. Repair it instead, so what is published always comes
+          # from this builder and this tag.
+          if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+            echo "release $tag already exists: replacing its assets"
+            gh release upload "$tag" --repo "$repo" --clobber "${assets[@]}"
+            gh release edit "$tag" --repo "$repo" \
+              --title "PyQt6 packaging Skills ${VERSION}" \
+              --notes-file dist/RELEASE-NOTES.md
+          else
+            gh release create "$tag" \
+              --repo "$repo" \
+              --title "PyQt6 packaging Skills ${VERSION}" \
+              --notes-file dist/RELEASE-NOTES.md \
+              --verify-tag \
+              "${assets[@]}"
+          fi
