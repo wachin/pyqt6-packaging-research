@@ -1,4 +1,4 @@
-# PyQt6 packaging research
+# PyQt6 Packaging Research
 
 ![Cover: how eight real desktop applications package themselves on Windows, Linux and macOS, and the five artifacts a GitHub Actions workflow produces](assets/pyqt6-packaging-research-cover.svg)
 
