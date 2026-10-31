@@ -11,13 +11,13 @@ Calculator (NSIS installer, per-user, bilingual, with a silent-install test in
 CI), napari (the only project doing real Windows Authenticode signing). Reference
 files, pinned to commits:
 
-- `PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/dikte.iss`
-- `PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/build-windows.ps1`
-- `PYQT6-GENESIS-PACKAGING/pyzo-results/_evidence/freeze/installerBuilderScript.iss`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/dikte.iss`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/build-windows.ps1`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/pyzo-results/_evidence/freeze/installerBuilderScript.iss`
 - `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`
 - `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/build_windows.ps1`
 - `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
-- `PYQT6-GENESIS-PACKAGING/napari-packaging-results/_evidence/.github/workflows/make_bundle_conda.yml`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/napari-packaging-results/_evidence/.github/workflows/make_bundle_conda.yml`
 
 **Where this runs:** in GitHub Actions, as jobs on `windows-2025`. Nothing in this
 Skill should be done on a Linux or macOS machine — Nuitka, MSVC and the installer
@@ -289,6 +289,44 @@ runs - and it is the one that was flagged. What the test does **not** establish 
 which element did the work: the stub version and the layout changed together in
 the clean round. Build the whole shape rather than picking one item from the
 list.
+
+### The artwork: two bitmaps and an icon
+
+Two real BMP files are referenced by the script above, and `makensis` fails at
+compile time if either is missing. Generate them before the first CI run:
+
+| File | Size | Where it appears |
+|---|---|---|
+| `nsis-header.bmp` | 150x57 | top strip of every page except welcome and finish, right-aligned via `MUI_HEADERIMAGE_RIGHT` |
+| `nsis-welcome.bmp` | 164x314 | the welcome and finish pages |
+
+Both must be **24-bit BMP**, not PNG renamed and not a palette image. Derive them
+from the application's own icon or a screenshot of it — a placeholder that ships
+to users is worse than no installer.
+
+For the application icon itself, ship a **multi-resolution `.ico`** at 16, 24,
+32, 48, 64, 128 and 256 px. Windows asks for a different size depending on where
+the icon is drawn — the shortcut, the taskbar, Alt-Tab, the file listing — and
+picks the nearest stored size instead of downscaling one 256 px image into a blur.
+
+That last point is a deliberate deviation from the reference, which ships a single
+256x256 icon. It was present in the build that scanned clean, so it does not hurt
+the verdict; it is also not the cause of it. The recipe is the page set, the
+sections, the bitmaps and `XPStyle`.
+
+With ImageMagick 7 (`magick`) or 6 (`convert`):
+
+```sh
+# Installer artwork, exact sizes, forced (!) so the aspect ratio does not win
+magick app-icon.png -resize 150x57!  -type TrueColor BMP3:nsis-header.bmp
+magick app-icon.png -resize 164x314! -type TrueColor BMP3:nsis-welcome.bmp
+
+# Multi-resolution application icon
+magick app-icon.png -define icon:auto-resize=256,128,64,48,32,24,16 app-icon.ico
+```
+
+Verify the result rather than trusting the command: `file` reports the BMP depth,
+and `magick identify app-icon.ico` lists one frame per size.
 
 ### Per-user install: three places must agree
 
@@ -565,6 +603,8 @@ mutation. Submit a vendor report instead.
       `VIFileVersion`/`VIAddVersionKey`, and neither inherits the frozen `.exe`'s.
 - [ ] The installer uses the reference layout (6 pages, 4 sections, header and
       welcome bitmaps, `XPStyle on`), not a minimal script.
+- [ ] `nsis-header.bmp` (150x57) and `nsis-welcome.bmp` (164x314) exist as 24-bit
+      BMPs, and the application `.ico` carries frames from 16 to 256 px.
 - [ ] `makensis` is pinned to a release that has been the package default for a
       while, and its version is printed in the CI log.
 - [ ] Installer compiles, installs, launches, and uninstalls cleanly on a clean

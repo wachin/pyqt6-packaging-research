@@ -53,22 +53,22 @@ The six skill directories sit at its top level, so extraction needs no stripping
 and a `_meta/` directory carries the licence and these notes:
 
 ```bash
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.1/pyqt6-packaging-skills-1.1.1.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.2/pyqt6-packaging-skills-1.1.2.tar.gz \
   | tar -xz -C ~/.dsh/skills
 ```
 
 Check the digest first if you prefer:
 
 ```bash
-curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.1/pyqt6-packaging-skills-1.1.1.tar.gz
-curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.1/SHA256SUMS
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.2/pyqt6-packaging-skills-1.1.2.tar.gz
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.2/SHA256SUMS
 sha256sum -c SHA256SUMS
 ```
 
 Build it yourself, or bump the version:
 
 ```bash
-python3 tools/build_skills_bundle.py --version 1.1.1   # writes dist/
+python3 tools/build_skills_bundle.py --version 1.1.2   # writes dist/
 ```
 
 The build is deterministic — the same tree produces the same digest — so the
@@ -104,7 +104,7 @@ program; otherwise the user scope is enough and works everywhere.
 
 **Caveat when copying:** the Skill bodies cite evidence with paths relative to
 *this* repository root, for example
-`PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/build-appimage.sh` or
+`PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/build-appimage.sh` or
 `my-PyQt6-Apps/TBO-resultados/_evidence/debian/`. Those references only resolve
 in this repository. A bundle install leaves them dangling — the procedures
 themselves do not depend on them, but you lose the ability to audit a claim

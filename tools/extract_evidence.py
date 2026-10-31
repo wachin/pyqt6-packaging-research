@@ -67,7 +67,7 @@ PROJECTS: list[dict] = [
     {
         "key": "dikte",
         "submodule": "dikte",
-        "results": "PYQT6-GENESIS-PACKAGING/dikte-results",
+        "results": "PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results",
         "label": "dikte - voice-dictation tray app",
         "note": "Only implemented AppImage in the case set; onedir payload wrapped in Inno/DMG/AppImage.",
         "files": [
@@ -95,7 +95,7 @@ PROJECTS: list[dict] = [
     {
         "key": "CARA",
         "submodule": "CARA",
-        "results": "PYQT6-GENESIS-PACKAGING/CARA-results",
+        "results": "PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/CARA-results",
         "label": "CARA - chess analysis app",
         "note": "Full macOS Developer ID signing + notarization from a local script; three separate platform specs.",
         "files": [
@@ -117,7 +117,7 @@ PROJECTS: list[dict] = [
     {
         "key": "pyzo",
         "submodule": "pyzo",
-        "results": "PYQT6-GENESIS-PACKAGING/pyzo-results",
+        "results": "PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/pyzo-results",
         "label": "pyzo - scientific Python IDE",
         "note": "Mature onedir + Inno/DMG/ZIP wrappers; full macOS signing and notarization in CI; the only project that curates Qt modules explicitly.",
         "files": [
@@ -143,7 +143,7 @@ PROJECTS: list[dict] = [
     {
         "key": "CustomKnight-Creator",
         "submodule": "CustomKnight-Creator",
-        "results": "PYQT6-GENESIS-PACKAGING/CustomKnight-Creator-results",
+        "results": "PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/CustomKnight-Creator-results",
         "label": "CustomKnight-Creator - Hollow Knight mod tool",
         "note": "The negative example: onefile on all platforms, ubuntu-latest GLIBC, no signing, no release automation.",
         "files": [
@@ -155,7 +155,7 @@ PROJECTS: list[dict] = [
     {
         "key": "napari",
         "submodule": "napari",
-        "results": "PYQT6-GENESIS-PACKAGING/napari-results",
+        "results": "PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/napari-results",
         "label": "napari - scientific image viewer",
         "note": "Freezing rejected in favour of conda constructor; delegates all packaging to napari/packaging.",
         "files": [
@@ -178,7 +178,7 @@ PROJECTS: list[dict] = [
     {
         "key": "napari-packaging",
         "submodule": "napari-packaging",
-        "results": "PYQT6-GENESIS-PACKAGING/napari-packaging-results",
+        "results": "PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/napari-packaging-results",
         "label": "napari/packaging - dedicated packaging + installer infrastructure",
         "note": "The most auditable installer pipeline in the set: conda constructor + NSIS/pkg, SHA-pinned actions, artifact smoke test. NO LICENCE FILE - evidence only, do not reuse.",
         "files": [

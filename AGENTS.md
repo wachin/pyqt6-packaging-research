@@ -286,7 +286,7 @@ at all.
 | `SKILLS.md` | The six Skills, what they cover, and what they deliberately refuse to cover. |
 | `SKILLS-VERIFICATION.md` | The audit of those Skills against the five common release artifacts, what it fixed, and what is still not verified. |
 | `EVIDENCE_INDEX.md` | Every evidence pack with its pinned commit and licence. |
-| `PYQT6-GENESIS-PACKAGING/` | The studies in one folder with English directory names, written to be pointed at by a person or an agent. For the six case-study packs it is the **only** copy: edit it here, and note that no source pack exists to regenerate it from. |
+| `PYQT6-GENESIS-PACKAGING/` | The studies in one folder with English directory names, written to be pointed at by a person or an agent. Two groups: `wachin-PyQt6-Apps/` (the owner's own two, and the Windows reference) and `external-PyQt6-Apps/` (six studied for technique). For the six external packs this is the **only** copy: edit it there, and note that no source exists to regenerate them from. |
 | `my-PyQt6-Apps/<app>-resultados/` | The two owner applications' packs, maintained as a source plus a mirror under `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`. Edit the source, then regenerate its copy. `tools/check_genesis_pack.py` enforces parity between the two, including the two permitted path rewrites. |
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
@@ -315,7 +315,7 @@ Three traps this repository has already hit. Do not reintroduce them.
   `git status` clean is `ignore = dirty` in `.gitmodules`. Adding `dikte/`
   or `napari/` to `.gitignore` does nothing.
 - **Never add unanchored directory patterns to `.gitignore`.** A bare `napari/`
-  also matches `PYQT6-GENESIS-PACKAGING/napari-results/_evidence/src/napari/`,
+  also matches `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/napari-results/_evidence/src/napari/`,
   the four napari source files pinned there as evidence. Commit `603161d`
   removed the `napari/` and `napari-packaging/` patterns and added the packs in
   the same commit, and the four have been tracked continuously since. Anchor

@@ -59,19 +59,39 @@ specifically:
 Build them with GitHub Actions, the way the research does it: the artifacts should
 be produced by a workflow in CI and attached to a release, not built on my machine.
 
-To expedite this process, please refer to the folder located in the project root
-named:
+Read this folder first. It is the reference, not a survey:
 
-PYQT6-GENESIS-PACKAGING
+PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results
 
-This folder contains research on how various other PyQt6 projects have implemented
-their installers. It is particularly important to review the following
-subdirectory:
+Its Windows executables are built with Nuitka and its NSIS installer was scanned
+clean on VirusTotal.com — 0/68, the project's own record — and the whole recipe is
+written down there: the Nuitka flags, the PE version metadata, and the .nsi script
+itself. Copy that Windows recipe instead of inventing one. A second application of
+mine, TBO, builds its Windows portable the same way and also scans clean:
 
-PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps
+PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/TBO-results
 
-The developer who conducted this research included the actual programs they
-successfully built using these methods.
+What carries over is the installer's shape, not only its settings: MUI version 1
+rather than MUI2, six pages including the components page, four sections plus the
+uninstall section, a header and a welcome bitmap, XPStyle, and a pinned makensis
+version. A minimal five-page, one-section installer compiles and installs and is
+the variant that gets flagged, so start from the .nsi in that folder's _evidence/
+and keep its layout.
+
+Produce the artwork as well, as that reference does: a 150x57 header bitmap and a
+164x314 welcome bitmap, both 24-bit BMP, and a multi-resolution .ico for the
+application itself at 16, 24, 32, 48, 64, 128 and 256 px, so the shortcut, the
+taskbar and the file listing each get the size they need.
+
+If you hit something specific to PyQt6 that this folder does not answer, look here:
+
+PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps
+
+It holds six other projects — CARA, CustomKnight-Creator, dikte, napari,
+napari/packaging and pyzo — studied the same way, each with a PACKAGING_STUDY.md, a
+PYQT6_PACKAGING_TUTORIAL.md and the real packaging files in _evidence/. Treat them
+as a fallback for a problem you are stuck on, not as the thing to copy: they solve
+different problems, and none of them was built with VirusTotal in mind.
 ```
 
 Three things make that prompt work, and they are worth knowing so you can steer
@@ -275,10 +295,10 @@ all six locations, and that no permission rule denies it.
 
 | Path | What it is |
 |---|---|
-| `PYQT6-GENESIS-PACKAGING/` | **Start here.** Every study in one folder with English directory names, for pointing a person or an agent at. |
+| `PYQT6-GENESIS-PACKAGING/` | **Start here.** Every study in one folder with English directory names, for pointing a person or an agent at. `wachin-PyQt6-Apps/` is the Windows reference; `external-PyQt6-Apps/` is the fallback shelf. |
 | `03-Promt-MAESTRO-resultado/` | The consolidated result: `MASTER_PYQT6_PACKAGING_GUIDE.md`, `PYQT6_MASTER_PACKAGING_TUTORIAL.md`, and `PACKAGING_EVIDENCE_MATRIX.md` with a confidence label on every claim. |
 | `01-GENESIS/`, `02-Promt-MAESTRO/` | Provenance: where the research started and the master prompt used for the second-level analysis. Not needed to use the results. |
-| `PYQT6-GENESIS-PACKAGING/<project>-results/` | The evidence packs the Skills cite, and the only copy of all six case-study packs. |
+| `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/` | The six external case-study packs, and the only copy of them. |
 | `my-PyQt6-Apps/<app>-resultados/` | The two owner applications' packs, maintained as a source plus a mirror under `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`. |
 | `.dsh/skills/` | The six Skills, source of truth for the release bundle. |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit, with the VirusTotal screenshots. |

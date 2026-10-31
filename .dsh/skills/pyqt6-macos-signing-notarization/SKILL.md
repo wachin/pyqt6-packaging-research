@@ -9,10 +9,10 @@ whenToUse: Use when producing a macOS build of a Python/PyQt6 application, when 
 Observed implementations: CARA (local script), pyzo (full CI), napari (most
 auditable). Reference files, pinned to commits:
 
-- `PYQT6-GENESIS-PACKAGING/CARA-results/_evidence/scripts/build_macos_signed.sh`
-- `PYQT6-GENESIS-PACKAGING/CARA-results/_evidence/packaging/macos/entitlements.plist`
-- `PYQT6-GENESIS-PACKAGING/pyzo-results/_evidence/.github/workflows/cd.yml`
-- `PYQT6-GENESIS-PACKAGING/napari-packaging-results/_evidence/.github/workflows/make_bundle_conda.yml`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/CARA-results/_evidence/scripts/build_macos_signed.sh`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/CARA-results/_evidence/packaging/macos/entitlements.plist`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/pyzo-results/_evidence/.github/workflows/cd.yml`
+- `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/napari-packaging-results/_evidence/.github/workflows/make_bundle_conda.yml`
 
 **Where this runs:** in GitHub Actions, as a job on `macos-15-intel` (the Intel
 slice; an arm64 runner builds a different binary). Notarization in particular only

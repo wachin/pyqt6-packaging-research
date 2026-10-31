@@ -170,7 +170,7 @@ Two things to carry into the Windows run:
 2. **This spec excludes nothing.** A 197 MB `_internal/` is what happens when
    every Qt module is collected. It is precisely the problem that dikte and
    pyzo solve with targeted Qt excludes — see the evidence packs at
-   `PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/dikte.spec` and
-   `PYQT6-GENESIS-PACKAGING/pyzo-results/_evidence/freeze/pyzo_freeze.py`. The experiment holds
+   `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/dikte.spec` and
+   `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/pyzo-results/_evidence/freeze/pyzo_freeze.py`. The experiment holds
    collection strategy constant on purpose; a follow-up run should add a third
    PyInstaller arm with curated excludes to quantify what curation is worth.
