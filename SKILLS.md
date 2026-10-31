@@ -53,22 +53,22 @@ The six skill directories sit at its top level, so extraction needs no stripping
 and a `_meta/` directory carries the licence and these notes:
 
 ```bash
-curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.2/pyqt6-packaging-skills-1.1.2.tar.gz \
+curl -fsSL https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.3/pyqt6-packaging-skills-1.1.3.tar.gz \
   | tar -xz -C ~/.dsh/skills
 ```
 
 Check the digest first if you prefer:
 
 ```bash
-curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.2/pyqt6-packaging-skills-1.1.2.tar.gz
-curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.2/SHA256SUMS
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.3/pyqt6-packaging-skills-1.1.3.tar.gz
+curl -fsSLO https://github.com/wachin/pyqt6-packaging-research/releases/download/skills-v1.1.3/SHA256SUMS
 sha256sum -c SHA256SUMS
 ```
 
 Build it yourself, or bump the version:
 
 ```bash
-python3 tools/build_skills_bundle.py --version 1.1.2   # writes dist/
+python3 tools/build_skills_bundle.py --version 1.1.3   # writes dist/
 ```
 
 The build is deterministic — the same tree produces the same digest — so the
