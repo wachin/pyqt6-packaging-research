@@ -347,9 +347,12 @@ reproduced directly rather than read from a note.
 **Corrected 2026-10-31.** This note previously read that the bare `napari/`
 pattern "silently excluded **12 real evidence files** from git", citing the path
 `_evidence/napari/`. Both details were wrong. The directory is
-`_evidence/src/napari/` and holds four files, and none of them was ever
-excluded: commit `603161d` removed the `napari/` and `napari-packaging/`
-patterns and added the packs in the same commit, so the four were never subject
-to the rule. The hazard is real; the incident is not. The figure 12 coincides
-with the file count `EVIDENCE_INDEX.md` lists for the `napari/packaging` pack,
-which has no nested `napari/` directory and was never affected.
+`_evidence/src/napari/` and holds four files, none of which was ever excluded:
+commit `603161d` removed the `napari/` and `napari-packaging/` patterns and
+added the packs in the same commit, and the four have been tracked continuously
+since — and git never applies `.gitignore` to a tracked path. The add order is
+not recorded, so the commit does not show that the rule was what spared them;
+it shows that nothing was lost. The hazard is real; the incident is not. The
+figure 12 coincides with the file count `EVIDENCE_INDEX.md` lists for the
+`napari/packaging` pack, which has no nested `napari/` directory and was never
+affected.

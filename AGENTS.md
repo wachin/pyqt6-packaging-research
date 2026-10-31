@@ -316,10 +316,11 @@ Three traps this repository has already hit. Do not reintroduce them.
   or `napari/` to `.gitignore` does nothing.
 - **Never add unanchored directory patterns to `.gitignore`.** A bare `napari/`
   also matches `PYQT6-GENESIS-PACKAGING/napari-results/_evidence/src/napari/`,
-  the four napari source files pinned there as evidence. Those four survived
-  only because commit `603161d` removed the `napari/` and `napari-packaging/`
-  patterns and added the packs in the same commit. Anchor such patterns to the
-  root (`/x/`) or scope them to the directory that needs them.
+  the four napari source files pinned there as evidence. Commit `603161d`
+  removed the `napari/` and `napari-packaging/` patterns and added the packs in
+  the same commit, and the four have been tracked continuously since. Anchor
+  such patterns to the root (`/x/`) or scope them to the directory that needs
+  them.
 - **The same trap, hit again — and then dissolved.** A bare `PyQt6-Apps/` was
   once added here while those two trees were independent clones, and it swallowed
   everything under the directory, including the `<app>-resultados/` folders that
