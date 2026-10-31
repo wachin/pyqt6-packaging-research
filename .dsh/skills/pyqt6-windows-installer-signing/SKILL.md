@@ -1,7 +1,7 @@
 ---
 name: pyqt6-windows-installer-signing
-description: Produce a Windows build of a PyQt6 application - onedir payload, an Inno Setup or NSIS installer, PE version metadata, and the correct Authenticode signing order including nested binaries and RFC 3161 timestamping.
-whenToUse: Use when creating or fixing a Windows build or installer (Inno Setup or NSIS) for a Python/PyQt6 application, or when setting up Authenticode signing / SmartScreen reputation work.
+description: Produce a Windows build of a PyQt6 application - onedir payload, an NSIS installer built with the layout that measured clean on VirusTotal, PE version metadata, and the correct Authenticode signing order including nested binaries and RFC 3161 timestamping.
+whenToUse: Use when creating or fixing a Windows build or installer for a Python/PyQt6 application, when a Windows .exe is being flagged by antivirus engines, or when setting up Authenticode signing / SmartScreen reputation work.
 ---
 
 # Windows packaging and signing for a PyQt6 application
@@ -26,6 +26,15 @@ Workflow shape and the build/test split: `pyqt6-packaging-decisions` §6. The re
 jobs: `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
 (`build_windows`, `test_windows`).
 
+**Why this Skill copies Lucio's NSIS script instead of inventing one.** A
+controlled test on 2026-10-31 built four installers from one identical Nuitka
+payload and changed only the wrapper: the three built with a minimal script drew
+a heuristic detection from one engine, and the one built with Lucio's layout was
+clean. Installer size and compression did not move the verdict; the shape of the
+installer did. The record is
+`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`,
+and section 4 lists what to copy.
+
 ## 1. Bundle: onedir
 
 Ship `onedir`, not `onefile`. All three mature frozen projects do, and onefile
@@ -41,6 +50,12 @@ coll = COLLECT(exe, a.binaries, a.datas, name='MyApp', upx=False)
 **`upx=False` everywhere.** UPX is discouraged in all modern guidance and no
 project here measures any benefit. Disabling it is free; leave it disabled
 consistently across every build you compare.
+
+**Bundle size is not a constraint here.** A scanner scores the shape of the
+binary, not its weight. In the controlled test of section 4 the largest installer
+of the four - 43.8 MB, carrying a 92 MB payload - was the only clean one. Do not
+drop assets, translations or features to chase a smaller download; it does not
+address the problem.
 
 ### If you freeze with Nuitka instead
 
@@ -193,8 +208,12 @@ the executable, the installer and the release tag look like a repackaged binary.
 
 ## 3. Installer: Inno Setup
 
-Inno Setup is the demonstrated installer path (dikte, pyzo). A per-user
-installer avoids requiring administrator rights:
+Inno Setup is a demonstrated installer path (dikte, pyzo): both publish working
+installers, and neither publishes a VirusTotal number for one. Treat it as
+"known to work", not as "known to scan clean". The path that was measured clean
+is NSIS with the layout in section 4.
+
+A per-user installer avoids requiring administrator rights:
 
 ```ini
 [Setup]
@@ -226,16 +245,50 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; Flags: unchecked
 Compile with `iscc packaging\MyApp.iss`. Keep the `AppId` GUID stable forever —
 changing it makes upgrades install side by side instead of replacing.
 
-If you need a licence page, a components page and per-language UI without writing
-that plumbing yourself, NSIS is the other demonstrated path and it is covered in
-section 4. MSI/MSIX exist but no project here produces one.
+If you need a licence page, a components page and per-language UI, NSIS gives you
+that with less code — and it is the path that was measured clean. Section 4.
+MSI/MSIX exist but no project here produces one.
 
 ## 4. Installer: NSIS
 
-Demonstrated by Lucio IVA Calculator, whose installer is published and was
-measured: `LucioIVACalculator-0.1.1-nuitka-setup.exe`, 30,666,770 bytes, SHA-256
+Demonstrated and measured clean by Lucio IVA Calculator, whose installer is
+published: `LucioIVACalculator-0.1.1-nuitka-setup.exe`, 30,666,770 bytes, SHA-256
 `4d8cda49…f55c12`. Its `.nsi` is the reference
 (`my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`).
+
+### The layout is the part that was measured
+
+The directives below make the installer *correct*. They are not what made it
+*clean*. A controlled test on 2026-10-31 wrapped one identical Nuitka payload in
+four installers and changed nothing but the wrapper:
+
+| makensis | Script | VirusTotal |
+|---|---|---|
+| 3.13.0 | minimal: MUI2, 5 pages, 1 section, no bitmaps | 1/70 `high.ml.score` |
+| 3.13.0 | same, ZLIB | 1/69 `high.ml.score` |
+| 3.10.0 | same, ZLIB | 1/69 `moderate.ml.score` |
+| 3.12.0 | Lucio's layout: MUI v1, 6 pages, 4 sections, bitmaps, `XPStyle` | **0/67** |
+
+The portable ZIP of that same payload was clean in every round, and the
+compressor change moved the file by 8.8 MB without moving the verdict. So copy
+the shape, not only the settings:
+
+- **`!include "MUI.nsh"`**, the MUI v1 macros, not `MUI2.nsh`.
+- **Six pages**: welcome, licence, components, directory, instfiles, finish. The
+  components page is what makes the shortcut sections optional.
+- **Four sections**: main (`SectionIn RO`), start menu, desktop, website - plus
+  `Section Uninstall`.
+- **Header and welcome bitmaps**: `MUI_HEADERIMAGE`, `MUI_HEADERIMAGE_RIGHT`,
+  `MUI_HEADERIMAGE_BITMAP` and `MUI_WELCOMEFINISHPAGE_BITMAP`, pointing at real
+  files. 24-bit BMP3, 164x314 for the welcome page and 150x57 for the header.
+- **`XPStyle on`**, plus `Icon` and `UninstallIcon`.
+- **The full `VIFileVersion` / `VIProductVersion` / `VIAddVersionKey` block.**
+
+A minimal five-page, one-section installer with no bitmaps compiles, installs and
+runs - and it is the one that was flagged. What the test does **not** establish is
+which element did the work: the stub version and the layout changed together in
+the clean round. Build the whole shape rather than picking one item from the
+list.
 
 ### Per-user install: three places must agree
 
@@ -347,11 +400,29 @@ the raw one. Note the limitation — only the two languages are handled, so any
 other locale keeps whatever `$LANGUAGE` was left at. That is acceptable for two
 languages and wrong for twelve.
 
-### Compressor
+### Compressor: ZLIB, and it is not the lever
 
-`SetCompressor ZLIB` (line 22) is chosen for compile speed. The 30 MB installer
-would be noticeably smaller with `LZMA`, which is the default in most NSIS
-templates. This is a trade, not a defect, but it is worth an explicit decision.
+`SetCompressor ZLIB` (line 22). Keep it, because it is what the reference used,
+but do not expect a compressor change to fix a detection: the same payload built
+with solid `LZMA` and with `ZLIB` scored identically, and the difference was
+8.8 MB of installer size and nothing else. Installer size is not what a scanner
+scores.
+
+### Pin the compiler version
+
+The stub that `makensis` embeds is part of the binary a scanner sees, and its
+version is not neutral. Measured on one payload: 3.13.0 produced
+`Malicious.high.ml.score`, 3.10.0 the same installer at `moderate`, and 3.12.0
+with this script's layout was clean. `choco install nsis -y` installs whatever
+is current, so pin it and print the version in the CI log:
+
+```powershell
+choco install nsis --version=3.12.0 -y --no-progress
+& "C:\Program Files (x86)\NSIS\makensis.exe" /VERSION
+```
+
+Prefer a release that has been the package default for a while over the newest
+one. This is a measured difference, not a guarantee.
 
 ### Test the installer, not just the compile
 
@@ -467,10 +538,16 @@ facts are read from the published bytes, not from the project's prose.
 - **That the NSIS uninstaller removes everything.** Lucio's `Section Uninstall`
   looks complete and was read, but no CI job runs an uninstall and checks the
   result. Verify it by hand on a VM.
-- **The `makensis /D` recipe in section 4.** It is a template, not a copy; it has
-  not been compiled.
-- **Whether `LZMA` works for this payload.** It is the usual choice and it is not
-  used here; no measurement of size or compile time exists for this project.
+- **The `makensis /D` recipe in section 4.** It has been compiled and run since
+  this audit, in a port of Lucio's script to another application, but not in the
+  exact template form printed here.
+- **Which element of the installer layout did the work.** The stub version and
+  the script shape changed together in the round that came back clean. The
+  experiment that would separate them is written down in
+  `my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`
+  and has not been run.
+- **That a clean result survives a rebuild or a new NSIS release.** Scores are
+  point-in-time. Re-scan before publishing a claim.
 - **The `.onInit` language fallback for locales other than English and Spanish.**
   Untested.
 
@@ -486,6 +563,10 @@ mutation. Submit a vendor report instead.
 - [ ] PE version metadata present and consistent with the installer and the tag.
 - [ ] Installer PE metadata present too — Inno writes it from `[Setup]`, NSIS from
       `VIFileVersion`/`VIAddVersionKey`, and neither inherits the frozen `.exe`'s.
+- [ ] The installer uses the reference layout (6 pages, 4 sections, header and
+      welcome bitmaps, `XPStyle on`), not a minimal script.
+- [ ] `makensis` is pinned to a release that has been the package default for a
+      while, and its version is printed in the CI log.
 - [ ] Installer compiles, installs, launches, and uninstalls cleanly on a clean
       Windows VM with no Python or Qt installed.
 - [ ] CI installs silently (`/S` for NSIS, `/SILENT` for Inno) and then runs the
@@ -496,6 +577,9 @@ mutation. Submit a vendor report instead.
       (`/DVERSION=`, `iscc /D…`), not by rewriting the script.
 - [ ] Every nested binary signed, then the installer, with SHA-256 and RFC 3161.
 - [ ] Published SHA-256 matches the **signed** bytes.
+- [ ] The **installer** was scanned on VirusTotal and its hash recorded. A clean
+      portable ZIP says nothing about the installer, and the payload is not what
+      is being scored.
 - [ ] Source URL published for false-positive reports.
 
 ## Related

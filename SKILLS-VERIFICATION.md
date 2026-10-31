@@ -32,7 +32,7 @@ would not have made the result more trustworthy — see section 5.
 | **`.deb`** (Ubuntu, Debian) | none — native `python3-pyqt6` | `pyqt6-deb-packaging` §1-§6 | **Covered and validated on a real package** (TBO's) — layout, `control`, `rules` with the `dh_auto_test` trap, `changelog`, the CI failures that actually happened, post-build audit |
 | **macOS portable `.zip`** | PyInstaller `-D` + `BUNDLE` | `pyqt6-macos-signing-notarization` §1 | **Covered after this audit** — `BUNDLE` recipe, `ditto -c -k --sequesterRsrc`, arch naming, and the unsigned/Gatekeeper path. Signing and notarization are documented but not exercised (no certificate) |
 | **Windows portable `.zip`** | **Nuitka `--standalone`** | `pyqt6-windows-installer-signing` §1 | **Covered after this audit** — Nuitka invocation with the traps that break builds, plus the archive rules: one top-level folder, forward slashes, shape post-conditions |
-| **Windows `setup.exe`** (NSIS) | **Nuitka `--standalone`** + `makensis` | `pyqt6-windows-installer-signing` §1, §4 | **Covered and measured** — the published Lucio installer's metadata was parsed from the binary; per-user scope, MUI, bilingual UI, `/D` version injection, silent-install test in CI |
+| **Windows `setup.exe`** (NSIS) | **Nuitka `--standalone`** + `makensis` | `pyqt6-windows-installer-signing` §1, §4 | **Covered and measured** — the published Lucio installer's metadata was parsed from the binary; per-user scope, MUI, bilingual UI, `/D` version injection, silent-install test in CI; and since 2026-10-31 the layout that measured clean (6 pages, 4 sections, bitmaps, `XPStyle`) with a pinned compiler version |
 | Checksums, pinning, provenance, artifact tests | — | `pyqt6-release-integrity` | **Covered** |
 | Which tool for which platform | — | `pyqt6-packaging-decisions` | **Covered after this audit** — a route table for exactly these five artifacts |
 
@@ -53,6 +53,8 @@ MSI/MSIX, and code signing as an *executed* procedure.
 | 8 | macos §1 | No step that produces the `.zip`, and no guidance for shipping unsigned — the actual situation for anyone without a paid Apple account | `ditto` recipe, "do not wrap a zip in a zip", arch naming, and an unsigned-release subsection with the Gatekeeper consequence and the right-click → Open workaround |
 | 9 | deb §2 | The `Depends` example gave only `python3-pyqt6` | The PyQt6 Debian module split, measured on Debian 13 — see section 4 |
 | 10 | decisions | The "where to go next" table was a list of questions, not a route to the five artifacts; the evidence path predated `my-PyQt6-Apps/` | A five-row route table with freezer, skill and section per artifact |
+| 11 | windows §3, §4 | Inno Setup was presented as *the* demonstrated installer path and the compressor as a cosmetic trade. Neither reflects what decides a verdict: the installer's shape | §4 now leads with the measured layout (6 pages, 4 sections, header and welcome bitmaps, `XPStyle`) and a pinned `makensis`; §3 marks Inno as working but unmeasured; the compressor section says plainly that size and compression are not levers |
+| 12 | windows, decisions | Neither Skill mentioned the installer as a variable separate from the freezer, although a controlled measurement of exactly that existed | The 2026-10-31 wrapper measurement is now in decisions §4 and windows §4, with the record in `my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md` |
 
 ### Two corrections this audit made against itself
 
@@ -91,6 +93,15 @@ Parsed from the published `LucioIVACalculator-0.1.1-nuitka-setup.exe`
 - Authenticode security directory: offset 0, size 0 — **unsigned**, in the
   installer *and* in the portable executable inside the ZIP.
 
+And from the 2026-10-31 wrapper experiment
+(`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`):
+four installers built from one Nuitka payload, only the wrapper changed, and the
+only clean one was built with the reference layout and `makensis` 3.12.0. Its
+compile statistics match the Lucio installer exactly — 6 pages, 4 sections, an
+8,288-byte section table, 280 uninstall instructions and a 39,936-byte compressed
+header — which is what "the same layout" means in practice, beyond copying the
+directives.
+
 ## 4. Does it generalise beyond these five projects?
 
 The Skills are written against placeholders (`MyApp`, `myapp`, `org.example.myapp`)
@@ -128,8 +139,13 @@ Stated plainly, because a Skill is followed confidently:
   a Developer ID or an Authenticode certificate, so `notarytool`, `stapler` and
   `signtool` sequences are transcribed from pyzo, CARA and napari rather than run.
 - **The NSIS uninstaller is read, not run.** No CI job uninstalls and checks.
-- **`makensis /D` and the `--include-data-dir` fix are templates.** They have not
-  been compiled here.
+- **`--include-data-dir` remains a template.** It has not been compiled here.
+  `makensis /D` has since been compiled and run in a port of Lucio's script to
+  another application, but not in the exact form printed in the Skill.
+- **Which element of the installer layout did the work.** The compiler version
+  and the script shape changed together in the round that came back clean. The
+  two builds that would separate them are listed in the experiment record and
+  have not been run.
 - **The pinned `appimagetool` digest is a fact about version 1.9.1.** It will age,
   and the Skill says to check it rather than trust it.
 - **`linuxdeploy` + `linuxdeploy-plugin-qt`** is mentioned as an alternative and
@@ -160,6 +176,11 @@ done
 # 4. the Lucio installer still carries the metadata the Skill claims
 #    (download LucioIVACalculator-0.1.1-nuitka-setup.exe from the v0.1.1 release
 #     and parse its RT_VERSION resource; expectations are in section 3)
+
+# 5. the wrapper record exists and is cited by the Skills that rely on it
+test -f my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md \
+  || echo "MISSING: INSTALLER_WRAPPER_EXPERIMENT.md"
+grep -rl "INSTALLER_WRAPPER_EXPERIMENT" .dsh/skills SKILLS.md | sort
 ```
 
 Re-run this whenever a measurement is repeated, a template is executed, or an

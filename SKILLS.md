@@ -10,7 +10,7 @@ this workspace; each is a directory containing a `SKILL.md`.
 | `pyqt6-deb-packaging` | Building or fixing a `.deb`. |
 | `pyqt6-appimage-packaging` | Building or fixing an AppImage. |
 | `pyqt6-macos-signing-notarization` | Building, signing, notarizing or stapling a macOS `.app`. |
-| `pyqt6-windows-installer-signing` | Building a Windows installer (Inno Setup or NSIS), or setting up Authenticode signing. |
+| `pyqt6-windows-installer-signing` | Building a Windows installer — NSIS with the layout that measured clean on VirusTotal — or setting up Authenticode signing. |
 | `pyqt6-release-integrity` | Setting up checksums, lockfiles, provenance and CI hardening. |
 
 ## The rule these skills follow
@@ -127,9 +127,11 @@ section E, and the Status section of the root `README.md`).
 
 Regenerate or extend them when:
 
-- the antivirus measurement is repeated across several releases and captures
-  detection counts and engine names — only then is there something a Skill can
-  state as a rule;
+- the installer-wrapper measurement is repeated on a second application, or the
+  two builds listed as open questions in
+  `my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md` are
+  run to separate the stub version from the script shape — only then can a Skill
+  say which element did the work, instead of "build the whole shape";
 - the `[TEMPLATE — MUST BE TESTED]` blocks in the tutorials have actually been
   executed;
 - a Skill's procedure fails in practice — that is a bug in the Skill, and the

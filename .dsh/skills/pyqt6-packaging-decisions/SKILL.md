@@ -105,9 +105,10 @@ experience here comes from TBO — see the `pyqt6-deb-packaging` skill.
 This is the area where the honest answer changed in 2026-10, so state it
 precisely instead of repeating the folklore in either direction.
 
-**One controlled measurement exists, plus one reported pair.** The controlled one
-is TBO: the same application, version and PE metadata, unsigned and with UPX
-disabled in every arm, built four ways.
+**One controlled freezer measurement exists, plus one reported pair, plus a
+controlled measurement of the installer that wraps the payload.** The freezer
+measurement is TBO: the same application, version and PE metadata, unsigned and
+with UPX disabled in every arm, built four ways.
 
 | Arm | VirusTotal |
 |---|---|
@@ -135,13 +136,44 @@ What the four arms establish, which is more than the headline:
   anyone down that path expecting a fix.
 - What every PyInstaller build shares and the developer does not control is the
   **embedded CPython runtime and PyInstaller's archive format**. That is where
-  the remaining difference plausibly lives, and it is also why "switch freezer"
-  is the only lever available.
+  the remaining difference plausibly lives, and it is why the freezer was the
+  first lever to try. It is not the only one - see the wrapper measurement below.
 - **The second data point.** Lucio IVA Calculator, 2026-06, recorded `0/68` for
   its NSIS installer and `0/65` for its portable ZIP after moving from
   PyInstaller to Nuitka for the same reason. Self-reported, no scan artifact
   preserved; the hashes are recoverable from its release and are recorded in
   `my-PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6.
+
+### The wrapper measurement: the lever that is not the freezer
+
+On 2026-10-31 a second application, `ksnip-pyqt6`, was built four times from **one
+identical Nuitka payload** - 662 files, 92 MB - and only the NSIS installer
+changed:
+
+| makensis | Script | Installer | VirusTotal |
+|---|---|---|---|
+| 3.13.0 | minimal: MUI2, 5 pages, 1 section, no bitmaps, solid LZMA | 34.8 MB | 1/70 `high.ml.score` |
+| 3.13.0 | same, ZLIB | 43.6 MB | 1/69 `high.ml.score` |
+| 3.10.0 | same, ZLIB | 43.6 MB | 1/69 `moderate.ml.score` |
+| 3.12.0 | Lucio's layout: MUI v1, 6 pages, 4 sections, bitmaps, `XPStyle` | 43.8 MB | **0/67** |
+
+The portable ZIP of that payload was clean in every round.
+
+Three things follow, and they are the most actionable in this Skill:
+
+1. **The payload is not what is scored.** The same 92 MB sits inside the three
+   flagged installers and inside the clean one.
+2. **The wrapper is.** One payload, three different verdicts from the same engine,
+   depending only on how it was wrapped. The freezer was not a variable here at
+   all - all four builds are Nuitka.
+3. **Size and compression are not levers.** LZMA to ZLIB moved the installer by
+   8.8 MB and changed nothing; the largest installer was the only clean one.
+
+What the experiment does not establish: which part of the wrapper did the work.
+The stub version (3.10 to 3.12) and the script layout changed together in the
+clean round. Record and open questions:
+`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`.
+The procedure that follows from it is `pyqt6-windows-installer-signing` §4.
 
 What it does **not** support, and what you must not tell a user:
 
@@ -283,7 +315,7 @@ For the common five-artifact release, this is the route:
 | `.deb` (Ubuntu, Debian) | debhelper + pybuild, native `python3-pyqt6` | `pyqt6-deb-packaging` |
 | macOS portable `.zip` containing the `.app` | PyInstaller `-D` + `ditto -c -k --sequesterRsrc` | `pyqt6-macos-signing-notarization` §1 (bundle, zip, unsigned path) |
 | Windows portable `.zip`, unsigned | **Nuitka `--standalone`** + `make_portable_zip.py`-style archive | `pyqt6-windows-installer-signing` §1 (Nuitka recipe and archive rules) |
-| Windows `setup.exe` (NSIS or Inno) | same Nuitka payload + `makensis` / `iscc` | `pyqt6-windows-installer-signing` §1 for the payload, §3 or §4 for the installer |
+| Windows `setup.exe` | same Nuitka payload + `makensis` | `pyqt6-windows-installer-signing` §1 for the payload, **§4 for the installer** — the layout measured clean. §3 (Inno Setup) is a working alternative that has never been measured |
 | Checksums, pinning, provenance, artifact tests | — | `pyqt6-release-integrity` |
 
 Two notes that apply to all five:
