@@ -105,7 +105,7 @@ program; otherwise the user scope is enough and works everywhere.
 **Caveat when copying:** the Skill bodies cite evidence with paths relative to
 *this* repository root, for example
 `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/build-appimage.sh` or
-`my-PyQt6-Apps/TBO-resultados/_evidence/debian/`. Those references only resolve
+`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/TBO-results/_evidence/debian/`. Those references only resolve
 in this repository. A bundle install leaves them dangling — the procedures
 themselves do not depend on them, but you lose the ability to audit a claim
 without going back to this repository. That is the cost of distributing the
@@ -129,7 +129,7 @@ Regenerate or extend them when:
 
 - the installer-wrapper measurement is repeated on a second application, or the
   two builds listed as open questions in
-  `my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md` are
+  `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md` are
   run to separate the stub version from the script shape — only then can a Skill
   say which element did the work, instead of "build the whole shape";
 - the `[TEMPLATE — MUST BE TESTED]` blocks in the tutorials have actually been

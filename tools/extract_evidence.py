@@ -199,7 +199,7 @@ PROJECTS: list[dict] = [
     {
         "key": "lucio-iva-calculator",
         "submodule": "my-PyQt6-Apps/lucio-iva-calculator",
-        "results": "my-PyQt6-Apps/lucio-iva-calculator-resultados",
+        "results": "PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results",
         "label": "Lucio IVA Calculator - own PyQt6 app (Nuitka on Windows, PyInstaller elsewhere)",
         "note": "One of the owner's own applications, pinned as a sub-module. The only project in the set whose Windows freezer was changed from PyInstaller to Nuitka on the strength of antivirus results, and the only one that verifies its Linux onefile archive's contents before publishing. Recorded VirusTotal figures are 0/68 for the installer and 0/65 for the portable ZIP at 0.1.1; PACKAGING_STUDY.md section 6 states exactly what that record does and does not establish.",
         "files": [
@@ -225,7 +225,7 @@ PROJECTS: list[dict] = [
     {
         "key": "TBO",
         "submodule": "my-PyQt6-Apps/TBO",
-        "results": "my-PyQt6-Apps/TBO-resultados",
+        "results": "PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/TBO-results",
         "label": "TBO - own PyQt6 app (Nuitka on Windows, PyInstaller on macOS/Linux)",
         "note": "Not a case study in the same sense: this is the owner's own application, pinned as a sub-module like the rest. It is the only source of validated .deb evidence and the only project here with a Flatpak manifest and a controlled freezer measurement. The fix log lives in 03-Promt-MAESTRO-resultado/TBO-SOLUCIONES/SOLUCIONES-TBO.md; the packaging study is the one in this folder.",
         "files": [

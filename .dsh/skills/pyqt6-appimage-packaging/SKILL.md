@@ -13,7 +13,7 @@ actually observed in this research. Read it alongside this skill.
 **Where this runs:** in GitHub Actions, as a job on `ubuntu-22.04` — the glibc
 floor below is the reason for that runner, not a preference. Workflow shape:
 `pyqt6-packaging-decisions` §6. The real job:
-`my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml`
+`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/TBO-results/_evidence/.github/workflows/build.yml`
 (`build-appimage`), or `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/build-appimage.sh`
 for the script it calls.
 
@@ -145,7 +145,7 @@ Also: if you download a helper at build time, **pin it and verify its SHA-256**
   grouping.
 - Ship an AppStream metainfo file (`<id>.appdata.xml`) if you want to appear in
   software centres. TBO has one; see
-  `my-PyQt6-Apps/TBO-resultados/_evidence/packaging/org.tbo.TBO.appdata.xml`.
+  `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/TBO-results/_evidence/packaging/org.tbo.TBO.appdata.xml`.
 
 ## 7. Verify before publishing
 

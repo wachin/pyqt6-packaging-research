@@ -54,7 +54,7 @@ MSI/MSIX, and code signing as an *executed* procedure.
 | 9 | deb §2 | The `Depends` example gave only `python3-pyqt6` | The PyQt6 Debian module split, measured on Debian 13 — see section 4 |
 | 10 | decisions | The "where to go next" table was a list of questions, not a route to the five artifacts; the evidence path predated `my-PyQt6-Apps/` | A five-row route table with freezer, skill and section per artifact |
 | 11 | windows §3, §4 | Inno Setup was presented as *the* demonstrated installer path and the compressor as a cosmetic trade. Neither reflects what decides a verdict: the installer's shape | §4 now leads with the measured layout (6 pages, 4 sections, header and welcome bitmaps, `XPStyle`) and a pinned `makensis`; §3 marks Inno as working but unmeasured; the compressor section says plainly that size and compression are not levers |
-| 12 | windows, decisions | Neither Skill mentioned the installer as a variable separate from the freezer, although a controlled measurement of exactly that existed | The 2026-10-31 wrapper measurement is now in decisions §4 and windows §4, with the record in `my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md` |
+| 12 | windows, decisions | Neither Skill mentioned the installer as a variable separate from the freezer, although a controlled measurement of exactly that existed | The 2026-10-31 wrapper measurement is now in decisions §4 and windows §4, with the record in `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md` |
 
 ### Two corrections this audit made against itself
 
@@ -94,7 +94,7 @@ Parsed from the published `LucioIVACalculator-0.1.1-nuitka-setup.exe`
   installer *and* in the portable executable inside the ZIP.
 
 And from the 2026-10-31 wrapper experiment
-(`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`):
+(`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md`):
 four installers built from one Nuitka payload, only the wrapper changed, and the
 only clean one was built with the reference layout and `makensis` 3.12.0. Its
 compile statistics match the Lucio installer exactly — 6 pages, 4 sections, an
@@ -178,7 +178,7 @@ done
 #     and parse its RT_VERSION resource; expectations are in section 3)
 
 # 5. the wrapper record exists and is cited by the Skills that rely on it
-test -f my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md \
+test -f PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md \
   || echo "MISSING: INSTALLER_WRAPPER_EXPERIMENT.md"
 grep -rl "INSTALLER_WRAPPER_EXPERIMENT" .dsh/skills SKILLS.md | sort
 ```

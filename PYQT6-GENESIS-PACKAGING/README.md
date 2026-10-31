@@ -89,17 +89,16 @@ here do. Do not promise anyone a clean scan, do not generalise to other
 applications, and never respond to a false positive with obfuscation, packing or
 binary mutation — report it to the vendor.
 
-## One copy, two groups
+## One copy, nothing to reconcile
 
-The six folders under `external-PyQt6-Apps/` exist only here. Their original
-Spanish-named source folders were removed so the repository would not carry the
-same bytes twice, and the English-named copy is now the only one. There is nothing
-to reconcile and nothing to regenerate them from.
+All eight folders here exist only here. The original Spanish-named source
+folders were removed so the repository would not carry the same bytes twice, and
+the English-named copy is now the only one. There is nothing to reconcile and
+nothing to regenerate them from.
 
-The two folders under `wachin-PyQt6-Apps/` are still maintained as a source
-plus a mirror: the source lives at the repository root, at
-`my-PyQt6-Apps/<app>-resultados/`, and `tools/check_genesis_pack.py` checks
-that this copy matches it.
+`tools/check_genesis_pack.py` still runs, but it no longer compares anything:
+what it checks now is that no study sends a reader to a directory name that does
+not exist.
 
 If you received this folder on its own, you have everything needed to build: the
 studies are self-contained and the evidence is beside them.

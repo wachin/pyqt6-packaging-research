@@ -48,9 +48,8 @@
 # build output or a venv inside them is `ignore = dirty` in .gitmodules, which
 # all eight sub-modules now carry.
 #
-# Their studies and evidence packs live next to them, at
-# `my-PyQt6-Apps/<app>-resultados/`, and THOSE are tracked. That is the reason
-# this file has to stay anchored: while they were independent clones a bare
-# `PyQt6-Apps/` pattern was added here, and it silently swallowed everything
-# under the directory — including the two `*-resultados/` folders that must be
-# committed. See AGENTS.md section 5.
+# Their studies and evidence packs are tracked, and they now live under
+# `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`, not beside the submodules. This
+# file still has to stay anchored: while the two trees were independent clones a
+# bare `PyQt6-Apps/` pattern was added here, and it silently swallowed everything
+# under the directory. See AGENTS.md section 5.

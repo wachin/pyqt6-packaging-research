@@ -299,7 +299,7 @@ all six locations, and that no permission rule denies it.
 | `03-Promt-MAESTRO-resultado/` | The consolidated result: `MASTER_PYQT6_PACKAGING_GUIDE.md`, `PYQT6_MASTER_PACKAGING_TUTORIAL.md`, and `PACKAGING_EVIDENCE_MATRIX.md` with a confidence label on every claim. |
 | `01-GENESIS/`, `02-Promt-MAESTRO/` | Provenance: where the research started and the master prompt used for the second-level analysis. Not needed to use the results. |
 | `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/` | The six external case-study packs, and the only copy of them. |
-| `my-PyQt6-Apps/<app>-resultados/` | The two owner applications' packs, maintained as a source plus a mirror under `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`. |
+| `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/` | The two owner applications' packs, and the only copy of them. |
 | `.dsh/skills/` | The six Skills, source of truth for the release bundle. |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit, with the VirusTotal screenshots. |
 | `tools/` | `extract_evidence.py` (regenerates the packs), `build_skills_bundle.py`, `check_genesis_pack.py`. |
@@ -368,7 +368,7 @@ before you go looking for a new freezer. Never answer a false positive with
 obfuscation, packing or binary mutation: report it to the vendor. Details and the
 per-engine lists are in `03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md` §B.1;
 the installer experiment is in
-`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`.
+`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md`.
 
 ## For AI agents working in this repository
 

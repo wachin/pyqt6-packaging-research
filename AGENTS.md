@@ -114,10 +114,11 @@ applies to them unchanged.
 
 Two things are still different about them:
 
-1. **Their studies live beside them**, at `my-PyQt6-Apps/<app>-resultados/`. Those
-   directories are ordinary tracked content of this repository: the submodule is a
-   gitlink, the study next to it is normal files. Editing a study is editing this
-   repository; editing the application is editing another one.
+1. **Their studies live under `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`**,
+   next to the other studies rather than beside the submodules. Those directories
+   are ordinary tracked content of this repository: the submodule is a gitlink,
+   the study is normal files. Editing a study is editing this repository; editing
+   the application is editing another one.
 2. **The owner does change them**, so "do not commit inside them" has a practical
    exception that belongs to the human, not to an agent working on the research.
    If you are asked to change one of the two applications, do it in its own
@@ -210,7 +211,7 @@ idea that `onedir` avoids detection. It is **n = 1**. Cite
 NSIS installer and `0/65` for the portable ZIP, recorded after the project moved
 its Windows build from PyInstaller to Nuitka for that reason. No scan artifact was
 preserved, but the two files are still in its `v0.1.1` release, so
-`my-PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6 records their
+`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/PACKAGING_STUDY.md` §6 records their
 SHA-256 and the claim can be re-queried. Confidence: **MEDIUM**, self-reported.
 
 Never generalise either into "PyInstaller causes detections" or "Nuitka avoids
@@ -287,7 +288,7 @@ at all.
 | `SKILLS-VERIFICATION.md` | The audit of those Skills against the five common release artifacts, what it fixed, and what is still not verified. |
 | `EVIDENCE_INDEX.md` | Every evidence pack with its pinned commit and licence. |
 | `PYQT6-GENESIS-PACKAGING/` | The studies in one folder with English directory names, written to be pointed at by a person or an agent. Two groups: `wachin-PyQt6-Apps/` (the owner's own two, and the Windows reference) and `external-PyQt6-Apps/` (six studied for technique). For the six external packs this is the **only** copy: edit it there, and note that no source exists to regenerate them from. |
-| `my-PyQt6-Apps/<app>-resultados/` | The two owner applications' packs, maintained as a source plus a mirror under `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`. Edit the source, then regenerate its copy. `tools/check_genesis_pack.py` enforces parity between the two, including the two permitted path rewrites. |
+| `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/` | The two owner applications' packs, and the only copy of them. Edit them there. |
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
 | `tools/build_skills_bundle.py` | Builds the installable Skills tarball; deterministic, and it refuses a bundle a harness could not load. |

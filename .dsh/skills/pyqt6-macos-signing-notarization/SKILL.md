@@ -18,7 +18,7 @@ auditable). Reference files, pinned to commits:
 slice; an arm64 runner builds a different binary). Notarization in particular only
 works on a runner, because it needs `notarytool` plus a certificate in a secret —
 that is §5. Workflow shape: `pyqt6-packaging-decisions` §6. The real jobs:
-`my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml`
+`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/TBO-results/_evidence/.github/workflows/build.yml`
 (`build-macos`) and Lucio's `build_macos` / `test_macos`.
 
 ## 1. Build the `.app`

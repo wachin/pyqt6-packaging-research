@@ -1,31 +1,28 @@
 #!/usr/bin/env python3
-"""Check that the reader-facing copy in PYQT6-GENESIS-PACKAGING/ matches its sources.
+"""
+Check PYQT6-GENESIS-PACKAGING/ for stale directory names and, if any, drift.
 
-`PYQT6-GENESIS-PACKAGING/` holds the evidence packs with the directory names
-translated from Spanish to English. Where a pack still has a source copy, the two
-drift, and a drift here is silent: a reader follows a citation, finds nothing,
-and does not know whether the research is wrong or the copy is stale.
+`PYQT6-GENESIS-PACKAGING/` holds every evidence pack with the directory names
+translated from Spanish to English. The Spanish-named source folders were
+removed, so for all eight packs this is now the only copy and there is nothing
+to compare their bytes against.
 
-So the copy is not maintained by hand. This script recomputes what every file
-*should* contain from its source pack and compares:
+What remains checkable is the failure the split used to cause: a study that sends
+a reader to a directory name which no longer exists. That is silent - the reader
+follows the citation, finds nothing, and cannot tell whether the research is
+wrong or the path is stale - so it is checked on every run.
 
-  * ``<project>-resultados/``            -> ``PYQT6-GENESIS-PACKAGING/<project>-results/``
-  * ``my-PyQt6-Apps/<app>-resultados/``  -> ``PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/<app>-results/``
+If a source pack ever reappears at `<project>-resultados/` or
+`my-PyQt6-Apps/<app>-resultados/`, the script goes back to comparing that pair
+byte for byte, applying the two documented rewrites:
 
-Only packs that still have a source directory are compared byte for byte, which
-today means the two owner applications under ``my-PyQt6-Apps/``. The six
-case-study packs exist only in the bundle; for them this script still checks for
-stale directory names, but there is no source to compare their bytes against.
+  * `<project>-resultados/`            -> `PYQT6-GENESIS-PACKAGING/<project>-results/`
+  * `my-PyQt6-Apps/<app>-resultados/`  -> `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/<app>-results/`
 
 Two transformations are expected inside Markdown files, and only those two: a
-references to a results directory becomes the translated name, and the owner's
-application directory becomes ``wachin-PyQt6-Apps/``. Everything else — including
-the ``_evidence/`` bytes — must be identical.
-
-    python3 tools/check_genesis_pack.py           # verify
-    python3 tools/check_genesis_pack.py --list    # also list every pair checked
-
-Exit codes: 0 when the copy is in sync, 1 otherwise.
+reference to a results directory becomes the translated name, and the owner's
+application directory becomes `wachin-PyQt6-Apps/`. Everything else - including
+the `_evidence/` bytes - must be identical.
 """
 
 from __future__ import annotations
@@ -134,7 +131,13 @@ def check(list_pairs: bool) -> int:
         )
         return 1
 
-    print(f"in sync: {checked} files compared across {len(pairs())} packs")
+    if checked:
+        print(f"in sync: {checked} files compared across {len(pairs())} packs")
+    else:
+        print(
+            "no source packs remain: every pack is single-copy, so only stale "
+            "directory names were checked"
+        )
     return 0
 
 

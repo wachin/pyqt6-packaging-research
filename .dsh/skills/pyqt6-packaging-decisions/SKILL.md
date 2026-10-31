@@ -142,7 +142,7 @@ What the four arms establish, which is more than the headline:
   its NSIS installer and `0/65` for its portable ZIP after moving from
   PyInstaller to Nuitka for the same reason. Self-reported, no scan artifact
   preserved; the hashes are recoverable from its release and are recorded in
-  `my-PyQt6-Apps/lucio-iva-calculator-resultados/PACKAGING_STUDY.md` §6.
+  `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/PACKAGING_STUDY.md` §6.
 
 ### The wrapper measurement: the lever that is not the freezer
 
@@ -172,7 +172,7 @@ Three things follow, and they are the most actionable in this Skill:
 What the experiment does not establish: which part of the wrapper did the work.
 The stub version (3.10 to 3.12) and the script layout changed together in the
 clean round. Record and open questions:
-`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`.
+`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md`.
 The procedure that follows from it is `pyqt6-windows-installer-signing` §4.
 
 What it does **not** support, and what you must not tell a user:
@@ -298,8 +298,8 @@ What decides whether that works, learned from the failures:
 
 Read the real thing rather than the sketch above:
 
-- `my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml`
-- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
+- `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/TBO-results/_evidence/.github/workflows/build.yml`
+- `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/.github/workflows/build.yml`
   (the one with build/test pairs and the release job)
 
 Pinning, provenance and artifact checksums are `pyqt6-release-integrity`; this
@@ -329,6 +329,6 @@ Two notes that apply to all five:
 Full reasoning and confidence labels:
 `03-Promt-MAESTRO-resultado/MASTER_PYQT6_PACKAGING_GUIDE.md` and
 `03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md`.
-Real packaging files, pinned to a commit: `<project>-resultados/_evidence/` and
-`my-PyQt6-Apps/<app>-resultados/_evidence/`. What each Skill does and does not
+Real packaging files, pinned to a commit:
+`PYQT6-GENESIS-PACKAGING/*-results/_evidence/`. What each Skill does and does not
 cover is audited in `SKILLS-VERIFICATION.md`.

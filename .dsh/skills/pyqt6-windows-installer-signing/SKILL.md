@@ -14,16 +14,16 @@ files, pinned to commits:
 - `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/dikte.iss`
 - `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/dikte-results/_evidence/packaging/build-windows.ps1`
 - `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/pyzo-results/_evidence/freeze/installerBuilderScript.iss`
-- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`
-- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/build_windows.ps1`
-- `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
+- `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/build/LucioIVACalculator.nsi`
+- `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/build/build_windows.ps1`
+- `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/.github/workflows/build.yml`
 - `PYQT6-GENESIS-PACKAGING/external-PyQt6-Apps/napari-packaging-results/_evidence/.github/workflows/make_bundle_conda.yml`
 
 **Where this runs:** in GitHub Actions, as jobs on `windows-2025`. Nothing in this
 Skill should be done on a Linux or macOS machine — Nuitka, MSVC and the installer
 compiler all need Windows, and cross-building them is not a thing that works.
 Workflow shape and the build/test split: `pyqt6-packaging-decisions` §6. The real
-jobs: `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
+jobs: `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/.github/workflows/build.yml`
 (`build_windows`, `test_windows`).
 
 **Why this Skill copies Lucio's NSIS script instead of inventing one.** A
@@ -32,7 +32,7 @@ payload and changed only the wrapper: the three built with a minimal script drew
 a heuristic detection from one engine, and the one built with Lucio's layout was
 clean. Installer size and compression did not move the verdict; the shape of the
 installer did. The record is
-`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`,
+`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md`,
 and section 4 lists what to copy.
 
 ## 1. Bundle: onedir
@@ -254,7 +254,7 @@ MSI/MSIX exist but no project here produces one.
 Demonstrated and measured clean by Lucio IVA Calculator, whose installer is
 published: `LucioIVACalculator-0.1.1-nuitka-setup.exe`, 30,666,770 bytes, SHA-256
 `4d8cda49…f55c12`. Its `.nsi` is the reference
-(`my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`).
+(`PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/build/LucioIVACalculator.nsi`).
 
 ### The layout is the part that was measured
 
@@ -582,7 +582,7 @@ facts are read from the published bytes, not from the project's prose.
 - **Which element of the installer layout did the work.** The stub version and
   the script shape changed together in the round that came back clean. The
   experiment that would separate them is written down in
-  `my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`
+  `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md`
   and has not been run.
 - **That a clean result survives a rebuild or a new NSIS release.** Scores are
   point-in-time. Re-scan before publishing a claim.

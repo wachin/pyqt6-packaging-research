@@ -1,8 +1,0 @@
-tbo (2.0.0.dev0-1) unstable; urgency=medium
-
-  * Initial packaging of the Python/PyQt6 reimplementation.
-  * Reads and writes the legacy .tbo format, interactive canvas, object
-    editing, undo/redo, asset library, and PNG/PDF/SVG export.
-  * Ships the doodle and speech bubble library under /usr/share/tbo/doodle.
-
- -- Washington Indacochea Delgado <linuxfrontier@proton.me>  Mon, 24 Aug 2026 12:00:00 +0000
