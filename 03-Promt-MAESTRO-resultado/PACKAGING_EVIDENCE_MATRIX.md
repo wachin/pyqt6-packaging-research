@@ -336,10 +336,20 @@ What was confirmed:
 - What actually keeps `git status` clean is `ignore = dirty` in `.gitmodules`.
   With `git status --ignore-submodules=none`, the only untracked submodule
   content reported was the research agents' leftover `opencode.json` files.
-- Related, and worse in practice: unanchored patterns are actively harmful in
-  this repository. A bare `napari/` also matched
-  `PYQT6-GENESIS-PACKAGING/napari-results/_evidence/napari/` and silently excluded **12 real evidence
-  files** from git.
+- Related, and worth avoiding: unanchored patterns would be harmful in this
+  repository. A bare `napari/` also matches
+  `PYQT6-GENESIS-PACKAGING/napari-results/_evidence/src/napari/`, the four
+  napari source files pinned there as evidence.
 
-Confidence remains **HIGH**: the behaviour was reproduced directly rather than
-read from a note.
+Confidence remains **HIGH** for the submodule behaviour above, which was
+reproduced directly rather than read from a note.
+
+**Corrected 2026-10-31.** This note previously read that the bare `napari/`
+pattern "silently excluded **12 real evidence files** from git", citing the path
+`_evidence/napari/`. Both details were wrong. The directory is
+`_evidence/src/napari/` and holds four files, and none of them was ever
+excluded: commit `603161d` removed the `napari/` and `napari-packaging/`
+patterns and added the packs in the same commit, so the four were never subject
+to the rule. The hazard is real; the incident is not. The figure 12 coincides
+with the file count `EVIDENCE_INDEX.md` lists for the `napari/packaging` pack,
+which has no nested `napari/` directory and was never affected.
