@@ -276,10 +276,51 @@ That is the strongest evidence in the whole research for reading these detection
 as a Windows-PE phenomenon rather than a property of the application: same code,
 same version, different packaging, no detections.
 
+### The variable this measurement did not cover: the installer
+
+TBO ships no Windows installer, so every number above is a statement about a
+frozen executable or an archive. The next variable - the NSIS wrapper around a
+payload - was measured separately, on a sibling application, on 2026-10-31, and
+it belongs here because it changes what "0/71 for Nuitka" can be used to claim.
+
+`ksnip-pyqt6` was built four times from **one identical Nuitka payload** (662
+files, 92 MB). Only the wrapper changed:
+
+| NSIS | Script shape | Installer | VirusTotal |
+|---|---|---|---|
+| 3.13.0 | minimal: MUI2, 5 pages, 1 section, no bitmaps, solid LZMA | 34.8 MB | 1/70 Trapmine `high.ml.score` |
+| 3.13.0 | same, `ZLIB` | 43.6 MB | 1/69 Trapmine `high.ml.score` |
+| 3.10.0 | same, `ZLIB` | 43.6 MB | 1/69 Trapmine `moderate.ml.score` |
+| 3.12.0 | reference layout: MUI v1, 6 pages, 4 sections, bitmaps, `XPStyle` | 43.8 MB | **0/67** |
+
+The portable ZIP of that same payload was clean in every round.
+
+Three consequences for this project:
+
+1. **The freezer is not the last variable.** A clean `TBO.exe` says nothing
+   about an installer wrapped around it. TBO's 0/71 is a statement about the
+   frozen executable, which is exactly what TBO ships - the claim is narrower
+   than "Nuitka produces clean Windows software".
+2. **Compression is not a lever.** LZMA to ZLIB moved the installer by 8.8 MB
+   and left the verdict untouched.
+3. **If TBO ever gains an installer**, port the shape from
+   `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`
+   - six pages including a components page, four sections, header and welcome
+   bitmaps, `XPStyle on`, a complete version resource -
+   and pin makensis to a version that has been the package default for a while.
+   The minimal script is the one that gets flagged.
+
+The full record, with hashes, VirusTotal links and the two builds that would
+separate stub version from script shape, is
+`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`.
+
 ### What is NOT established
 
 - **n = 1 application.** One build of each arm, one point in time. The matrix's
   own rule applies: one sample is noise.
+- **The installer variable is measured elsewhere.** The wrapper experiment above
+  was run on a different application; it says nothing about how a TBO installer
+  would score, only that the wrapper is a variable worth controlling.
 - **Unsigned, and versioned `2.0.0.dev0`.** Both are weak negative signals
   independent of the freezer.
 - **Submission history is uncontrolled.** A hash VirusTotal has never seen is
@@ -656,6 +697,12 @@ It also contributes a cautionary tale that has nothing to do with packaging and
 everything to do with maintaining evidence: thirteen binary assets were silently
 emptied by a normal-looking commit, and only a broken build revealed it.
 
+And it marks the edge of what a freezer measurement can claim. Section 6 records
+a later experiment on a sibling application which shows that the installer
+wrapping a payload is its own variable, capable of turning a clean payload into a
+flagged artifact. TBO's own numbers remain valid for what TBO ships - a frozen
+executable and a portable ZIP - and no wider.
+
 ### Confidence summary
 
 | Claim | Confidence |
@@ -665,6 +712,7 @@ emptied by a normal-looking commit, and only a broken build revealed it.
 | Rebuilt bootloader 2/70 refutes the bootloader hypothesis | **HIGH** for this application |
 | AppImage 0/64, `.deb` 0/61, macOS 0/73, Windows ZIP 0/66 | **HIGH** — hashes and screenshots checked in |
 | Detections are a Windows-PE phenomenon, not application-specific | **MEDIUM-HIGH** — three flagging engines reported the AppImage clean, n = 1 application |
+| The installer wrapper is a separate variable from the freezer | **MEDIUM-HIGH** — four installers of one payload on a sibling application, section 6 |
 | The ZIP conformance and shape fixes work | **HIGH** — verified in a CI build and by extracting the artifact |
 | Published assets are not the CI output | **HIGH** — sizes, entry counts and hashes differ |
 | Nothing is signed | **HIGH** — no signing code, secret or job exists |

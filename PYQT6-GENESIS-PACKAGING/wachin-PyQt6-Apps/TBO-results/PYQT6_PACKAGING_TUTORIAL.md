@@ -363,6 +363,29 @@ What is left is the embedded CPython runtime and the archive format, which you d
 not control. And still: **n = 1 application, one build each.** Report it as a
 lead.
 
+### The wrapper is a separate arm
+
+Everything above compares freezers. If your application also ships an installer,
+that is a second variable, and a clean `.exe` does not cover it.
+
+Measured on a sibling application on 2026-10-31: one Nuitka payload, four
+wrappers, same everything else.
+
+| NSIS | Script shape | Installer | VirusTotal |
+|---|---|---|---|
+| 3.13.0 | minimal: MUI2, 5 pages, 1 section, no bitmaps | 34.8 MB | 1/70 |
+| 3.13.0 | same, ZLIB | 43.6 MB | 1/69 |
+| 3.10.0 | same, ZLIB | 43.6 MB | 1/69 |
+| 3.12.0 | six pages, four sections, bitmaps, `XPStyle` | 43.8 MB | **0/67** |
+
+The portable ZIP of the same payload was clean in every round, and changing the
+compressor moved the file by 8.8 MB without moving the verdict. What moved it was
+the shape of the installer.
+
+So measure the artifact you actually ship. If you ship an installer, the freezer
+arm and the installer arm are two different experiments, and a result for one
+says nothing about the other.
+
 ### Do not
 
 - rebuild to mutate the binary until an engine stops complaining;

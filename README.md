@@ -312,7 +312,8 @@ are already inside the repository.
 
 This is the reason many people land here, so here is the honest state of it.
 
-Two measurements exist, both Windows-only:
+Two freezer measurements exist, both Windows-only, plus one installer
+measurement from 2026-10:
 
 | Build | VirusTotal |
 |---|---|
@@ -321,19 +322,32 @@ Two measurements exist, both Windows-only:
 | PyInstaller onefile (TBO) | **3 / 73** |
 | PyInstaller onefile, bootloader rebuilt from source (TBO) | **2 / 70** |
 | Nuitka NSIS installer / portable ZIP (Lucio, 2026-06, self-reported) | **0 / 68** / **0 / 65** |
+| NSIS installer over a Nuitka payload, minimal script (ksnip-pyqt6, 2026-10) | **1 / 70** |
+| Same payload, reference installer layout (ksnip-pyqt6, 2026-10) | **0 / 67** |
 
-Read it as: **two applications, one platform, one of them self-reported.** It is a
+Read the freezer rows as: **two applications, one platform, one of them
+self-reported.** It is a
 consistent direction, not a law. The four arms also settle two things that sound
 plausible and are wrong — `onedir` is *not* a remedy (both PyInstaller layouts
 scored identically), and rebuilding the bootloader is *not* a remedy either
 (3/73 became 2/70). What remains is the embedded CPython runtime and PyInstaller's
 archive format.
 
+The last two rows are a different experiment and they change the question. Four
+installers were built from **one identical Nuitka payload** — same 662 files, same
+92 MB — and only the wrapper changed: the minimal NSIS script drew a detection
+from one engine, and the script that mirrors the reference layout did not. The
+portable ZIP of that payload was clean every round. In that experiment the
+freezer was never a variable; the installer was.
+
 So: prefer Nuitka on Windows. Do not promise anyone a clean scan. Do not generalise
-to your app without measuring — `experiments/pyinstaller-vs-nuitka/` is the kit.
-And never answer a false positive with obfuscation, packing or binary mutation:
-report it to the vendor. Details and the per-engine lists are in
-`03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md` §B.1.
+to your app without measuring — `experiments/pyinstaller-vs-nuitka/` is the kit —
+and remember that the installer is a variable of its own, worth controlling
+before you go looking for a new freezer. Never answer a false positive with
+obfuscation, packing or binary mutation: report it to the vendor. Details and the
+per-engine lists are in `03-Promt-MAESTRO-resultado/PACKAGING_EVIDENCE_MATRIX.md` §B.1;
+the installer experiment is in
+`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`.
 
 ## For AI agents working in this repository
 

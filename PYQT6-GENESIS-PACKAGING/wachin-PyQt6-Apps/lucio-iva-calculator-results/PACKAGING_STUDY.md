@@ -314,6 +314,83 @@ the missing half of the record, and it is worth adding to the project itself.
 Also measured, for the portable ZIP: 133 entries, top-level
 `LucioIVACalculator/` and `LICENSE`, and **zero entries containing a backslash**.
 
+### The wrapper experiment: one payload, four installers
+
+The record above says what the project measured, not why. On 2026-10-31 the
+question was put to a controlled test on a second application, `ksnip-pyqt6`,
+packaged with this project's recipe: Nuitka `--standalone` on `windows-2025`, a
+portable ZIP, and an NSIS installer built in CI.
+
+Four installers were built from **one identical Nuitka payload** - 662 files,
+92 MB on disk. Only the wrapper changed, and the portable ZIP of that payload
+was clean in every round.
+
+| Round | makensis | Script shape | Installer | VirusTotal |
+|---|---|---|---|---|
+| A | 3.13.0 | minimal: MUI2, 5 pages, 1 section, no bitmaps, solid LZMA | 34.8 MB | 1/70 Trapmine `high` |
+| B | 3.13.0 | same as A, `ZLIB` | 43.6 MB | 1/69 Trapmine `high` |
+| C | 3.10.0 | same as A, `ZLIB` | 43.6 MB | 1/69 Trapmine `moderate` |
+| D | 3.12.0 | this project's layout: MUI v1, 6 pages, 4 sections, bitmaps, `XPStyle` | 43.8 MB | **0/67** |
+
+Round D is the only clean one, and it is the only one whose compiled installer
+has this project's proportions:
+
+| makensis statistic | Lucio IVA Calculator 0.1.1 | Round D |
+|---|---|---|
+| Pages / sections | 6 pages, 4 sections (1 required) | 6 pages, 4 sections (1 required) |
+| Section table | 8,288 bytes | 8,288 bytes |
+| Uninstall instructions | 280 | 280 |
+| Compressed EXE header | 39,936 bytes | 39,936 bytes |
+
+Hashes, VirusTotal links, compile statistics for all four rounds, and the two
+builds that would separate the variables are in
+`INSTALLER_WRAPPER_EXPERIMENT.md` next to this file.
+
+### Why that is the answer
+
+Three statements are supported by the table.
+
+**The payload is not what is being scored.** The same 92 MB sits inside all four
+installers, and the ZIP that carries it unchanged is clean every time. Whatever
+the engine dislikes is in the wrapper.
+
+**Compression is not the lever.** Round A to round B changed LZMA to ZLIB, moved
+the installer by 8.8 MB, and changed nothing: same engine, same label.
+
+**The wrapper's shape moves the score.** Three wrappers of one payload produced
+`high`, `moderate` and `undetected` from the same engine, and the only clean
+one is the one that looks like a mainstream installer. That is a continuous
+score responding to the binary - what an ML verdict looks like, and what a
+signature match does not.
+
+One statement is not supported. Round C to round D changed two things at once,
+the stub (3.10.0 to 3.12.0) and the script (minimal MUI2 to this layout), so the
+data cannot say which half did the work.
+
+### The mechanism that fits
+
+An ML verdict of the form `Malicious.<severity>.ml.score` is a score on a
+feature vector, and such models behave like density estimators: shapes that are
+common in the training population score low, shapes that are rare score high,
+intent is not an input.
+
+- A **minimal NSIS installer** - five pages, one section, no bitmaps, a
+  single-resolution icon, a 49 KB header - is rare among published desktop
+  software and common among small custom NSIS droppers. Sparse region.
+- **This project's installer** - six pages including a components page, four
+  sections, header and welcome bitmaps, `XPStyle`, a full version resource - is what commercial Windows software looks like. Dense
+  region.
+- A **stub released weeks ago** has produced almost none of the installers in
+  circulation; the stub that has been the Chocolatey default for years has
+  produced a large share of them.
+
+The same reading explains why the portable ZIP is never flagged: a ZIP is not an
+executable, and the model is not asked the same question about it.
+
+This is inference from four data points on one application, not a vendor
+statement. Confidence: **MEDIUM-HIGH** that the wrapper is the variable,
+**LOW** on the split between stub version and script shape.
+
 ### What is NOT established
 
 - **The scores are the project's own statement.** No VirusTotal URL, no scan
@@ -333,8 +410,12 @@ Also measured, for the portable ZIP: 133 entries, top-level
 - **The scores may have drifted since 2026-06-16.** Engine sets and heuristics
   change. Re-querying the hashes above today is the only way to know the current
   state, and a different result would not mean either build changed.
+- **The wrapper experiment is one application.** It isolates the installer as the
+  variable, which is the missing half of this record, but four installers of one
+  application do not make the recipe portable to another project. It says what
+  separated these four binaries, not what will separate anyone else's.
 
-### The mechanism the project believes in
+### What this replaces in the project's own account
 
 `docs/nuitka-windows-build.md:505-520` lists what it calls helpful practices: no
 UPX, complete Windows product metadata, a visible icon, clean installer
@@ -342,11 +423,19 @@ behaviour, reproducible Actions builds, a portable ZIP alongside the installer,
 SHA256 checksums, and public source. It then adds, correctly, that code signing
 is still recommended.
 
-Of those, "no UPX" and "complete metadata" are implemented and verifiable in the
-tree. "Improved reputation" is the part that no build flag can promise:
-Antivirus vendors decide their own heuristics, and the research repository's own
-rule applies — the response to a suspected false positive is a report to the
-vendor, never a rebuild intended to defeat a scanner.
+The experiment narrows that list. "No UPX" was never tested here and remains
+unproven; none of the installers above contains UPX. "Complete metadata" is
+present in all four rounds, including the three that were flagged, so it is not
+what made the difference. "Clean installer behaviour" and "reproducible Actions
+builds" are the same in all four. What separated them was the shape of the
+installer binary itself.
+
+None of this is a licence to mutate a binary until a scanner goes quiet. The
+practices on that list are worth keeping because they are correct, and the
+response to a suspected false positive is still a report to the vendor. What the
+experiment adds is a reason to build the installer like a mainstream installer
+rather than like a minimal one, which is a design decision, not an evasion
+technique.
 
 ### The one thing this project does that is better than TBO's record
 
@@ -363,15 +452,29 @@ The parts that matter:
 | Line | What it does | Why it is right |
 |---|---|---|
 | 11-20 | `VIFileVersion`, `VIProductVersion`, seven `VIAddVersionKey` entries | The installer `.exe` carries real PE metadata, which is what Explorer's Properties dialog and most reputation heuristics read. |
-| 22 | `SetCompressor ZLIB` | Correct but conservative. LZMA would cut the 30 MB installer noticeably. |
+| 22 | `SetCompressor ZLIB` | Correct but conservative. Section 6 shows the compressor is not what moves a scanner's verdict: switching it on a sibling project grew the installer by 8.8 MB and changed nothing. |
 | 28 | `RequestExecutionLevel user` | No UAC prompt; installs where the user can write. |
 | 29 | `InstallDir "$LOCALAPPDATA\Programs\LucioIVACalculator"` | Consistent with line 28. |
-| 38-41 | Header and welcome bitmaps | Two `.bmp` files, 8-bit palette NSIS format, shipped in `assets/`. |
+| 38-41 | Header and welcome bitmaps | Two `.bmp` files, 24-bit BMP3, 164x314 and 150x57, shipped in `assets/`. |
 | 44-53 | Welcome, Licence, Components, Directory, InstFiles, Finish, plus three uninstall pages | The Components page is what makes the shortcut sections optional. |
 | 54-55 | Spanish and English | |
 | 70-77 | `GetUserDefaultUILanguage`, mask `0x3ff`, compare with 9 and 10 | Selects English or Spanish from the system UI language. |
 | 89-101 | Main section, `SectionIn RO`, files, uninstaller, five `HKCU` keys | Complete Add/Remove Programs registration for a per-user install. |
 | 122-130 | Uninstall section | Removes the tree, the shortcuts, the registry key and the Start Menu folder. |
+
+### Why the layout matters, not only the options
+
+Section 6 measures what happens when this layout is replaced by a minimal one:
+the installer is flagged, and the same payload in a portable ZIP is not. The page
+count, the components page, the two bitmaps and `XPStyle` are therefore not
+decoration in that result. Together they are what makes
+the compiled binary resemble the population of installers that scanners have
+seen in bulk, and the compile statistics of a faithful port land on this
+project's numbers exactly: 6 pages, 4 sections, an 8,288-byte section table, 280
+uninstall instructions and a 39,936-byte compressed header.
+
+Anyone porting this script should port the shape, not only the compression
+setting and the registry keys.
 
 ### The fragility worth fixing
 
@@ -502,7 +605,7 @@ None. The recursive search finds `dpkg`/`debian` only in `README.md` prose about
 where to build. There is no `debian/` directory, no `control`, no `rules`, and no
 job that produces a `.deb`.
 
-The TBO case study in `my-PyQt6-Apps/TBO-results/` is the only source of
+The TBO case study in `my-PyQt6-Apps/TBO-resultados/` is the only source of
 validated `.deb` evidence in this research.
 
 ## 11. macOS
@@ -545,7 +648,7 @@ Rosetta 2, which works but is not a universal binary.
 None, as in section 8 for Windows. For the full treatment of what a correct
 inside-out signing order, hardened runtime, `notarytool` submission and stapling
 look like, see
-`pyzo-results/PACKAGING_STUDY.md` and the `pyqt6-macos-signing-notarization`
+`pyzo-resultados/PACKAGING_STUDY.md` and the `pyqt6-macos-signing-notarization`
 Skill; this project contributes nothing to that subject and should not be cited
 for it.
 
@@ -781,7 +884,7 @@ Reject or fix:
 
 ## 21. Important Files to Study
 
-In the evidence pack, `wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/`:
+In the evidence pack, `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/`:
 
 | File | Read it for |
 |---|---|
@@ -833,6 +936,7 @@ Start-Process .\build\output\LucioIVACalculator-*-setup.exe -ArgumentList "/S", 
 | Does it produce reproducible artifacts? | No: no lock file, no pinned actions, and the published assets were assembled by hand. |
 | Does it record antivirus results? | Yes — as counts, without hashes. This study recovers the hashes. |
 | Is the Nuitka claim established? | **No.** Two self-reported scans of two applications is a lead, not a property of the freezer. |
+| Is the installer wrapper a variable? | **Yes**, measured on a second application: four installers from one payload, three flagged, the one built like this project clean (section 6). |
 
 ### What this project changes about the research
 
@@ -848,6 +952,14 @@ It also contributes a practice the other seven projects do not have: an automate
 check that the frozen artifact actually contains its resources. That idea, not
 the antivirus anecdote, is the most portable thing in this repository.
 
+The 2026-10-31 experiment in section 6 is the strongest contribution, and it is
+a correction as much as an addition. It moves the question from "which freezer"
+to "which wrapper", and it does so with one payload held constant across four
+installers. The recipe in `_evidence/build/LucioIVACalculator.nsi` is no longer
+just a well-written script; it is the specific layout that measured clean while
+a minimal one did not. What it still cannot say is which part of that layout did
+the work, and that gap is written down rather than papered over.
+
 ### Confidence summary
 
 | Claim | Confidence |
@@ -858,5 +970,7 @@ the antivirus anecdote, is the most portable thing in this repository.
 | SHA-256 of the two 0.1.1 artifacts | **HIGH** — computed from the published release |
 | `0/68` and `0/65` VirusTotal figures | **MEDIUM** — project's own record, no scan artifact preserved |
 | "Nuitka caused the improvement" | **NOT ESTABLISHED** — n = 2, self-reported, Windows only |
+| "The installer wrapper, not the payload, is what gets scored" | **MEDIUM-HIGH** — four installers, one payload, one engine that answered, one application |
+| "Which part of the wrapper layout matters" | **NOT ESTABLISHED** — stub version and script shape changed together |
 | Which revision produced the scanned files | **NOT ESTABLISHED** — the `-nuitka-` names match no script on any branch |
 | CI-built Linux binary requires a recent glibc | **HIGH** — `runs-on: ubuntu-latest` plus the README's own warning |

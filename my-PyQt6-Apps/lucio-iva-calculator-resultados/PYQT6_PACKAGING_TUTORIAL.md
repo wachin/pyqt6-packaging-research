@@ -294,6 +294,17 @@ Every `WriteRegStr`, `CreateShortCut` and `CreateDirectory` needs a matching
 `Delete`/`RmDir` under `Section Uninstall`. Lucio's section (lines 122-130) is
 complete, which is rarer than it should be.
 
+### Keep the whole layout, not just the settings
+
+The page count, the components page, the header and welcome bitmaps and
+`XPStyle on` are not decoration. Section 6 of
+`PACKAGING_STUDY.md` measures what happens when they are dropped: the same
+payload, wrapped by a minimal five-page, one-section script, drew a heuristic
+detection, and the faithful port of this layout did not.
+
+Port the shape, and pin makensis to a version that has been the package default
+for a while rather than to the newest release.
+
 ---
 
 ## 7. Antivirus and VirusTotal: Legitimate Practice
@@ -314,6 +325,14 @@ Two independent signs pointing the same way, and still **not proof that the
 freezer causes it**: n = 2, self-reported in one case, Windows-only, and no
 vendor has said why its heuristic changed. Report it as a lead.
 
+A third measurement, made on a sibling application on 2026-10-31 and written up
+in `PACKAGING_STUDY.md` section 6, narrows the question further. Four installers
+were built from one identical Nuitka payload: the three with a minimal NSIS
+script were flagged by one engine, the one built with this project's layout was
+not, and the portable ZIP of that payload was clean every time. That does not
+make Nuitka the cause; it says the installer wrapping the payload is a variable
+of its own, and it is the one this script controls.
+
 ### Things you control that plausibly matter
 
 - **Do not pack.** No UPX, no self-extracting wrapper. Lucio has no UPX at all
@@ -325,6 +344,10 @@ vendor has said why its heuristic changed. Report it as a lead.
   and says so (`windows-exe-fixes.md:63`).
 - **Ship a readable installer.** Per-user, no admin prompt, no unexpected
   network access, a visible licence page.
+- **Build it like a mainstream installer.** Measured in `PACKAGING_STUDY.md`
+  section 6: the same payload wrapped in a minimal NSIS script was flagged, and
+  wrapped in this project's full layout it was not. Page count, components page,
+  bitmaps and `XPStyle` are part of that result.
 - **Publish checksums next to the files**, so a user can confirm they have what
   you built (`SHA256SUMS.txt` at release).
 - **Keep the source buildable in public**, so "rebuild it yourself" is a real
@@ -335,8 +358,12 @@ vendor has said why its heuristic changed. Report it as a lead.
 
 ### Things that do not help, or that you should not do
 
-- Rebuilding to change the binary's shape in the hope that a specific engine
-  stops complaining. That is evasion, it is temporary, and it is not a fix.
+- Rebuilding until a specific engine stops complaining. Tuning a binary in a loop
+  against a scanner's output is evasion, it is temporary, and it fixes nothing.
+  There is a real difference between that and deciding once that your installer
+  should look like a mainstream installer; the test is whether the change
+  survives a reviewer asking "why is it like this?" without mentioning
+  antivirus.
 - Claiming a clean score is permanent. Engines and heuristics change; the same
   bytes can be clean today and flagged next month.
 - Treating VirusTotal as an authority. It is an aggregator of third-party
