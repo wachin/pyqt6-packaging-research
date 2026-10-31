@@ -11,13 +11,13 @@ Calculator (NSIS installer, per-user, bilingual, with a silent-install test in
 CI), napari (the only project doing real Windows Authenticode signing). Reference
 files, pinned to commits:
 
-- `dikte-resultados/_evidence/packaging/dikte.iss`
-- `dikte-resultados/_evidence/packaging/build-windows.ps1`
-- `pyzo-resultados/_evidence/freeze/installerBuilderScript.iss`
+- `PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/dikte.iss`
+- `PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/build-windows.ps1`
+- `PYQT6-GENESIS-PACKAGING/pyzo-results/_evidence/freeze/installerBuilderScript.iss`
 - `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`
 - `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/build_windows.ps1`
 - `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/.github/workflows/build.yml`
-- `napari-packaging-resultados/_evidence/.github/workflows/make_bundle_conda.yml`
+- `PYQT6-GENESIS-PACKAGING/napari-packaging-results/_evidence/.github/workflows/make_bundle_conda.yml`
 
 **Where this runs:** in GitHub Actions, as jobs on `windows-2025`. Nothing in this
 Skill should be done on a Linux or macOS machine — Nuitka, MSVC and the installer

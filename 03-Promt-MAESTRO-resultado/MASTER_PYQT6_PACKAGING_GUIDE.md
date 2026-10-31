@@ -105,8 +105,8 @@ headline conclusions:
 - **Key source references (from the study):** `CARA_windows.spec`,
   `CARA_linux.spec`, `CARA_macos.spec`, `scripts/build_macos_signed.sh`,
   `app/utils/path_resolver.py`, `cara.py`.
-- **Study:** `CARA-resultados/PACKAGING_STUDY.md`; report
-  `CARA-resultados/01_resultado_de_Codex_CLI.md`.
+- **Study:** `PYQT6-GENESIS-PACKAGING/CARA-results/PACKAGING_STUDY.md`; report
+  `PYQT6-GENESIS-PACKAGING/CARA-results/01_resultado_de_Codex_CLI.md`.
 
 ### 2.2 CustomKnight-Creator (Hollow Knight mod tool)
 - **Binding:** PyQt6 6.3.1, direct imports.
@@ -124,8 +124,8 @@ headline conclusions:
 - **Reusable:** clean 3-OS matrix with per-entry build command; `--add-data
   resources:resources` + `__file__`-relative resolution; per-platform icons;
   exact `==` pins; `zip -r9` of a `.app`.
-- **Study:** `CustomKnight-Creator-resultados/PACKAGING_STUDY.md`; report
-  `CustomKnight-Creator-resultados/01_resultados_opencode_B.AI_Api.md`.
+- **Study:** `PYQT6-GENESIS-PACKAGING/CustomKnight-Creator-results/PACKAGING_STUDY.md`; report
+  `PYQT6-GENESIS-PACKAGING/CustomKnight-Creator-results/01_resultados_opencode_B.AI_Api.md`.
 
 ### 2.3 dikte (voice-dictation tray app)
 - **Binding:** PyQt6 (Core/Gui/Widgets/Network), direct imports.
@@ -148,8 +148,8 @@ headline conclusions:
   repair; Qt-module exclusions.
 - **Weaknesses:** unpinned PyQt6/PyInstaller, mutable `continuous` appimagetool
   download, unsigned Windows, ad-hoc-only macOS, no artifact smoke tests.
-- **Study:** `dikte-resultados/PACKAGING_STUDY.md`; report
-  `dikte-resultados/01_Codex_CLI_reporte.md`.
+- **Study:** `PYQT6-GENESIS-PACKAGING/dikte-results/PACKAGING_STUDY.md`; report
+  `PYQT6-GENESIS-PACKAGING/dikte-results/01_Codex_CLI_reporte.md`.
 
 ### 2.4 napari + napari/packaging (scientific image viewer)
 - **Binding:** QtPy abstraction; installers bundle **PySide6** (PyQt6 supported
@@ -176,10 +176,10 @@ headline conclusions:
   signing gated by event type + secret availability; installers installed and
   smoke-tested in CI; SHA-pinned actions, zizmor, dependabot, least-privilege
   permissions; per-installer lockfile artifacts.
-- **Study:** `napari-resultados/PACKAGING_STUDY.md` +
-  `napari-packaging-resultados/PACKAGING_STUDY.md`; reports
-  `napari-resultados/01_opencode_B.AI_API_resultado.md` and
-  `napari-packaging-resultados/01_resultados_por_opencode_con_DeepSeek_V4_Flash_(B.AI).md`.
+- **Study:** `PYQT6-GENESIS-PACKAGING/napari-results/PACKAGING_STUDY.md` +
+  `PYQT6-GENESIS-PACKAGING/napari-packaging-results/PACKAGING_STUDY.md`; reports
+  `PYQT6-GENESIS-PACKAGING/napari-results/01_opencode_B.AI_API_resultado.md` and
+  `PYQT6-GENESIS-PACKAGING/napari-packaging-results/01_resultados_por_opencode_con_DeepSeek_V4_Flash_(B.AI).md`.
 
 ### 2.5 pyzo (scientific Python IDE)
 - **Binding:** multi-binding (PySide6 on Win64/macOS, PyQt5 on Win32/Linux;
@@ -202,8 +202,8 @@ headline conclusions:
 - **Reusable:** native CI builds; frozen-app smoke tests; explicit Qt module
   include/exclude; macOS signing/notarization in CI; old Linux baseline;
   tag-gated publishing.
-- **Study:** `pyzo-resultados/PACKAGING_STUDY.md`; report
-  `pyzo-resultados/01_resultados_de_Codex_CLI.md`.
+- **Study:** `PYQT6-GENESIS-PACKAGING/pyzo-results/PACKAGING_STUDY.md`; report
+  `PYQT6-GENESIS-PACKAGING/pyzo-results/01_resultados_de_Codex_CLI.md`.
 
 ---
 

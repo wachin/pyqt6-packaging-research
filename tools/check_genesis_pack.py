@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """Check that the reader-facing copy in PYQT6-GENESIS-PACKAGING/ matches its sources.
 
-`PYQT6-GENESIS-PACKAGING/` is a second copy of the same evidence packs, with the
-directory names translated from Spanish to English. Two copies drift, and a drift
-here is silent: a reader follows a citation, finds nothing, and does not know
-whether the research is wrong or the copy is stale.
+`PYQT6-GENESIS-PACKAGING/` holds the evidence packs with the directory names
+translated from Spanish to English. Where a pack still has a source copy, the two
+drift, and a drift here is silent: a reader follows a citation, finds nothing,
+and does not know whether the research is wrong or the copy is stale.
 
 So the copy is not maintained by hand. This script recomputes what every file
-*should* contain from the canonical pack and compares:
+*should* contain from its source pack and compares:
 
   * ``<project>-resultados/``            -> ``PYQT6-GENESIS-PACKAGING/<project>-results/``
   * ``my-PyQt6-Apps/<app>-resultados/``  -> ``PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/<app>-results/``
+
+Only packs that still have a source directory are compared byte for byte, which
+today means the two owner applications under ``my-PyQt6-Apps/``. The six
+case-study packs exist only in the bundle; for them this script still checks for
+stale directory names, but there is no source to compare their bytes against.
 
 Two transformations are expected inside Markdown files, and only those two: a
 references to a results directory becomes the translated name, and the owner's
@@ -32,15 +37,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGET = ROOT / "PYQT6-GENESIS-PACKAGING"
-
-#: Files that are deliberately not copied into the bundle, with the reason. An
-#: explicit allowlist rather than a silent difference: if a file disappears any
-#: other way, the check fails.
-EXCLUDED = {
-    # The raw first-level report for CARA is not part of the reader-facing copy.
-    # dikte's equivalent *is* included, which is an accepted asymmetry, not a rule.
-    "CARA-resultados/01_resultado_de_Codex_CLI.md",
-}
 
 OWNER_PREFIX = "my-PyQt6-Apps"
 BUNDLE_OWNER_PREFIX = "wachin-PyQt6-Apps"
@@ -103,9 +99,6 @@ def check(list_pairs: bool) -> int:
         }
 
         for name, source in sorted(sources.items()):
-            exclusion_key = f"{canonical.name}/{name}"
-            if exclusion_key in EXCLUDED:
-                continue
             if name not in copies:
                 problems.append(f"{bundle.relative_to(ROOT)}/{name}: missing")
                 continue

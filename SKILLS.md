@@ -104,7 +104,7 @@ program; otherwise the user scope is enough and works everywhere.
 
 **Caveat when copying:** the Skill bodies cite evidence with paths relative to
 *this* repository root, for example
-`dikte-resultados/_evidence/packaging/build-appimage.sh` or
+`PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/build-appimage.sh` or
 `my-PyQt6-Apps/TBO-resultados/_evidence/debian/`. Those references only resolve
 in this repository. A bundle install leaves them dangling — the procedures
 themselves do not depend on them, but you lose the ability to audit a claim

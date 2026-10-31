@@ -16,24 +16,24 @@ Compact, evidence-oriented reference for the major conclusions in
   independence of the evidence.
 
 **Evidence file abbreviations**
-- `CARAhd` = `CARA-resultados/01_resultado_de_Codex_CLI.md`
-- `CARAS` = `CARA-resultados/PACKAGING_STUDY.md`
-- `CARAT` = `CARA-resultados/PYQT6_PACKAGING_TUTORIAL.md`
-- `CKhd` = `CustomKnight-Creator-resultados/01_resultados_opencode_B.AI_Api.md`
-- `CKS` = `CustomKnight-Creator-resultados/PACKAGING_STUDY.md`
-- `CKT` = `CustomKnight-Creator-resultados/PYQT6_PACKAGING_TUTORIAL.md`
-- `DIKhd` = `dikte-resultados/01_Codex_CLI_reporte.md`
-- `DIKS` = `dikte-resultados/PACKAGING_STUDY.md`
-- `DIKT` = `dikte-resultados/PYQT6_PACKAGING_TUTORIAL.md`
-- `NAPhd` = `napari-resultados/01_opencode_B.AI_API_resultado.md`
-- `NAPS` = `napari-resultados/PACKAGING_STUDY.md`
-- `NAPT` = `napari-resultados/PYQT6_PACKAGING_TUTORIAL.md`
-- `PAPhd` = `napari-packaging-resultados/01_resultados_por_opencode_con_DeepSeek_V4_Flash_(B.AI).md`
-- `PAPS` = `napari-packaging-resultados/PACKAGING_STUDY.md`
-- `PAPT` = `napari-packaging-resultados/PYQT6_PACKAGING_TUTORIAL.md`
-- `PZOhd` = `pyzo-resultados/01_resultados_de_Codex_CLI.md`
-- `PZOS` = `pyzo-resultados/PACKAGING_STUDY.md`
-- `PZOT` = `pyzo-resultados/PYQT6_PACKAGING_TUTORIAL.md`
+- `CARAhd` = `PYQT6-GENESIS-PACKAGING/CARA-results/01_resultado_de_Codex_CLI.md`
+- `CARAS` = `PYQT6-GENESIS-PACKAGING/CARA-results/PACKAGING_STUDY.md`
+- `CARAT` = `PYQT6-GENESIS-PACKAGING/CARA-results/PYQT6_PACKAGING_TUTORIAL.md`
+- `CKhd` = `PYQT6-GENESIS-PACKAGING/CustomKnight-Creator-results/01_resultados_opencode_B.AI_Api.md`
+- `CKS` = `PYQT6-GENESIS-PACKAGING/CustomKnight-Creator-results/PACKAGING_STUDY.md`
+- `CKT` = `PYQT6-GENESIS-PACKAGING/CustomKnight-Creator-results/PYQT6_PACKAGING_TUTORIAL.md`
+- `DIKhd` = `PYQT6-GENESIS-PACKAGING/dikte-results/01_Codex_CLI_reporte.md`
+- `DIKS` = `PYQT6-GENESIS-PACKAGING/dikte-results/PACKAGING_STUDY.md`
+- `DIKT` = `PYQT6-GENESIS-PACKAGING/dikte-results/PYQT6_PACKAGING_TUTORIAL.md`
+- `NAPhd` = `PYQT6-GENESIS-PACKAGING/napari-results/01_opencode_B.AI_API_resultado.md`
+- `NAPS` = `PYQT6-GENESIS-PACKAGING/napari-results/PACKAGING_STUDY.md`
+- `NAPT` = `PYQT6-GENESIS-PACKAGING/napari-results/PYQT6_PACKAGING_TUTORIAL.md`
+- `PAPhd` = `PYQT6-GENESIS-PACKAGING/napari-packaging-results/01_resultados_por_opencode_con_DeepSeek_V4_Flash_(B.AI).md`
+- `PAPS` = `PYQT6-GENESIS-PACKAGING/napari-packaging-results/PACKAGING_STUDY.md`
+- `PAPT` = `PYQT6-GENESIS-PACKAGING/napari-packaging-results/PYQT6_PACKAGING_TUTORIAL.md`
+- `PZOhd` = `PYQT6-GENESIS-PACKAGING/pyzo-results/01_resultados_de_Codex_CLI.md`
+- `PZOS` = `PYQT6-GENESIS-PACKAGING/pyzo-results/PACKAGING_STUDY.md`
+- `PZOT` = `PYQT6-GENESIS-PACKAGING/pyzo-results/PYQT6_PACKAGING_TUTORIAL.md`
 
 ---
 
@@ -338,7 +338,7 @@ What was confirmed:
   content reported was the research agents' leftover `opencode.json` files.
 - Related, and worse in practice: unanchored patterns are actively harmful in
   this repository. A bare `napari/` also matched
-  `napari-resultados/_evidence/napari/` and silently excluded **12 real evidence
+  `PYQT6-GENESIS-PACKAGING/napari-results/_evidence/napari/` and silently excluded **12 real evidence
   files** from git.
 
 Confidence remains **HIGH**: the behaviour was reproduced directly rather than

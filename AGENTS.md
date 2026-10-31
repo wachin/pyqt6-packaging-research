@@ -286,9 +286,8 @@ at all.
 | `SKILLS.md` | The six Skills, what they cover, and what they deliberately refuse to cover. |
 | `SKILLS-VERIFICATION.md` | The audit of those Skills against the five common release artifacts, what it fixed, and what is still not verified. |
 | `EVIDENCE_INDEX.md` | Every evidence pack with its pinned commit and licence. |
-| `<project>-resultados/` | Per-case-study `PACKAGING_STUDY.md`, `PYQT6_PACKAGING_TUTORIAL.md` and `_evidence/`. |
-| `my-PyQt6-Apps/<app>-resultados/` | The same two documents and an `_evidence/` pack for the two owner applications, placed beside their submodules. |
-| `PYQT6-GENESIS-PACKAGING/` | The **reader-facing copy** of every study, in one folder with English directory names, written to be pointed at by a person or an agent. It is derivative: edit the canonical pack, then bring the copy back in line. `tools/check_genesis_pack.py` enforces that, including the two permitted path rewrites. |
+| `PYQT6-GENESIS-PACKAGING/` | The studies in one folder with English directory names, written to be pointed at by a person or an agent. For the six case-study packs it is the **only** copy: edit it here, and note that no source pack exists to regenerate it from. |
+| `my-PyQt6-Apps/<app>-resultados/` | The two owner applications' packs, maintained as a source plus a mirror under `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`. Edit the source, then regenerate its copy. `tools/check_genesis_pack.py` enforces parity between the two, including the two permitted path rewrites. |
 | `03-Promt-MAESTRO-resultado/` | Consolidated master guide, master tutorial, evidence matrix, TBO fixes. |
 | `tools/extract_evidence.py` | Regenerates every evidence pack. |
 | `tools/build_skills_bundle.py` | Builds the installable Skills tarball; deterministic, and it refuses a bundle a harness could not load. |
@@ -316,7 +315,7 @@ Three traps this repository has already hit. Do not reintroduce them.
   `git status` clean is `ignore = dirty` in `.gitmodules`. Adding `dikte/`
   or `napari/` to `.gitignore` does nothing.
 - **Never add unanchored directory patterns to `.gitignore`.** A bare `napari/`
-  also matches `napari-resultados/_evidence/napari/`, which silently excluded
+  also matches `PYQT6-GENESIS-PACKAGING/napari-results/_evidence/napari/`, which silently excluded
   **12 real evidence files** from git. Anchor such patterns to the root (`/x/`)
   or scope them to the directory that needs them.
 - **The same trap, hit again — and then dissolved.** A bare `PyQt6-Apps/` was

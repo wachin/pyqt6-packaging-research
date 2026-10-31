@@ -648,7 +648,7 @@ Rosetta 2, which works but is not a universal binary.
 None, as in section 8 for Windows. For the full treatment of what a correct
 inside-out signing order, hardened runtime, `notarytool` submission and stapling
 look like, see
-`pyzo-resultados/PACKAGING_STUDY.md` and the `pyqt6-macos-signing-notarization`
+`PYQT6-GENESIS-PACKAGING/pyzo-results/PACKAGING_STUDY.md` and the `pyqt6-macos-signing-notarization`
 Skill; this project contributes nothing to that subject and should not be cited
 for it.
 

@@ -304,7 +304,7 @@ Three consequences for this project:
 2. **Compression is not a lever.** LZMA to ZLIB moved the installer by 8.8 MB
    and left the verdict untouched.
 3. **If TBO ever gains an installer**, port the shape from
-   `my-PyQt6-Apps/lucio-iva-calculator-resultados/_evidence/build/LucioIVACalculator.nsi`
+   `wachin-PyQt6-Apps/lucio-iva-calculator-results/_evidence/build/LucioIVACalculator.nsi`
    - six pages including a components page, four sections, header and welcome
    bitmaps, `XPStyle on`, a complete version resource -
    and pin makensis to a version that has been the package default for a while.
@@ -312,7 +312,7 @@ Three consequences for this project:
 
 The full record, with hashes, VirusTotal links and the two builds that would
 separate stub version from script shape, is
-`my-PyQt6-Apps/lucio-iva-calculator-resultados/INSTALLER_WRAPPER_EXPERIMENT.md`.
+`wachin-PyQt6-Apps/lucio-iva-calculator-results/INSTALLER_WRAPPER_EXPERIMENT.md`.
 
 ### What is NOT established
 
@@ -621,7 +621,7 @@ Do not take:
 
 ## 20. Important Files to Study
 
-In `my-PyQt6-Apps/TBO-resultados/_evidence/`:
+In `my-PyQt6-Apps/TBO-results/_evidence/`:
 
 | File | Read it for |
 |---|---|

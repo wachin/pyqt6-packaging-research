@@ -7,14 +7,14 @@ whenToUse: Use when creating or fixing an AppImage for a Python/PyQt6 applicatio
 # AppImage packaging for a PyQt6 application
 
 Reference implementation (pinned to a commit):
-`dikte-resultados/_evidence/packaging/build-appimage.sh` — the only AppImage
+`PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/build-appimage.sh` — the only AppImage
 actually observed in this research. Read it alongside this skill.
 
 **Where this runs:** in GitHub Actions, as a job on `ubuntu-22.04` — the glibc
 floor below is the reason for that runner, not a preference. Workflow shape:
 `pyqt6-packaging-decisions` §6. The real job:
 `my-PyQt6-Apps/TBO-resultados/_evidence/.github/workflows/build.yml`
-(`build-appimage`), or `dikte-resultados/_evidence/packaging/build-appimage.sh`
+(`build-appimage`), or `PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/packaging/build-appimage.sh`
 for the script it calls.
 
 ## 1. AppDir layout
@@ -130,8 +130,8 @@ child's environment rather than fight it:
 - unset or restore `LD_LIBRARY_PATH` before launching the bundled helper;
 - restore the certificate store path so TLS still works.
 
-Observed implementations: `dikte-resultados/_evidence/dikte/integrate.py` and
-`CARA-resultados/_evidence/app/services/uci_communication_service.py`. Read both
+Observed implementations: `PYQT6-GENESIS-PACKAGING/dikte-results/_evidence/dikte/integrate.py` and
+`PYQT6-GENESIS-PACKAGING/CARA-results/_evidence/app/services/uci_communication_service.py`. Read both
 before writing your own — the pattern is short but non-obvious.
 
 Also: if you download a helper at build time, **pin it and verify its SHA-256**

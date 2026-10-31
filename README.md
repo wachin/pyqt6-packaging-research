@@ -278,7 +278,8 @@ all six locations, and that no permission rule denies it.
 | `PYQT6-GENESIS-PACKAGING/` | **Start here.** Every study in one folder with English directory names, for pointing a person or an agent at. |
 | `03-Promt-MAESTRO-resultado/` | The consolidated result: `MASTER_PYQT6_PACKAGING_GUIDE.md`, `PYQT6_MASTER_PACKAGING_TUTORIAL.md`, and `PACKAGING_EVIDENCE_MATRIX.md` with a confidence label on every claim. |
 | `01-GENESIS/`, `02-Promt-MAESTRO/` | Provenance: where the research started and the master prompt used for the second-level analysis. Not needed to use the results. |
-| `<project>-resultados/`, `my-PyQt6-Apps/<app>-resultados/` | The canonical evidence packs, what the Skills cite. |
+| `PYQT6-GENESIS-PACKAGING/<project>-results/` | The evidence packs the Skills cite, and the only copy of all six case-study packs. |
+| `my-PyQt6-Apps/<app>-resultados/` | The two owner applications' packs, maintained as a source plus a mirror under `PYQT6-GENESIS-PACKAGING/wachin-PyQt6-Apps/`. |
 | `.dsh/skills/` | The six Skills, source of truth for the release bundle. |
 | `experiments/pyinstaller-vs-nuitka/` | The repeatable build-tool experiment kit, with the VirusTotal screenshots. |
 | `tools/` | `extract_evidence.py` (regenerates the packs), `build_skills_bundle.py`, `check_genesis_pack.py`. |

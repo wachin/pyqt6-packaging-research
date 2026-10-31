@@ -123,7 +123,7 @@ and `QtSvg`, declare them as PyInstaller `--hidden-import`s, and let Nuitka's
 plugin do the equivalent. It works, and it ships more Qt than a
 `--onefile` user needs.
 
-If size matters, Pyzo's approach in `pyzo-resultados/` (explicit module
+If size matters, Pyzo's approach in `PYQT6-GENESIS-PACKAGING/pyzo-results/` (explicit module
 selection, everything else excluded) is the opposite trade and is worth reading
 before copying either.
 
@@ -485,7 +485,7 @@ whether a normal user can open the app at all. That is section 11.
 Out of scope for this project: it signs nothing. For the real procedure — the
 inside-out `codesign` order, hardened runtime, entitlements, `notarytool` in CI
 and `stapler` — use the `pyqt6-macos-signing-notarization` Skill and the pyzo
-case study (`pyzo-resultados/`), which implements it in CI.
+case study (`PYQT6-GENESIS-PACKAGING/pyzo-results/`), which implements it in CI.
 
 The one thing to carry away from Lucio here is negative evidence: an unsigned,
 unnotarized `.app` is blocked by Gatekeeper on first launch, so a release that
@@ -634,7 +634,7 @@ Two of those are worth automating because they fail silently: the ZIP layout
 - code signing and notarization — see the `pyqt6-windows-installer-signing` and
   `pyqt6-macos-signing-notarization` Skills;
 - Debian packaging — see `my-PyQt6-Apps/TBO-resultados/`;
-- AppImage — see `dikte-resultados/`.
+- AppImage — see `PYQT6-GENESIS-PACKAGING/dikte-results/`.
 
 ---
 
